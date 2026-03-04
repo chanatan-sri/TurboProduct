@@ -160,3 +160,4 @@ Key summary:
 | # | Changelog | Summary | Date |
 |---|-----------|---------|------|
 | 001 | [CHANGELOG_001_initial.md](changelogs/CHANGELOG_001_initial.md) | Initial product definition — Accounting portfolio and Bookkeeping product onboarded into TurboProduct | 2026-03-04 |
+| 002 | [CHANGELOG_002_feature-layer-and-architecture.md](changelogs/CHANGELOG_002_feature-layer-and-architecture.md) | Feature layer completed — 17 FEATURE_*.md files created; ARCHITECTURE.md added with data models, SAP JV spec, and 7 ADRs | 2026-03-04 |
