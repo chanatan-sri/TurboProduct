@@ -1,0 +1,85 @@
+# Portfolio: Credit
+
+**Strategic Domain**: Consumer and SME Lending Lifecycle
+**Business Owner**: CPO / Chief Credit Officer
+**Status**: Active Investment
+**Last Updated**: 2026-03-04
+
+---
+
+## Investment Thesis
+
+The Credit portfolio owns the full lending lifecycle — from the moment a customer starts a loan application to the last day any loan is active. Today, **Onigiri** covers the origination leg (application → underwriting → disbursement). As the business scales, the portfolio will expand to include **Loan Servicing** (repayment scheduling, statements, early settlement) and **Collections** (delinquency management, recovery tracking) as distinct products with distinct lifecycles and owners.
+
+These products belong in the same portfolio because:
+- They share the same customer entity (resolved via DaVinci).
+- They share the same document verification infrastructure (Matcha / Wasabi).
+- Their data flows sequentially — an approved loan in Onigiri becomes an active loan in Servicing; a delinquent loan in Servicing becomes a collection case in Collections.
+- Portfolio-level OKRs (loan book quality, origination-to-collection funnel) require unified measurement.
+
+**Why not a single product?** Each lifecycle stage has a distinct operational owner, team, technology surface, and performance cadence. Origination is sales-led (branch COs), Servicing is operations-led (back-office), and Collections is specialist-led (collection officers). Separate products prevent scope creep and ownership dilution.
+
+---
+
+## Constituent Products
+
+| Product | Codename | Status | PRODUCT.md | Description |
+|---------|----------|--------|------------|-------------|
+| Loan Origination System | Onigiri (おにぎり) | 📝 Draft | [PRODUCT](onigiri/PRODUCT.md) | Loan application intake → underwriting workflow → credit decision → disbursement |
+| Loan Servicing | TBD | ⏳ To be defined | — | Repayment scheduling, statement generation, early settlement |
+| Collections | TBD | ⏳ To be defined | — | Delinquency management, collection workflow, recovery tracking |
+
+---
+
+## Portfolio-Level OKRs
+
+| Objective | Key Result | Target |
+|-----------|-----------|--------|
+| Accelerate loan origination | Avg. origination cycle time (Draft → Funded) | < 5 business days |
+| Increase underwriting automation | % of applications with zero manual risk rule changes post-launch | > 90% |
+| Reduce document errors at intake | % of Matcha tasks auto-verified by AI (no human QA) | > 70% |
+| Enable rapid product launch | Time to launch a new loan campaign (without code changes) | < 2 business days |
+| Improve portfolio quality | NPL rate within 6 months of origination | < 3% |
+
+---
+
+## Cross-Product Dependencies
+
+```
+Credit Portfolio → Operations Portfolio
+  Onigiri → Matcha     : Document verification after facility creation
+  Onigiri → Wasabi     : AI early-warning scan during Draft phase
+  Onigiri → Sensei     : Task creation when branch action required
+
+Credit Portfolio → Platform Portfolio
+  Onigiri → DaVinci    : Customer identity resolution on application creation
+  Onigiri → DaVinci    : ApplicationCreated, ApplicationApproved events
+
+Credit Portfolio → External
+  Onigiri → Core Banking : Facility creation, loan disbursement
+  Onigiri → NCB          : Credit bureau inquiry via OTP consent
+```
+
+---
+
+## Strategic Roadmap
+
+| Horizon | Initiative | Owner |
+|---------|-----------|-------|
+| **Now** | Onigiri — complete capability implementation (Smart Form, Underwriting, Risk Engine, Campaign Config) | Credit PO |
+| **Now** | Onigiri — Wasabi early-warning integration in Draft state | Credit PO + AI/ML |
+| **Next** | Onigiri — AI-first verification routing via Matcha/Wasabi (Phase 2) | Credit PO + Operations |
+| **Next** | Define Loan Servicing product (PRODUCT.md + capability registry) | Credit CPO |
+| **Later** | Define Collections product (PRODUCT.md + capability registry) | Credit CPO |
+| **Later** | Portfolio-level reporting: origination → servicing → collections funnel | Analytics |
+
+---
+
+## Key Risks and Constraints
+
+| Risk | Severity | Mitigation |
+|------|----------|-----------|
+| Onigiri scope creep beyond origination | High | Strict IS/IS NOT boundary enforced in PRODUCT.md. Servicing and Collections are separate products. |
+| Campaign configuration complexity grows unbounded | Medium | Campaign configuration must remain no-code. Any feature that requires code to configure is a boundary violation. |
+| Wasabi confidence threshold causes false positives | Medium | 99.99% threshold is ultra-conservative. Monitor false positive rate via spot-check sampling. |
+| Servicing/Collections products not defined before Onigiri goes live | Low | Onigiri ends at disbursement. Integration handoffs (loan_id to Core Banking) are the boundary. Servicing definition can follow. |
