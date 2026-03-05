@@ -83,15 +83,84 @@ Bookkeeping is the single source of truth for all double-entry ledger records ac
 ## High-Level User Flow
 
 ```mermaid
-flowchart LR
-    A[Upstream System\nLOS / Cash Reconcile] -->|S3 file upload| GW[Accounting Gateway\nFile Validation + Event Config Lookup]
-    B[AMS User\nManual / File Upload] -->|API or file| GW
-    GW -->|Valid transactions| BK[Accounting Book\nJournal Header + Lines]
-    BK -->|Async| PV[Pivot View\nBook of Record]
-    BK -->|Ungroup transactions| SAP[SAP Connector\nJV Batch + JV File]
-    SAP -->|JV file on S3| SAPFI[SAP FI]
-    SAPFI -->|Result file| SAP
-    SAP -->|Status update| BK
+flowchart TD
+    classDef entryNode  fill:#3b2d8f,stroke:#7c6fcd,stroke-width:2px,color:#e8e0ff,font-weight:bold
+    classDef gateNode   fill:#0f2a45,stroke:#4a90d9,stroke-width:2px,color:#cce4ff
+    classDef bookNode   fill:#0d2a00,stroke:#52c41a,stroke-width:2px,color:#b7eb8f,font-weight:bold
+    classDef sapNode    fill:#2a1a3d,stroke:#9b6dff,stroke-width:2px,color:#d3b8ff
+    classDef pivotNode  fill:#003030,stroke:#00bfbf,stroke-width:2px,color:#7fffee
+    classDef humanNode  fill:#3b2d8f,stroke:#7c6fcd,stroke-width:2px,color:#e8e0ff
+    classDef failNode   fill:#3d1a00,stroke:#e07820,stroke-width:2px,color:#ffcc80
+
+    A1(["☁  Upstream System
+    LOS · Cash Reconcile
+    ─────────────────────
+    S3 file — event code + amount
+    GL accounts NOT included"])
+
+    A2(["👤  Accounting User · AMS
+    Manual entry or file upload
+    ─────────────────────────────
+    GL accounts supplied directly"])
+
+    A1 -->|"Stage 1: File format
+    Stage 2: Row validation
+    Event config → GL resolution"| GW
+
+    A2 -->|"Stage 1: File format
+    Stage 2: Row + COA validation
+    GL validated against COA master"| GW
+
+    GW["🔀  Accounting Gateway
+    ──────────────────────────────
+    Two-stage validation · GL resolution
+    SAP Record flag check"]
+
+    GW -->|"Valid transactions"| BK
+
+    BK["💾  Accounting Book
+    ──────────────────────────────
+    Double-entry journal store
+    journal_header · journal_line"]
+
+    BK -->|"Async refresh"| PV["↺  Book of Record
+    Pivot View
+    Summary query layer"]
+
+    BK -->|"Ungroup transactions
+    (nightly batch or on-demand)"| JV
+
+    JV["📦  SAP Connector
+    ──────────────────────────────
+    Group → JV Batch → JV File
+    Max 900 doc groups per file
+    Uploaded to S3"]
+
+    JV -->|"JV file downloaded
+    and uploaded to SAP FI"| HU
+
+    HU(["👤  Accounting User
+    Upload JV file to SAP FI
+    Upload SAP result file via AMS"])
+
+    HU -->|"SAP result file"| RES
+
+    RES["⚙  Process SAP Result
+    ──────────────────────────────
+    Update JV Posting Status
+    SUCCESS · FAILED"]
+
+    RES -->|"SUCCESS
+    Pivot view refreshed"| PV
+    RES -->|"FAILED
+    Cancel JV batch · release transactions"| JV
+
+    class A1,A2   entryNode
+    class GW      gateNode
+    class BK      bookNode
+    class JV,RES  sapNode
+    class PV      pivotNode
+    class HU      humanNode
 ```
 
 ---
