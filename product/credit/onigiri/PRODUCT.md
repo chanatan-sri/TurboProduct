@@ -4,7 +4,7 @@
 **Portfolio**: Credit → [PORTFOLIO](../../PORTFOLIO.md)
 **Status**: 📝 Draft
 **Executive Owner**: CPO
-**Last Updated**: 2026-03-04
+**Last Updated**: 2026-03-05
 
 > *Onigiri (おにぎり) — A tightly packed, self-contained unit. Like the rice ball, Onigiri wraps the entire loan origination lifecycle into a single, cohesive product — from application intake through underwriting to disbursement. Everything the borrower needs, held together in one place.*
 
@@ -38,16 +38,19 @@ A single configurable platform that governs the full loan application lifecycle 
 - AI document analysis and report assembly (owned by **Wasabi**)
 - Customer master data and Golden Record (owned by **DaVinci**)
 - Branch task tracking and worklist management (owned by **Sensei**)
+- Credit scoring model selection, inference execution, or raw score handling (owned by **Miso**)
 - Loan repayment scheduling, statements, or early settlement (future: **Loan Servicing** product)
 - Delinquency management or collection workflows (future: **Collections** product)
 
 **This product RECEIVES from:**
 - DaVinci → customer identity + product summary on application creation → via REST API
+- Miso → standardized score object `{ rating, risk_band, indicators[], model_version, trace_id }` → via REST API response
 - Wasabi → early-warning document verification report during Draft phase → via async callback
 - Matcha → verification outcome (APPROVED/RETURNED/REFERRED) → via webhook callback
 - NCB → credit bureau inquiry result → via API (triggered by OTP consent in Smart Form)
 
 **This product SENDS to:**
+- Miso → application JSON + campaign ID on Risk Assessment state entry → via REST API
 - Matcha → document verification task (POST /task) after Create Facility state → via REST API
 - Wasabi → document image URL + expected type + system data on upload → via async API
 - Sensei → TaskCreationRequest event when branch action is needed → via event
@@ -137,6 +140,7 @@ stateDiagram-v2
 ```mermaid
 graph LR
     Onigiri[Onigiri\nLoan Origination]
+    Miso[Miso\nCredit Scoring]
     DaVinci[DaVinci\nMaster Data]
     Wasabi[Wasabi\nAI Verification]
     Matcha[Matcha\nDoc Verification]
@@ -146,6 +150,8 @@ graph LR
 
     DaVinci -->|Customer identity| Onigiri
     Onigiri -->|App events| DaVinci
+    Onigiri -->|application JSON + campaign_id| Miso
+    Miso -->|standardized score object| Onigiri
     Onigiri -->|Document + type| Wasabi
     Wasabi -->|Verification report| Onigiri
     Onigiri -->|POST /task + Wasabi results| Matcha
