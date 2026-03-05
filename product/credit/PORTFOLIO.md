@@ -3,7 +3,7 @@
 **Strategic Domain**: Consumer and SME Lending Lifecycle
 **Business Owner**: CPO / Chief Credit Officer
 **Status**: Active Investment
-**Last Updated**: 2026-03-04
+**Last Updated**: 2026-03-05
 
 ---
 
@@ -26,6 +26,7 @@ These products belong in the same portfolio because:
 | Product | Codename | Status | PRODUCT.md | Description |
 |---------|----------|--------|------------|-------------|
 | Loan Origination System | Onigiri (おにぎり) | 📝 Draft | [PRODUCT](onigiri/PRODUCT.md) | Loan application intake → underwriting workflow → credit decision → disbursement |
+| Credit Scoring Service | Miso (味噌) | 📝 Draft | [PRODUCT](miso/PRODUCT.md) | Campaign-to-model routing, A/B traffic splitting, model inference execution, standardized score output, immutable audit log |
 | Loan Servicing | TBD | ⏳ To be defined | — | Repayment scheduling, statement generation, early settlement |
 | Collections | TBD | ⏳ To be defined | — | Delinquency management, collection workflow, recovery tracking |
 
@@ -46,6 +47,10 @@ These products belong in the same portfolio because:
 ## Cross-Product Dependencies
 
 ```
+Credit Portfolio — Internal
+  Onigiri → Miso       : application JSON + campaign_id for credit scoring (Risk Assessment state)
+  Miso → Onigiri       : standardized score object { rating, risk_band, indicators[], trace_id }
+
 Credit Portfolio → Operations Portfolio
   Onigiri → Matcha     : Document verification after facility creation
   Onigiri → Wasabi     : AI early-warning scan during Draft phase
@@ -68,6 +73,8 @@ Credit Portfolio → External
 |---------|-----------|-------|
 | **Now** | Onigiri — complete capability implementation (Smart Form, Underwriting, Risk Engine, Campaign Config) | Credit PO |
 | **Now** | Onigiri — Wasabi early-warning integration in Draft state | Credit PO + AI/ML |
+| **Now** | Miso — feature decomposition and engineering owner assignment | Credit PO + Engineering |
+| **Next** | Miso — integrate with Onigiri Risk Assessment state (score routing active) | Credit PO + Engineering |
 | **Next** | Onigiri — AI-first verification routing via Matcha/Wasabi (Phase 2) | Credit PO + Operations |
 | **Next** | Define Loan Servicing product (PRODUCT.md + capability registry) | Credit CPO |
 | **Later** | Define Collections product (PRODUCT.md + capability registry) | Credit CPO |
