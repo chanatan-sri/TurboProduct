@@ -84,83 +84,247 @@ Bookkeeping is the single source of truth for all double-entry ledger records ac
 
 ```mermaid
 flowchart TD
-    classDef entryNode  fill:#3b2d8f,stroke:#7c6fcd,stroke-width:2px,color:#e8e0ff,font-weight:bold
-    classDef gateNode   fill:#0f2a45,stroke:#4a90d9,stroke-width:2px,color:#cce4ff
-    classDef bookNode   fill:#0d2a00,stroke:#52c41a,stroke-width:2px,color:#b7eb8f,font-weight:bold
-    classDef sapNode    fill:#2a1a3d,stroke:#9b6dff,stroke-width:2px,color:#d3b8ff
-    classDef pivotNode  fill:#003030,stroke:#00bfbf,stroke-width:2px,color:#7fffee
-    classDef humanNode  fill:#3b2d8f,stroke:#7c6fcd,stroke-width:2px,color:#e8e0ff
-    classDef failNode   fill:#3d1a00,stroke:#e07820,stroke-width:2px,color:#ffcc80
+    classDef entryNode    fill:#3b2d8f,stroke:#7c6fcd,stroke-width:2px,color:#e8e0ff,font-weight:bold
+    classDef userNode     fill:#3b2d8f,stroke:#7c6fcd,stroke-width:2px,color:#e8e0ff
+    classDef validateNode fill:#0f2a45,stroke:#4a90d9,stroke-width:2px,color:#cce4ff
+    classDef decisionNode fill:#2d2000,stroke:#c8960c,stroke-width:2px,color:#ffe082,font-weight:bold
+    classDef notifyNode   fill:#3d1a00,stroke:#e07820,stroke-width:2px,color:#ffcc80,font-style:italic
+    classDef configNode   fill:#0d3028,stroke:#2eb89a,stroke-width:2px,color:#80ffda
+    classDef saveNode     fill:#0d2a00,stroke:#52c41a,stroke-width:2px,color:#b7eb8f,font-weight:bold
+    classDef sapNode      fill:#2a1a3d,stroke:#9b6dff,stroke-width:2px,color:#d3b8ff
+    classDef pivotNode    fill:#003030,stroke:#00bfbf,stroke-width:2px,color:#7fffee
+    classDef endNode      fill:#1a1a1a,stroke:#555,stroke-width:1px,color:#888
 
+    %% ─────────────────────────────────────────────────────
+    %% ENTRY POINTS
+    %% ─────────────────────────────────────────────────────
     A1(["☁  Upstream System
-    LOS · Cash Reconcile
-    ─────────────────────
-    S3 file — event code + amount
-    GL accounts NOT included"])
+    Upload transaction file to S3
+    ─────────────────────────────
+    File contains: Event code · Posting date
+    Doc date · Amount · Reference1-6 · Note
+    GL accounts are NOT included"])
 
     A2(["👤  Accounting User · AMS
     Manual entry or file upload
     ─────────────────────────────
-    GL accounts supplied directly"])
+    File contains: Event code · Posting date · Doc date
+    Dr/Cr Account Number · Dr/Cr Center
+    Dr/Cr Sub-ledger · Amount · Reference1-6 · Remark"])
 
-    A1 -->|"Stage 1: File format
-    Stage 2: Row validation
-    Event config → GL resolution"| GW
+    %% ─────────────────────────────────────────────────────
+    %% PATH 1 — UPSTREAM: STAGE 1
+    %% ─────────────────────────────────────────────────────
+    A1 --> S1["📋  Stage 1 · File Format Validation
+    ─────────────────────────────────────
+    File-level gate — all or nothing
+    ─────────────────────────────────────
+    · Column names match format
+    · Required fields NOT NULL
+    · Date format YYYY-MM-DD
+    · Amount is numeric"]
 
-    A2 -->|"Stage 1: File format
-    Stage 2: Row + COA validation
-    GL validated against COA master"| GW
+    S1 --> D1{"Format
+    valid?"}
+    D1 -->|"✕  Invalid"| N1["🔔  Notify Dev Team
+    File format error
+    File halted — no rows processed"]
+    N1 --> HALT(["⊘  End"])
 
-    GW["🔀  Accounting Gateway
-    ──────────────────────────────
-    Two-stage validation · GL resolution
-    SAP Record flag check"]
+    %% ─────────────────────────────────────────────────────
+    %% PATH 1 — UPSTREAM: STAGE 2
+    %% ─────────────────────────────────────────────────────
+    D1 -->|"✓  Valid"| S2["🔍  Stage 2 · Row-Level Validation
+    ──────────────────────────────────────────────
+    Each row validated independently.
+    No GL lookup — GL accounts are not in this file.
+    All GL resolution happens in event config below.
+    ──────────────────────────────────────────────
+    ①  Event code exists in Bookkeeping
+    ②  Amount > 0
+    ③  Date fields conform to YYYY-MM-DD
+    ④  Required reference fields NOT NULL"]
 
-    GW -->|"Valid transactions"| BK
+    S2 --> D2{"Any rows
+    fail?"}
+    D2 -->|"✕  Failed rows"| N2["🔔  Notify Dev Team
+    Validation summary file
+    ──────────────────────
+    · ไม่พบ Event Code บนระบบ
+    · amount มีค่าติดลบ
+    · Format Date ไม่ถูกต้อง
+    · กรุณาระบุ [Field]"]
+    D2 -->|"✓  Passed rows"| CFG
+    N2 -. "valid rows continue" .-> CFG
 
-    BK["💾  Accounting Book
-    ──────────────────────────────
-    Double-entry journal store
-    journal_header · journal_line"]
+    %% ─────────────────────────────────────────────────────
+    %% PATH 1 — EVENT CONFIG LOOKUP
+    %% ─────────────────────────────────────────────────────
+    CFG["⚙  Event Config Lookup
+    ─────────────────────────────────────────────
+    All GL resolution happens here from config.
+    ─────────────────────────────────────────────
+    ①  Event code → DR / CR GL accounts
+    ②  Ref1 or fixed config → Profit / Cost Center
+    ③  Event config → fixed Vendor / Customer code
+    ④  Date logic per event rule"]
 
-    BK -->|"Async refresh"| PV["↺  Book of Record
-    Pivot View
-    Summary query layer"]
+    %% ─────────────────────────────────────────────────────
+    %% PATH 2 — MANUAL AMS: STAGE 1
+    %% ─────────────────────────────────────────────────────
+    A2 --> S1B["📋  Stage 1 · File Format Validation
+    ─────────────────────────────────────
+    File-level gate — all or nothing
+    ─────────────────────────────────────
+    · Column names match format
+    · Required fields NOT NULL
+    · Date format YYYY-MM-DD
+    · Amount is numeric"]
 
-    BK -->|"Ungroup transactions
-    (nightly batch or on-demand)"| JV
+    S1B --> D1B{"Format
+    valid?"}
+    D1B -->|"✕  Invalid"| N1B["🔔  Notify User via AMS
+    File format error
+    File halted — no rows processed"]
+    N1B --> HALT2(["⊘  End"])
 
-    JV["📦  SAP Connector
-    ──────────────────────────────
-    Group → JV Batch → JV File
-    Max 900 doc groups per file
-    Uploaded to S3"]
+    %% ─────────────────────────────────────────────────────
+    %% PATH 2 — MANUAL AMS: STAGE 2
+    %% ─────────────────────────────────────────────────────
+    D1B -->|"✓  Valid"| S2B["🔍  Stage 2 · Row-Level Master Data Validation
+    ──────────────────────────────────────────────
+    Each row validated independently.
+    User supplies GL accounts directly — system
+    validates each against COA and GL master config.
+    ──────────────────────────────────────────────
+    ①  Event code exists in Bookkeeping
+    ②  DR Account Number exists in COA
+    ③  CR Account Number exists in COA
+    ④  DR Profit/Cost Center exists in COA
+       GL master → determines Profit or Cost type
+    ⑤  CR Profit/Cost Center exists in COA
+       GL master → determines Profit or Cost type
+    ⑥  DR Sub-ledger exists in COA
+       GL master → Customer / Vendor / None
+    ⑦  CR Sub-ledger exists in COA
+       GL master → Customer / Vendor / None
+    ⑧  Amount > 0
+    ⑨  Date fields conform to YYYY-MM-DD"]
 
-    JV -->|"JV file downloaded
-    and uploaded to SAP FI"| HU
+    S2B --> D2B{"Any rows
+    fail?"}
+    D2B -->|"✕  Failed rows"| N2B["🔔  Notify User via AMS
+    Validation summary
+    ──────────────────────────────────
+    · ไม่พบ Event Code บนระบบ
+    · ไม่พบ Dr/Cr Account บนระบบ
+    · ไม่พบ Dr/Cr Center บนระบบ
+    · ไม่พบ Dr/Cr Sub-ledger บนระบบ
+    · amount มีค่าติดลบ
+    · Format amount ไม่ถูกต้อง
+    · Format Date ไม่ถูกต้อง
+    · กรุณาระบุ [Field]"]
+    D2B -->|"✓  Passed rows"| CFG2
+    N2B -. "valid rows continue" .-> CFG2
 
-    HU(["👤  Accounting User
-    Upload JV file to SAP FI
-    Upload SAP result file via AMS"])
+    CFG2["✓  Values confirmed from user input
+    Center type and sub-ledger type
+    resolved from GL master lookup.
+    No event config lookup performed."]
 
-    HU -->|"SAP result file"| RES
+    %% ─────────────────────────────────────────────────────
+    %% BOTH PATHS CONVERGE — SAP RECORD FLAG
+    %% ─────────────────────────────────────────────────────
+    CFG  --> SAPF{"SAP Record
+    flag?"}
+    CFG2 --> SAPF
 
-    RES["⚙  Process SAP Result
-    ──────────────────────────────
-    Update JV Posting Status
-    SUCCESS · FAILED"]
+    SAPF -->|"Y · Eligible for JV"| SAVE["💾  Save Accounting Transaction
+    ─────────────────────────────────────
+    Grouping Status   :  Ungroup
+    Posting Status    :  Ungroup
+    ─────────────────────────────────────
+    journal_header · journal_line
+    journal_line_attributes
+    journal_header_references · sap_transaction"]
 
-    RES -->|"SUCCESS
-    Pivot view refreshed"| PV
-    RES -->|"FAILED
-    Cancel JV batch · release transactions"| JV
+    SAPF -->|"N · Excluded from JV"| SAVED["💾  Save Accounting Transaction
+    ─────────────────────────────────────
+    Grouping Status   :  Do Not Post
+    Posting Status    :  Do Not Post
+    ─────────────────────────────────────
+    Migration entries or corrections
+    already in SAP — permanently excluded
+    from JV batching"]
 
-    class A1,A2   entryNode
-    class GW      gateNode
-    class BK      bookNode
-    class JV,RES  sapNode
-    class PV      pivotNode
-    class HU      humanNode
+    SAVE  --> PV1
+    SAVED --> PV1
+
+    PV1["↺  Async · Pivot View Refresh
+    Triggered by new transaction save
+    pivot_view updated"]
+
+    %% ─────────────────────────────────────────────────────
+    %% JV BATCHING & SAP POSTING CYCLE
+    %% ─────────────────────────────────────────────────────
+    SAVE --> JV1["📦  Group Ungroup Transactions → JV Batch
+    ──────────────────────────────────────────────
+    Voucher Status   :  CONFIRMED
+    Posting Status   :  PENDING
+    Linked transactions Grouping → Grouped · locked"]
+
+    JV1 --> JV2["📄  Generate JV File · Upload to S3
+    Max 900 document groups per file"]
+
+    JV2 --> JV3(["👤  Accounting User
+    Download JV file from S3 via AMS
+    Upload manually into SAP FI"])
+
+    JV3 --> JV4["🏦  SAP FI
+    Processes the upload
+    Produces result file"]
+
+    JV4 --> JV5(["👤  Accounting User
+    Upload SAP result file via AMS
+    Feature F16"])
+
+    JV5 --> JV6["⚙  Process SAP Result
+    ──────────────────────────────────────────────
+    JV Posting Status         →  SUCCESS or FAILED
+    Inherited Posting Status  →  propagated to each
+                                 linked transaction"]
+
+    JV6 --> D4{"Posting
+    result?"}
+
+    D4 -->|"✓  SUCCESS"| PV2["↺  Async · Pivot View Refresh
+    Triggered by SAP result update
+    pivot_view updated
+    pivot_view_refresh_log recorded"]
+
+    D4 -->|"✕  FAILED"| F18["🔄  Cancel JV Batch via AMS · F18
+    ──────────────────────────────────────────────
+    Voucher Status   :  CONFIRMED → CANCELLED
+    Posting Status   :  FAILED  (retained as history)
+    Linked transactions released
+    Grouping Status  →  Ungroup
+    Eligible for re-grouping into new JV batch"]
+
+    F18 --> JV1
+
+    %% ─────────────────────────────────────────────────────
+    %% APPLY CLASSES
+    %% ─────────────────────────────────────────────────────
+    class A1,A2                    entryNode
+    class JV3,JV5                  userNode
+    class S1,S2,S1B,S2B            validateNode
+    class D1,D2,D1B,D2B,SAPF,D4   decisionNode
+    class N1,N2,N1B,N2B            notifyNode
+    class CFG,CFG2                 configNode
+    class SAVE,SAVED               saveNode
+    class JV1,JV2,JV4,JV6,F18     sapNode
+    class PV1,PV2                  pivotNode
+    class HALT,HALT2               endNode
 ```
 
 ---
