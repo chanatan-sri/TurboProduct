@@ -19,6 +19,7 @@
 | **Operations** | Branch Operations Orchestration | Sensei (先生) | 📝 Draft | [PORTFOLIO](operations/PORTFOLIO.md) | Centralized branch worklist and task orchestration. Aggregates work from Sensei playbooks, external service requests (Onigiri, Matcha), and supervisor tasks into a single prioritized queue. Contact compliance via DaVinci events. |
 | **Platform** | Customer & Product Master Data | DaVinci (ダヴィンチ) | 📝 Draft | [PORTFOLIO](platform/PORTFOLIO.md) | Enterprise Golden Record. Consent-based visibility (PDPA), event-driven sync, customer data change management, collection contact compliance, data consolidation engine (field-level authority, no-data-loss), data resolution workflow (3-tier). |
 | **Platform** | Core Banking | TBD | 📝 Draft | [PORTFOLIO](platform/PORTFOLIO.md) | Authoritative financial ledger for all loan accounts. Loan account lifecycle management, configurable payment hierarchy engine, interest & fee calculation, DPD engine. Single source of truth for account balance and delinquency status across all credit products. |
+| **Insurance** | Insurance Distribution Platform | OnePiece (ワンピース) | 📝 Draft | [PORTFOLIO](insurance/PORTFOLIO.md) | Multi-channel insurance broker platform. Aggregates quotations from multiple insurers, manages sales applications across branch and online channels, processes payments (cash/QR/2C2P), issues policies via file transfer/API/manual, and brokers post-sale endorsements and cancellations. |
 
 ---
 
@@ -52,6 +53,12 @@ product/
 │   └── sensei/
 │       ├── PRODUCT.md
 │       ├── ATLAS.md
+│       └── capabilities/
+│
+├── insurance/
+│   ├── PORTFOLIO.md
+│   └── onepiece/
+│       ├── PRODUCT.md
 │       └── capabilities/
 │
 └── platform/

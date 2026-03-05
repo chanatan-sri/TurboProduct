@@ -9,7 +9,7 @@
 
 ## Business Function
 
-Manages the insurance sales application lifecycle from creation (after package selection) through to completion (policy issued). Handles channel-specific flows -- branch applications are staff-operated while online applications are customer self-service.
+Manages the insurance sales lifecycle from checkout through to policy issuance. The lifecycle is structured as a two-level model: an **Order** (the checkout, containing 1 or 2 packages) and one or more **Applications** (each representing a single insurer × product to be issued as a separate policy). Handles channel-specific flows — branch is staff-operated, online is customer self-service.
 
 ---
 
@@ -17,30 +17,127 @@ Manages the insurance sales application lifecycle from creation (after package s
 
 | # | Feature | Status | Description |
 |---|---------|--------|-------------|
-| 1 | Application Creation | Concept | Create a new application from selected quotation package, pre-fill customer data from DaVinci |
-| 2 | Application Form | Concept | Collect required information: customer details, vehicle details, coverage preferences |
-| 3 | Application State Machine | Concept | Manage application through configurable completion steps (e.g. document upload, payment, health declaration, vehicle inspection) with flow mode (parallel or sequential) defined per insurer × product × channel combination |
-| 4 | Branch Application Flow | Concept | Staff-operated flow with all 6 products, cash/QR payment options |
-| 5 | Online Application Flow | Concept | Self-service flow with 4 car products only, 2C2P payment |
-| 6 | Application History | Concept | View past and in-progress applications for a customer |
-| 7 | Document Upload | Concept | Upload required documents and vehicle photos, requirements vary by insurer-product combination |
+| 1 | Order Creation | Concept | Create an order from selected package(s). Single package = 1 application. Bundle = 2 applications (1 compulsory + 1 voluntary). Branch: staff can selectively pre-fill customer data from DaVinci. Online: no pre-fill. |
+| 2 | Application Form | Concept | Collect required information: customer details, vehicle details, coverage preferences. Shared across applications within the same order. |
+| 3 | Order & Application State Machine | Concept | Manage order status and per-application status with configurable application-level tasks (e.g. document upload, vehicle inspection) and order-level tasks (e.g. payment). Flow mode (parallel or sequential) defined per insurer × product × channel combination. |
+| 4 | Branch Flow | Concept | Staff-operated flow with all 6 products, cash/QR payment options |
+| 5 | Online Flow | Concept | Self-service flow with 4 car products only, 2C2P payment |
+| 6 | Order & Application History | Concept | Branch: staff views order list with pending tasks and summarized info. Online: customer views all orders with application statuses and can download/print issued policy documents. |
+| 7 | Document Upload | Concept | Upload required documents and vehicle photos as an application-level task; requirements vary by insurer-product combination |
 
 ---
 
-## Application State Machine
+## Order → Application Model
 
-After the application form is completed, the application enters a set of **completion steps**. All required steps must be completed before policy issuance can proceed. The steps, their ordering, and their requirements are **fully configurable per insurer × product × channel combination**.
+The lifecycle is structured as a two-level model:
 
-### Completion Step Model
+| Concept | Scope | Contains |
+|---------|-------|----------|
+| **Order** | The checkout — 1 or 2 packages from the quotation stage | Customer info, sale channel, order-level tasks (e.g. payment), 1–2 applications |
+| **Application** | A single insurer × product to be issued as a separate policy | Application-level tasks (e.g. document upload, vehicle inspection), issuance tracking, policy document |
 
-A **completion step** is a named unit of work that must be fulfilled before the application can advance toward issuance. Steps are not hardcoded — each insurer-product-channel configuration declares which steps are required and in what order.
+A single-package checkout is an order with 1 application. A bundle checkout is an order with 2 applications (1 compulsory + 1 voluntary, potentially from different insurers).
 
-**Example step types** (non-exhaustive):
+### Example: Bundle Checkout
 
-| Step Type | Description | Example |
+```
+Order #12345 (bundle checkout, online)
+├── Order-level tasks:
+│   └── payment (collected once for all applications)
+│
+├── Application A: VIR × CMI-CAR × Online
+│   ├── Application-level tasks: (none per config)
+│   ├── Status: PendingIssuance
+│   └── Policy: (pending)
+│
+└── Application B: CHUBB × VMI-CAR-1 × Online
+    ├── Application-level tasks: [document_upload]
+    ├── Status: Ongoing (waiting for vehicle photos)
+    └── Policy: (pending)
+```
+
+---
+
+## Order Status
+
+The order has its own user-facing status, independent of (but driven by) its applications.
+
+| Status | Description | Visible To |
+|--------|-------------|------------|
+| `Draft` | Order created but form not yet submitted | Staff / Customer |
+| `Ongoing` | Order submitted; order-level tasks or applications still incomplete | Staff / Customer |
+| `Completed` | All applications have reached `Completed` | Staff / Customer |
+| `Cancelled` | Order cancelled or expired | Staff / Customer |
+
+### Order Status Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft : Order created
+    Draft --> Ongoing : Order form submitted
+    Ongoing --> Completed : All applications completed
+    Ongoing --> Cancelled : Cancel / expiration
+    Draft --> Cancelled : Cancel
+```
+
+> **Order status derivation:** An order is `Ongoing` as long as any order-level task is incomplete OR any application has not reached `Completed`. The order becomes `Completed` only when all order-level tasks are done AND every application is `Completed`.
+
+---
+
+## Application Status
+
+Each application within an order tracks its own status independently.
+
+| Status | Description | Visible To |
+|--------|-------------|------------|
+| `Ongoing` | Application-level tasks remain incomplete | Staff / Customer |
+| `PendingIssuance` | All application-level tasks completed; awaiting policy issuance from insurer | Staff / Customer |
+| `IssuanceFailed` | Policy issuance attempted but failed; pending retry | Staff |
+| `Completed` | Policy issued successfully | Staff / Customer |
+| `Cancelled` | Application cancelled (follows order cancellation) | Staff / Customer |
+
+### Application Status Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> Ongoing : Order submitted, tasks initialized
+    Ongoing --> PendingIssuance : All application-level tasks completed
+    PendingIssuance --> Completed : Policy issued
+    PendingIssuance --> IssuanceFailed : Issuance error
+    IssuanceFailed --> PendingIssuance : Retry
+    Ongoing --> Cancelled : Order cancelled
+```
+
+> **Note:** Applications do not have a `Draft` status — they are created when the order is submitted and begin in `Ongoing`. If an application has no application-level tasks, it starts directly in `PendingIssuance`.
+
+---
+
+## Task Model
+
+Tasks exist at two levels:
+
+### Task Levels
+
+| Level | Scope | Examples | When Executed |
+|-------|-------|---------|---------------|
+| **Order-level** | Shared across all applications in the order | `payment` | Once per order, regardless of number of applications |
+| **Application-level** | Specific to one insurer × product combination | `document_upload`, `vehicle_inspection`, `health_declaration`, `consent_signature` | Per application, configured by insurer × product × channel |
+
+### What is a Task?
+
+A **task** is a named unit of work that must be fulfilled before the order or application can advance. Tasks are not hardcoded — configuration declares which tasks are required.
+
+**Order-level task types:**
+
+| Task Type | Description | Example |
+|-----------|-------------|---------|
+| `payment` | Collect payment for the entire order | Cash, QR, 2C2P |
+
+**Application-level task types** (non-exhaustive):
+
+| Task Type | Description | Example |
 |-----------|-------------|---------|
 | `document_upload` | Upload required documents and/or photos | ID card, vehicle photos |
-| `payment` | Collect payment from customer | Cash, QR, 2C2P |
 | `health_declaration` | Customer completes health questionnaire | PA / health insurance products |
 | `beneficiary_nomination` | Customer nominates beneficiaries | Life / PA products |
 | `vehicle_inspection` | Physical or photo-based vehicle inspection | Type 1 voluntary motor |
@@ -48,81 +145,78 @@ A **completion step** is a named unit of work that must be fulfilled before the 
 | `additional_info` | Collect supplementary information | Occupation, income, driving history |
 
 Each insurer-product-channel combination defines:
-1. **Which steps** are required (subset of available step types)
-2. **Step ordering** via a flow mode
+1. **Which application-level tasks** are required (subset of available task types)
+2. **Task ordering** via a flow mode
 
 ### Flow Modes
 
-The **flow mode** determines how the required steps are orchestrated:
+The **flow mode** determines how the required application-level tasks are orchestrated:
 
 | Flow Mode | Behavior |
 |-----------|----------|
-| Single step | Only one step required (e.g. payment only) |
-| Parallel | All required steps start simultaneously; each completes independently |
-| Sequential | Steps must complete in a defined order (step 1 → step 2 → ... → step N) |
-| Grouped | Steps are organized into ordered groups; steps within a group run in parallel, groups run sequentially |
+| Single task | Only one task required |
+| Parallel | All required tasks start simultaneously; each completes independently |
+| Sequential | Tasks must complete in a defined order (task 1 → task 2 → ... → task N) |
+| Grouped | Tasks are organized into ordered groups; tasks within a group run in parallel, groups run sequentially |
 
-### Step Configuration Example
+### Task Configuration Example
 
-| Insurer | Product | Channel | Required Steps (in order) | Flow Mode |
-|---------|---------|---------|---------------------------|-----------|
-| VIR | VMI-CAR-1 | Branch | `document_upload` → `vehicle_inspection` → `payment` | Sequential |
-| VIR | VMI-CAR-1 | Online | `document_upload`, `payment` (parallel) | Parallel |
-| CHUBB | VMI-CAR-1 | Branch | `payment` only | Single step |
-| Insurer X | PA-GOLD | Online | Group 1: [`health_declaration`, `beneficiary_nomination`] → Group 2: [`payment`] | Grouped |
+| Insurer | Product | Channel | Required Application-Level Tasks (in order) | Flow Mode |
+|---------|---------|---------|----------------------------------------------|-----------|
+| VIR | VMI-CAR-1 | Branch | `document_upload` → `vehicle_inspection` | Sequential |
+| VIR | CMI-CAR | Branch | (none) | — |
+| CHUBB | VMI-CAR-1 | Branch | `document_upload` | Single task |
+| CHUBB | VMI-CAR-1 | Online | `document_upload` | Single task |
+| Insurer X | PA-GOLD | Online | Group 1: [`health_declaration`, `beneficiary_nomination`] → Group 2: [`consent_signature`] | Grouped |
 
-> **Note:** The examples above are illustrative. Actual step configurations per insurer-product-channel are defined in the product configuration and may change over time.
+> **Note:** Payment is no longer in this table — it is always an order-level task. The examples above are illustrative; actual configurations may change over time.
 
-### State Machine
+### Task Orchestration
 
-The state machine is generic — it does not encode specific step types. Instead, it processes a **step queue** derived from the configuration.
+After the order is submitted, order-level and application-level tasks are initialized. The orchestration engine processes tasks at both levels.
 
 ```mermaid
 flowchart TD
-    A([Package Selected]) --> B[Draft]
-    B -->|Application form completed| C[Submitted]
-    C --> D{Load step config<br/>for insurer × product × channel}
+    A([Order Submitted<br/>Order Status: Ongoing]) --> B[Initialize order-level tasks]
+    A --> C[Initialize application-level tasks<br/>per insurer × product × channel config]
 
-    D --> E{Flow mode?}
+    B --> B1[Order Task: payment]
+    B1 -->|Payment completed| B2([Order-level tasks done])
 
-    E -->|Single step| F1[StepPending: step₁]
-    F1 -->|Step completed| J
+    C --> D{Flow mode per application}
 
-    E -->|Sequential| G1[StepPending: step₁]
-    G1 -->|Step completed| G2[StepPending: step₂]
-    G2 -->|Step completed| G3[StepPending: step₃ ... stepₙ]
-    G3 -->|All steps completed| J
+    D -->|Single task| F1[TaskPending: task₁]
+    F1 -->|Task completed| J
 
-    E -->|Parallel| H1[StepPending: all steps simultaneously]
-    H1 -->|All steps completed| J
+    D -->|Sequential| G1[TaskPending: task₁]
+    G1 -->|Task completed| G2[TaskPending: task₂ ... taskₙ]
+    G2 -->|All tasks completed| J
 
-    E -->|Grouped| I1[Group₁: steps in parallel]
-    I1 -->|Group completed| I2[Group₂: steps in parallel]
+    D -->|Parallel| H1[TaskPending: all tasks simultaneously]
+    H1 -->|All tasks completed| J
+
+    D -->|Grouped| I1[Group₁: tasks in parallel]
+    I1 -->|Group completed| I2[Group₂: tasks in parallel]
     I2 -->|All groups completed| J
 
-    J[IssuancePending] -->|Policy issued| K([Completed])
-    J -->|Issuance error| L[IssuanceFailed]
-    L -->|Retry| J
+    D -->|No tasks| J
 
-    F1 -->|Cancel / timeout| M([Cancelled])
-    G1 -->|Cancel / timeout| M
-    H1 -->|Cancel / timeout| M
-    I1 -->|Cancel / timeout| M
+    J([Application-level tasks done<br/>App Status: PendingIssuance])
 ```
 
-### Step Lifecycle
+### Task Lifecycle
 
-Each individual step follows its own lifecycle:
+Each individual task (order-level or application-level) follows its own lifecycle:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Blocked : Step has unmet prerequisites
-    [*] --> Pending : Step is ready to start
+    [*] --> Blocked : Task has unmet prerequisites
+    [*] --> Pending : Task is ready to start
     Blocked --> Pending : Prerequisites met
-    Pending --> InProgress : User begins step
-    InProgress --> Completed : Step requirements fulfilled
+    Pending --> InProgress : User begins task
+    InProgress --> Completed : Task requirements fulfilled
     InProgress --> Pending : User saves progress but not complete
-    Pending --> Skipped : Step waived (config override)
+    Pending --> Skipped : Task waived (config override)
     Completed --> [*]
     Skipped --> [*]
 ```
@@ -131,20 +225,38 @@ stateDiagram-v2
 
 ## Business Rules
 
+### Order-Level Rules
+
 | Rule ID | Rule | Condition | Result |
 |---------|------|-----------|--------|
-| AM-001 | Pre-fill customer data | Customer exists in DaVinci | Auto-populate known fields |
+| AM-001 | Pre-fill customer data (branch only) | Channel = Branch AND customer exists in DaVinci | Staff can trigger pre-fill; not available in online channel |
+| AM-013 | Selective pre-fill | Channel = Branch AND pre-fill triggered | Staff selects which sections/fields to pre-fill from DaVinci data; unselected sections remain empty for manual entry |
 | AM-002 | Channel determines available products | Channel = Online | Restrict to car products only |
 | AM-003 | Channel determines payment options | Channel = Branch | Offer Cash, QR |
 | AM-004 | Channel determines payment options | Channel = Online | Offer 2C2P only |
-| AM-005 | Application timeout | PaymentPending > X hours | Auto-cancel |
-| AM-006 | Step configuration is insurer-driven | Per insurer × product × channel combination | Determine which completion steps are required and their flow mode |
-| AM-007 | Issuance gate | All required completion steps must be completed or skipped | Block issuance until every step in the configuration reaches Completed or Skipped |
-| AM-008 | Parallel mode | Flow mode = Parallel | All required steps start simultaneously; each completes independently |
-| AM-009 | Sequential mode | Flow mode = Sequential | Steps must complete in the configured order; next step unlocks only after current completes |
-| AM-010 | Grouped mode | Flow mode = Grouped | Steps within a group run in parallel; groups run sequentially in configured order |
-| AM-011 | Step type extensibility | New step type needed | New step types can be added without changing the state machine; only configuration and step handler required |
-| AM-012 | Step skip/waiver | Insurer config allows waiver for a step | Step moves directly to Skipped; does not block issuance gate |
+| AM-017 | Order composition | Single package selected | Order contains 1 application |
+| AM-018 | Order composition (bundle) | Bundle selected (1 compulsory + 1 voluntary) | Order contains 2 applications; payment is collected once at order level |
+| AM-019 | Payment is order-level | Always | Payment task belongs to the order, not individual applications; collected once regardless of number of applications |
+| AM-005 | Order timeout | Order Ongoing > X hours with no progress | Auto-cancel order (order status → Cancelled; all application statuses → Cancelled) |
+| AM-020 | Order status: Ongoing | Order form submitted | Order status changes from Draft to Ongoing; order-level tasks and applications are initialized |
+| AM-021 | Order status: Completed | All applications reach Completed | Order status changes from Ongoing to Completed |
+| AM-022 | Order cancellation cascades | Order cancelled | All applications within the order are also cancelled |
+
+### Application-Level Rules
+
+| Rule ID | Rule | Condition | Result |
+|---------|------|-----------|--------|
+| AM-006 | Task configuration is insurer-driven | Per insurer × product × channel combination | Determine which application-level tasks are required and their flow mode |
+| AM-007 | Issuance gate | All required application-level tasks completed or skipped AND order-level payment completed | Application can transition to PendingIssuance |
+| AM-008 | Parallel mode | Flow mode = Parallel | All required tasks start simultaneously; each completes independently |
+| AM-009 | Sequential mode | Flow mode = Sequential | Tasks must complete in the configured order; next task unlocks only after current completes |
+| AM-010 | Grouped mode | Flow mode = Grouped | Tasks within a group run in parallel; groups run sequentially in configured order |
+| AM-011 | Task type extensibility | New task type needed | New task types can be added without changing the orchestration engine; only configuration and task handler required |
+| AM-012 | Task skip/waiver | Insurer config allows waiver for a task | Task moves directly to Skipped; does not block issuance gate |
+| AM-014 | Application status: Ongoing | Order submitted | Application starts in Ongoing; application-level tasks initialized per config |
+| AM-023 | Application status: no tasks | Application has no configured application-level tasks AND order-level payment completed | Application starts directly in PendingIssuance |
+| AM-015 | Application status: PendingIssuance | All application-level tasks completed or skipped AND order-level payment completed | Application status changes to PendingIssuance; policy issuance is triggered |
+| AM-016 | Application status: IssuanceFailed | Issuance error from insurer | Application status changes to IssuanceFailed; retry is available |
 
 ---
 
@@ -190,13 +302,13 @@ Some insurer-product combinations require additional documents and/or vehicle ph
 
 ## Open Questions
 
-- What is the application timeout duration for PaymentPending?
-- Can a customer have multiple in-progress applications simultaneously?
+- What is the order timeout/expiration duration?
+- Can a customer have multiple in-progress orders simultaneously?
 - What customer/vehicle data fields are required vs. optional?
 - Does the branch flow allow staff to create applications on behalf of walk-in customers without prior DaVinci records?
 - Do other insurer-product combinations besides VIR VMI-CAR-1 and CHUBB VMI-CAR-1 require document uploads?
 - Are vehicle photo requirements the same across all voluntary type 1 products (regardless of insurer)?
-- What is the full step configuration (required steps + flow mode) for each insurer × product × channel combination?
-- What additional step types beyond document upload and payment are needed for non-motor products (e.g. PA, health)?
-- Can insurers change their step configuration over time (versioning)? How should in-flight applications handle config changes?
-- Are there step-level timeout rules (e.g. health declaration expires after 30 days)?
+- What is the full task configuration (required tasks + flow mode) for each insurer × product × channel combination?
+- What additional task types beyond document upload and payment are needed for non-motor products (e.g. PA, health)?
+- Can insurers change their task configuration over time (versioning)? How should in-flight applications handle config changes?
+- Are there task-level timeout rules (e.g. health declaration expires after 30 days)?

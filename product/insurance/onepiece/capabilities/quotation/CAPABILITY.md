@@ -50,6 +50,8 @@ flowchart TD
 | QT-001 | Only display packages matching vehicle type | Vehicle = Car | Show car insurance products only |
 | QT-002 | Only display packages matching vehicle type | Vehicle = Motorcycle | Show motorcycle insurance products only |
 | QT-003 | Filter by channel availability | Channel = Online AND Product = motorcycle | Exclude from results |
+| QT-009 | Package comparison availability (current) | Channel = Branch | Package comparison view is not available; staff selects package without comparison |
+| QT-010 | Package comparison availability (planned) | Channel = Branch OR Online | Package comparison view is available in all sale channels |
 | QT-004 | Display all insurer packages | Multiple insurers offer same product type | Show all packages from all insurers |
 | QT-005 | Bundle checkout eligibility | Customer selects bundle | Must be exactly 1 compulsory + 1 voluntary insurance |
 | QT-006 | Bundle available in both channels | Channel = Branch OR Online | Bundle checkout is offered |

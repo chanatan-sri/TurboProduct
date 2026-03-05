@@ -196,7 +196,7 @@ Introduces 2C2P sub-channels in branch and expands online payment channels.
 | # | Capability | Owner | Description |
 |---|-----------|-------|-------------|
 | 1 | [Product Catalog & Channel Configuration](capabilities/product-catalog/CAPABILITY.md) | TBD | Manages insurance product definitions, insurer-product mappings, channel availability rules, and payment/issuance method configuration |
-| 2 | [Quotation & Comparison](capabilities/quotation/CAPABILITY.md) | TBD | Retrieves and aggregates insurance packages from multiple insurers based on vehicle characteristics, displays comparison for customer/staff selection |
+| 2 | [Quotation & Comparison](capabilities/quotation/CAPABILITY.md) | TBD | Retrieves and aggregates insurance packages from multiple insurers based on vehicle characteristics, displays comparison for customer/staff selection. **Current:** comparison view is online-only. **Planned:** all sale channels. |
 | 3 | [Application Management](capabilities/application-management/CAPABILITY.md) | TBD | Manages the sales application lifecycle from creation through to completion, with channel-specific flows for branch and online |
 | 4 | [Payment Processing](capabilities/payment-processing/CAPABILITY.md) | TBD | Handles payment term selection, payment channel routing, installment loan approval triggering, and payment confirmation |
 | 5 | [Policy Issuance](capabilities/policy-issuance/CAPABILITY.md) | TBD | Executes policy issuance via the configured method (file transfer, REST API, or manual) per insurer-product combination |
