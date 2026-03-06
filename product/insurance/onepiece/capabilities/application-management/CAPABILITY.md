@@ -3,13 +3,13 @@
 > **Parent Product:** OnePiece (Insurance Distribution Platform)
 > **Product Owner:** TBD
 > **Status:** Draft
-> **Last Updated:** 2026-03-05
+> **Last Updated:** 2026-03-06
 
 ---
 
 ## Business Function
 
-Manages the insurance sales lifecycle from checkout through to policy issuance. The lifecycle is structured as a two-level model: an **Order** (the checkout, containing 1 or 2 packages) and one or more **Applications** (each representing a single insurer × product to be issued as a separate policy). Handles channel-specific flows — branch is staff-operated, online is customer self-service.
+Manages the insurance sales lifecycle from application form submission through to policy issuance. The lifecycle is structured as a two-level model: an **Order** (the checkout, containing 1 or 2 packages) and one or more **Applications** (each representing a single insurer × product to be issued as a separate policy). An order is created only when the application form is fully completed and submitted — branch staff may optionally save a draft before submission, while online orders have no server-side state until submission. Handles channel-specific flows — branch is staff-operated, online is customer self-service.
 
 ---
 
@@ -17,11 +17,11 @@ Manages the insurance sales lifecycle from checkout through to policy issuance. 
 
 | # | Feature | Status | Description |
 |---|---------|--------|-------------|
-| 1 | Order Creation | Concept | Create an order from selected package(s). Single package = 1 application. Bundle = 2 applications (1 compulsory + 1 voluntary). Branch: staff can selectively pre-fill customer data from DaVinci. Online: no pre-fill. |
-| 2 | Application Form | Concept | Collect required information: customer details, vehicle details, coverage preferences. Shared across applications within the same order. |
-| 3 | Order & Application State Machine | Concept | Manage order status and per-application status with configurable application-level tasks (e.g. document upload, vehicle inspection) and order-level tasks (e.g. payment). Flow mode (parallel or sequential) defined per insurer × product × channel combination. |
-| 4 | Branch Flow | Concept | Staff-operated flow with all 6 products, cash/QR payment options |
-| 5 | Online Flow | Concept | Self-service flow with 4 car products only, 2C2P payment |
+| 1 | Order Creation | Concept | Create an order from selected package(s) upon form submission. **Branch:** order may be saved as `Draft` at staff's discretion before submission; order is created server-side in `Draft` status. **Online:** order is only created upon successful form submission (no server-side Draft); partially filled data is preserved via website cookies for UX. Single package = 1 application. Bundle = 2 applications (1 compulsory + 1 voluntary). |
+| 2 | Application Form | Concept | A single unified form for the user (staff or customer) to fill — regardless of single or bundle checkout. Collects customer details, vehicle details, and coverage preferences. Shared across all applications within the same order. **Branch:** includes an optional DaVinci pre-fill section where staff can selectively auto-fill fields from existing customer data. **Online:** no DaVinci pre-fill; cookie-based restoration of previously entered data. Order is created only when the form passes all validations AND the user explicitly submits. |
+| 3 | Order & Application State Machine | Concept | Manage order status and per-application status with configurable application-level tasks (e.g. document upload, vehicle inspection) and order-level tasks (e.g. payment). Flow mode (parallel or sequential) defined per insurer × product × channel combination. Channel-specific state machines: branch orders start in `Draft`, online orders start in `Ongoing`. |
+| 4 | Branch Flow | Concept | Staff-operated flow with all 6 products, cash/QR payment options. Staff can save draft orders during form-filling. DaVinci pre-fill available as optional section in the application form. |
+| 5 | Online Flow | Concept | Self-service flow with 4 car products only, 2C2P payment. No draft orders — form data preserved via cookies until submission. |
 | 6 | Order & Application History | Concept | Branch: staff views order list with pending tasks and summarized info. Online: customer views all orders with application statuses and can download/print issued policy documents. |
 | 7 | Document Upload | Concept | Upload required documents and vehicle photos as an application-level task; requirements vary by insurer-product combination |
 
@@ -60,27 +60,38 @@ Order #12345 (bundle checkout, online)
 
 ## Order Status
 
-The order has its own user-facing status, independent of (but driven by) its applications.
+The order has its own user-facing status, independent of (but driven by) its applications. The available statuses differ by channel.
 
-| Status | Description | Visible To |
-|--------|-------------|------------|
-| `Draft` | Order created but form not yet submitted | Staff / Customer |
-| `Ongoing` | Order submitted; order-level tasks or applications still incomplete | Staff / Customer |
-| `Completed` | All applications have reached `Completed` | Staff / Customer |
-| `Cancelled` | Order cancelled or expired | Staff / Customer |
+| Status | Description | Branch | Online |
+|--------|-------------|--------|--------|
+| `Draft` | Order saved by staff but form not yet submitted | Yes | No |
+| `Ongoing` | Order submitted; order-level tasks or applications still incomplete | Yes | Yes |
+| `Completed` | All applications have reached `Completed` | Yes | Yes |
+| `Cancelled` | Order cancelled or expired | Yes | Yes |
 
-### Order Status Diagram
+### Order Status Diagram — Branch
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Draft : Order created
-    Draft --> Ongoing : Order form submitted
+    [*] --> Draft : Staff saves draft
+    Draft --> Ongoing : Staff submits completed form
     Ongoing --> Completed : All applications completed
     Ongoing --> Cancelled : Cancel / expiration
-    Draft --> Cancelled : Cancel
+    Draft --> Cancelled : Cancel / expiration
+```
+
+### Order Status Diagram — Online
+
+```mermaid
+stateDiagram-v2
+    [*] --> Ongoing : Customer submits completed form (order created)
+    Ongoing --> Completed : All applications completed
+    Ongoing --> Cancelled : Cancel / expiration
 ```
 
 > **Order status derivation:** An order is `Ongoing` as long as any order-level task is incomplete OR any application has not reached `Completed`. The order becomes `Completed` only when all order-level tasks are done AND every application is `Completed`.
+>
+> **Channel difference:** In the branch channel, staff can save a draft order server-side before the form is fully completed. In the online channel, no server-side order exists until the customer submits the completed form — partially filled data is preserved client-side via website cookies.
 
 ---
 
@@ -229,8 +240,8 @@ stateDiagram-v2
 
 | Rule ID | Rule | Condition | Result |
 |---------|------|-----------|--------|
-| AM-001 | Pre-fill customer data (branch only) | Channel = Branch AND customer exists in DaVinci | Staff can trigger pre-fill; not available in online channel |
-| AM-013 | Selective pre-fill | Channel = Branch AND pre-fill triggered | Staff selects which sections/fields to pre-fill from DaVinci data; unselected sections remain empty for manual entry |
+| AM-001 | Pre-fill customer data (branch only) | Channel = Branch AND customer exists in DaVinci | Staff can use the optional DaVinci pre-fill section within the application form; not available in online channel |
+| AM-013 | Selective pre-fill | Channel = Branch AND pre-fill used | Staff selects which sections/fields to pre-fill from DaVinci data within the application form; unselected sections remain empty for manual entry |
 | AM-002 | Channel determines available products | Channel = Online | Restrict to car products only |
 | AM-003 | Channel determines payment options | Channel = Branch | Offer Cash, QR |
 | AM-004 | Channel determines payment options | Channel = Online | Offer 2C2P only |
@@ -238,7 +249,11 @@ stateDiagram-v2
 | AM-018 | Order composition (bundle) | Bundle selected (1 compulsory + 1 voluntary) | Order contains 2 applications; payment is collected once at order level |
 | AM-019 | Payment is order-level | Always | Payment task belongs to the order, not individual applications; collected once regardless of number of applications |
 | AM-005 | Order timeout | Order Ongoing > X hours with no progress | Auto-cancel order (order status → Cancelled; all application statuses → Cancelled) |
-| AM-020 | Order status: Ongoing | Order form submitted | Order status changes from Draft to Ongoing; order-level tasks and applications are initialized |
+| AM-024 | Order creation trigger | Channel = Branch AND staff saves draft | Order is created server-side in `Draft` status; form data is persisted but not yet submitted |
+| AM-025 | Order creation trigger (online) | Channel = Online AND customer submits form (all validations pass) | Order is created directly in `Ongoing` status; no Draft state exists for online |
+| AM-026 | Online form persistence | Channel = Online AND form partially filled | No server-side order is created; partially filled data is preserved via website cookies for UX continuity |
+| AM-020 | Order status: Ongoing (branch) | Channel = Branch AND staff submits completed form (all validations pass) | Order status changes from Draft to Ongoing; order-level tasks and applications are initialized |
+| AM-027 | Order status: Ongoing (online) | Channel = Online AND customer submits completed form (all validations pass) | Order is created in Ongoing; order-level tasks and applications are initialized |
 | AM-021 | Order status: Completed | All applications reach Completed | Order status changes from Ongoing to Completed |
 | AM-022 | Order cancellation cascades | Order cancelled | All applications within the order are also cancelled |
 

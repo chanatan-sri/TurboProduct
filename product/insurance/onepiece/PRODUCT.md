@@ -56,8 +56,8 @@ OnePiece is a multi-channel insurance distribution platform that enables custome
 
 ## Insurance Products
 
-| Code | Insurance Product | Vehicle | Coverage Year | Insurers | Branch | Online |
-|------|-------------------|---------|---------------|----------|--------|--------|
+| Code | Insurance Product | Vehicle | Coverage Year | Insurers | Branch (current) | Online (current) |
+|------|-------------------|---------|---------------|----------|-------------------|-------------------|
 | CMI-CAR | Compulsory Car Insurance | Car | 1 year | VIR | Yes | Yes |
 | VMI-CAR-1 | Voluntary Car Insurance Type 1 | Car | 1 year | VIR, CHUBB | Yes | Yes |
 | VMI-CAR-3 | Voluntary Car Insurance Type 3 | Car | 1 year | VIR, CHUBB, AXA, MTI, AZA | Yes | Yes |
@@ -68,7 +68,7 @@ OnePiece is a multi-channel insurance distribution platform that enables custome
 | VMI-MC-5 | Voluntary Motorcycle Insurance Type 5 | Motorcycle | 1 year | CHUBB | Yes | No |
 
 > **Bundle checkout:** Customers can purchase 1 compulsory insurance + 1 voluntary insurance as a bundle in a single checkout. Available in both branch and online.
-> **Future plan:** All products to be available in all sale channels. The information acquisition process may differ by channel.
+> **Channel availability is configuration-driven, not a hard rule.** The "current" columns above reflect today's released packages. Channel availability is determined by whether active packages exist for a given product × channel (controlled via per-channel release date and end date in Product Catalog). Products currently shown as "No" for online (e.g. motorcycle, > 1 year coverage) may become available online in the future when packages are configured and released for that channel.
 
 ---
 
@@ -195,8 +195,8 @@ Introduces 2C2P sub-channels in branch and expands online payment channels.
 
 | # | Capability | Owner | Description |
 |---|-----------|-------|-------------|
-| 1 | [Product Catalog & Channel Configuration](capabilities/product-catalog/CAPABILITY.md) | TBD | Manages insurance product definitions, insurer-product mappings, channel availability rules, and payment/issuance method configuration |
-| 2 | [Quotation & Comparison](capabilities/quotation/CAPABILITY.md) | TBD | Retrieves and aggregates insurance packages from multiple insurers based on vehicle characteristics, displays comparison for customer/staff selection. **Current:** comparison view is online-only. **Planned:** all sale channels. |
+| 1 | [Package Master & Channel Configuration](capabilities/product-catalog/CAPABILITY.md) | TBD | Master configuration and reference data: package definitions, vehicle master data, insurer-product mappings, channel availability rules, payment eligibility, and issuance method configuration |
+| 2 | [Quotation & Comparison](capabilities/quotation/CAPABILITY.md) | TBD | User-facing product catalog, vehicle search, package filtering/sorting, multi-insurer comparison display, and package selection. **Current:** comparison view is online-only. **Planned:** all sale channels. |
 | 3 | [Application Management](capabilities/application-management/CAPABILITY.md) | TBD | Manages the sales application lifecycle from creation through to completion, with channel-specific flows for branch and online |
 | 4 | [Payment Processing](capabilities/payment-processing/CAPABILITY.md) | TBD | Handles payment term selection, payment channel routing, installment loan approval triggering, and payment confirmation |
 | 5 | [Policy Issuance](capabilities/policy-issuance/CAPABILITY.md) | TBD | Executes policy issuance via the configured method (file transfer, REST API, or manual) per insurer-product combination |
