@@ -4,7 +4,7 @@
 > This is the single entry point for any cross-product or cross-portfolio work.
 > **Read this first before any product-level session.**
 >
-> Last Updated: 2026-03-05
+> Last Updated: 2026-03-06
 
 ---
 
@@ -18,6 +18,7 @@
 | **Operations** | AI Document Verification | Wasabi (わさび) | 📝 Draft | [PORTFOLIO](operations/PORTFOLIO.md) | Stateless LLM-based document verification. 4-stage pipeline: quality → type classification → instruction verification → report assembly. Operates outside Matcha; returns results to Onigiri for early warnings and Matcha for routing. |
 | **Operations** | Branch Operations Orchestration | Sensei (先生) | 📝 Draft | [PORTFOLIO](operations/PORTFOLIO.md) | Centralized branch worklist and task orchestration. Aggregates work from Sensei playbooks, external service requests (Onigiri, Matcha), and supervisor tasks into a single prioritized queue. Contact compliance via DaVinci events. |
 | **Platform** | Customer & Product Master Data | DaVinci (ダヴィンチ) | 📝 Draft | [PORTFOLIO](platform/PORTFOLIO.md) | Enterprise Golden Record. Consent-based visibility (PDPA), event-driven sync, customer data change management, collection contact compliance, data consolidation engine (field-level authority, no-data-loss), data resolution workflow (3-tier). |
+| **Platform** | Contract & Collateral Master Data | Genesis | 📝 Draft | [PORTFOLIO](platform/PORTFOLIO.md) | Contract and Collateral Golden Record. Event-driven ingestion via Worker Adapter (RabbitMQ → S3 → RDS), contract master data, collateral master data, batch migration of legacy data, migration audit trail (MongoDB). Publishes completion events to downstream consumers via ods.trigger. |
 | **Platform** | Core Banking | TBD | 📝 Draft | [PORTFOLIO](platform/PORTFOLIO.md) | Authoritative financial ledger for all loan accounts. Loan account lifecycle management, configurable payment hierarchy engine, interest & fee calculation, DPD engine. Single source of truth for account balance and delinquency status across all credit products. |
 
 ---
@@ -60,6 +61,9 @@ product/
     │   ├── PRODUCT.md
     │   ├── ATLAS.md
     │   ├── Architecture.md
+    │   └── capabilities/
+    ├── genesis/
+    │   ├── PRODUCT.md
     │   └── capabilities/
     └── core-banking/
         ├── PRODUCT.md
