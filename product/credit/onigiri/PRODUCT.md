@@ -48,7 +48,6 @@ A single configurable platform that governs the full loan application lifecycle 
 - Wasabi → early-warning document verification report during Draft phase → via async callback
 - Matcha → verification outcome (APPROVED/RETURNED/REFERRED) → via webhook callback
 - NCB → credit bureau inquiry result → via API (triggered by OTP consent in Smart Form)
-- Core Banking → fund transfer result (success / failure) → via webhook callback
 
 **This product SENDS to:**
 - Miso → application JSON + campaign ID on Risk Assessment state entry → via REST API
@@ -69,7 +68,6 @@ A single configurable platform that governs the full loan application lifecycle 
 | [Underwriting Workflow](capabilities/underwriting-workflow/CAPABILITY.md) | Engineering | Draft | Fixed-topology 4-phase state machine (Origination → Underwriting → Decision → Terminal). 11 states. Configurable execution steps inside each state. Cash vs. non-cash path divergence. |
 | [Loan Campaign Configuration](capabilities/loan-campaign-configuration/CAPABILITY.md) | Product | Draft | Single configuration umbrella per loan product: pricing, eligibility rules, application template, risk strategy, workflow execution steps. Zero code changes for new campaigns. |
 | [Risk Assessment Engine](capabilities/risk-assessment-engine/CAPABILITY.md) | Engineering | Draft | JMESPath-based configurable rule engine. Strategy → Policy → Rule hierarchy. Produces max risk level, deviation flags, conditional document requirements. Full evaluation trace for audit. |
-| [Disbursement Orchestration](capabilities/disbursement-orchestration/CAPABILITY.md) | Engineering | Concept | Receives Matcha `approved` callback and Core Banking fund transfer callback to advance the application through `waiting_fund_transfer` → `waiting_create_loan_operation`. Owns post-document-verification disbursement states. |
 
 ---
 
@@ -90,10 +88,7 @@ stateDiagram-v2
 
     state "Phase: Decision" as dec {
         CreateFacility: Create Facility
-        DocCheck: Pending Document Checking
-        WaitFund: waiting_fund_transfer
-        WaitLoan: waiting_create_loan_operation
-        Cash: Cash?\n[TBD — post waiting_create_loan_operation]
+        Cash: Cash?
         Confirmation1: Confirmation
         CreateLoanDisb1: Create Loan + Disbursement
         QA_top: QA
@@ -107,7 +102,6 @@ stateDiagram-v2
         Rejected
         Withdrawn
         Expired
-        ReturnedForRevision: returned_for_revision
     }
 
     [*] --> Draft: Create application
@@ -120,17 +114,7 @@ stateDiagram-v2
     Approval --> Rejected: Reject
     Approval --> Draft: Request document upload
 
-    CreateFacility --> DocCheck: Matcha task created
-
-    DocCheck --> WaitFund: Matcha approved
-    DocCheck --> ReturnedForRevision: Matcha returned
-    DocCheck --> Approval: Matcha referred
-
-    WaitFund --> WaitLoan: CB fund transfer success
-    WaitFund --> ReturnedForRevision: Matcha re-decision returned
-    WaitFund --> Approval: Matcha re-decision referred
-
-    WaitLoan --> Cash: next state TBD
+    CreateFacility --> Cash
 
     Cash --> Confirmation1: y (cash)
     Confirmation1 --> CreateLoanDisb1: Create loan
@@ -175,7 +159,6 @@ graph LR
     Onigiri -->|TaskCreationRequest| Sensei
     Sensei -->|TaskCompleted| Onigiri
     Onigiri -->|Create Facility| CoreBanking
-    CoreBanking -->|Fund transfer result| Onigiri
     Onigiri -->|NCB inquiry| NCB
 ```
 
