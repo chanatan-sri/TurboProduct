@@ -51,6 +51,7 @@ A single configurable platform that governs the full loan application lifecycle 
 - Matcha → verification outcome (APPROVED/RETURNED/REFERRED) → via webhook callback
 - Core Banking → fund transfer COMPLETE callback `{ status=COMPLETE, transferResult: Success|Reject, transferReferenceId }` → via webhook callback
 - NCB → credit bureau inquiry result → via API (triggered by OTP consent in Smart Form)
+- Core Banking → fund transfer result (success / failure) → via webhook callback
 
 **This product SENDS to:**
 - Miso → application JSON + campaign ID on Risk Assessment state entry → via REST API
@@ -139,6 +140,7 @@ stateDiagram-v2
         Rejected: rejected
         Withdrawn
         Expired
+        ReturnedForRevision: returned_for_revision
     }
 
     [*] --> Draft: Create application
@@ -185,7 +187,6 @@ stateDiagram-v2
 ```mermaid
 graph LR
     Onigiri[Onigiri\nLoan Origination]
-    Miso[Miso\nCredit Scoring]
     DaVinci[DaVinci\nMaster Data]
     Wasabi[Wasabi\nAI Verification]
     Matcha[Matcha\nDoc Verification]
