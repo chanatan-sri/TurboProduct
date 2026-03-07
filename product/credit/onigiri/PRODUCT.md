@@ -4,7 +4,7 @@
 **Portfolio**: Credit → [PORTFOLIO](../../PORTFOLIO.md)
 **Status**: 📝 Draft
 **Executive Owner**: CPO
-**Last Updated**: 2026-03-05
+**Last Updated**: 2026-03-04
 
 > *Onigiri (おにぎり) — A tightly packed, self-contained unit. Like the rice ball, Onigiri wraps the entire loan origination lifecycle into a single, cohesive product — from application intake through underwriting to disbursement. Everything the borrower needs, held together in one place.*
 
@@ -38,19 +38,17 @@ A single configurable platform that governs the full loan application lifecycle 
 - AI document analysis and report assembly (owned by **Wasabi**)
 - Customer master data and Golden Record (owned by **DaVinci**)
 - Branch task tracking and worklist management (owned by **Sensei**)
-- Credit scoring model selection, inference execution, or raw score handling (owned by **Miso**)
 - Loan repayment scheduling, statements, or early settlement (future: **Loan Servicing** product)
 - Delinquency management or collection workflows (future: **Collections** product)
 
 **This product RECEIVES from:**
 - DaVinci → customer identity + product summary on application creation → via REST API
-- Miso → standardized score object `{ rating, risk_band, indicators[], model_version, trace_id }` → via REST API response
 - Wasabi → early-warning document verification report during Draft phase → via async callback
 - Matcha → verification outcome (APPROVED/RETURNED/REFERRED) → via webhook callback
 - NCB → credit bureau inquiry result → via API (triggered by OTP consent in Smart Form)
+- Core Banking → fund transfer result (success / failure) → via webhook callback
 
 **This product SENDS to:**
-- Miso → application JSON + campaign ID on Risk Assessment state entry → via REST API
 - Matcha → document verification task (POST /task) after Create Facility state → via REST API
 - Wasabi → document image URL + expected type + system data on upload → via async API
 - Sensei → TaskCreationRequest event when branch action is needed → via event
@@ -68,6 +66,7 @@ A single configurable platform that governs the full loan application lifecycle 
 | [Underwriting Workflow](capabilities/underwriting-workflow/CAPABILITY.md) | Engineering | Draft | Fixed-topology 4-phase state machine (Origination → Underwriting → Decision → Terminal). 11 states. Configurable execution steps inside each state. Cash vs. non-cash path divergence. |
 | [Loan Campaign Configuration](capabilities/loan-campaign-configuration/CAPABILITY.md) | Product | Draft | Single configuration umbrella per loan product: pricing, eligibility rules, application template, risk strategy, workflow execution steps. Zero code changes for new campaigns. |
 | [Risk Assessment Engine](capabilities/risk-assessment-engine/CAPABILITY.md) | Engineering | Draft | JMESPath-based configurable rule engine. Strategy → Policy → Rule hierarchy. Produces max risk level, deviation flags, conditional document requirements. Full evaluation trace for audit. |
+| [Disbursement Orchestration](capabilities/disbursement-orchestration/CAPABILITY.md) | Engineering | Concept | Receives Matcha `approved` callback and Core Banking fund transfer callback to advance the application through `waiting_fund_transfer` → `waiting_create_loan_operation`. Owns post-document-verification disbursement states. |
 
 ---
 
@@ -88,7 +87,10 @@ stateDiagram-v2
 
     state "Phase: Decision" as dec {
         CreateFacility: Create Facility
-        Cash: Cash?
+        DocCheck: Pending Document Checking
+        WaitFund: waiting_fund_transfer
+        WaitLoan: waiting_create_loan_operation
+        Cash: Cash?\n[TBD — post waiting_create_loan_operation]
         Confirmation1: Confirmation
         CreateLoanDisb1: Create Loan + Disbursement
         QA_top: QA
@@ -102,6 +104,7 @@ stateDiagram-v2
         Rejected
         Withdrawn
         Expired
+        ReturnedForRevision: returned_for_revision
     }
 
     [*] --> Draft: Create application
@@ -114,7 +117,17 @@ stateDiagram-v2
     Approval --> Rejected: Reject
     Approval --> Draft: Request document upload
 
-    CreateFacility --> Cash
+    CreateFacility --> DocCheck: Matcha task created
+
+    DocCheck --> WaitFund: Matcha approved
+    DocCheck --> ReturnedForRevision: Matcha returned
+    DocCheck --> Approval: Matcha referred
+
+    WaitFund --> WaitLoan: CB fund transfer success
+    WaitFund --> ReturnedForRevision: Matcha re-decision returned
+    WaitFund --> Approval: Matcha re-decision referred
+
+    WaitLoan --> Cash: next state TBD
 
     Cash --> Confirmation1: y (cash)
     Confirmation1 --> CreateLoanDisb1: Create loan
@@ -140,7 +153,6 @@ stateDiagram-v2
 ```mermaid
 graph LR
     Onigiri[Onigiri\nLoan Origination]
-    Miso[Miso\nCredit Scoring]
     DaVinci[DaVinci\nMaster Data]
     Wasabi[Wasabi\nAI Verification]
     Matcha[Matcha\nDoc Verification]
@@ -150,8 +162,6 @@ graph LR
 
     DaVinci -->|Customer identity| Onigiri
     Onigiri -->|App events| DaVinci
-    Onigiri -->|application JSON + campaign_id| Miso
-    Miso -->|standardized score object| Onigiri
     Onigiri -->|Document + type| Wasabi
     Wasabi -->|Verification report| Onigiri
     Onigiri -->|POST /task + Wasabi results| Matcha
@@ -159,6 +169,7 @@ graph LR
     Onigiri -->|TaskCreationRequest| Sensei
     Sensei -->|TaskCompleted| Onigiri
     Onigiri -->|Create Facility| CoreBanking
+    CoreBanking -->|Fund transfer result| Onigiri
     Onigiri -->|NCB inquiry| NCB
 ```
 

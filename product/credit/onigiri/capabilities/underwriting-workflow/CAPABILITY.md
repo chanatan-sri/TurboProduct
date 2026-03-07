@@ -41,7 +41,10 @@ Provide a state-machine-driven workflow that governs the lifecycle of a loan app
 | **Draft** | Origination | Application data entry, document upload, returns for edits | CO fills smart form, uploads docs, Wasabi scan, submits |
 | **Risk Assessment** | Underwriting | Automated + manual risk scoring | Execute risk strategy engine, generate risk level, required docs |
 | **Approval + Risk Level** | Underwriting | Authorization based on risk level | Approver reviews; Approve → Create Facility; Reject → Rejected; Request docs → Draft |
-| **Create Facility** | Decision | Create facility accounts in core banking | System integration to create facility |
+| **Create Facility** | Decision | Create facility accounts in core banking + submit Matcha verification task | System integration to create facility; POST /task to Matcha; transition → Pending Document Checking |
+| **Pending Document Checking** | Decision | Matcha task created; QA verifying uploaded documents | Matcha webhook callback routes outcomes: `approved` → Disbursement Orchestration; `returned` / `referred` → this capability |
+| **Waiting Fund Transfer** | Decision | Awaiting Core Banking fund transfer confirmation | Owned by: Disbursement Orchestration. Matcha re-decision callbacks (`returned` / `referred`) can still route back from this state to `returned_for_revision` / `pending_approval`. |
+| **Waiting Create Loan Operation** | Decision | Awaiting loan operation creation after fund transfer confirmed | Owned by: Disbursement Orchestration. Next state TBD — see Open Questions. |
 | **Cash?** | Decision | Routing decision based on disbursement type | System auto-routes: cash vs. non-cash path |
 | **Confirmation** | Decision | Confirm loan details and disbursement terms | Variance confirmation (differs for cash vs. non-cash) |
 | **Create Loan + Disbursement** | Decision | Create loan account and release funds | System integration to create loan and disburse |
@@ -50,6 +53,21 @@ Provide a state-machine-driven workflow that governs the lifecycle of a loan app
 | **Rejected** | Terminal | Application rejected at approval | End state |
 | **Withdrawn** | Terminal | Customer not interested / withdrew | End state |
 | **Expired** | Terminal | Application exceeded time limit | End state — system-triggered |
+
+### Handoff to Disbursement Orchestration
+
+At `waiting_fund_transfer`, this capability hands off ownership to the [Disbursement Orchestration](../disbursement-orchestration/CAPABILITY.md) capability.
+
+The Matcha callback endpoint (`POST /api/credit-application/verification-callback`) is shared between capabilities. Routing is by **current application state**:
+
+| Application State | Outcome | Owning Capability |
+|---|---|---|
+| `pending_document_checking` | `approved` | Disbursement Orchestration |
+| `pending_document_checking` | `returned` | Underwriting Workflow (this capability) |
+| `pending_document_checking` | `referred` | Underwriting Workflow (this capability) |
+| `waiting_fund_transfer` | any (`isReDecision=true`) | Disbursement Orchestration |
+
+---
 
 ### Cash vs. Non-Cash Path
 
@@ -91,7 +109,10 @@ stateDiagram-v2
 
     state "Decision" as dec {
         CreateFacility: Create Facility
-        Cash: Cash?
+        DocCheck: Pending Document Checking
+        WaitFund: waiting_fund_transfer\n[Disbursement Orchestration]
+        WaitLoan: waiting_create_loan_operation\n[Disbursement Orchestration]
+        Cash: Cash?\n[TBD — post WaitLoan]
         Confirmation1: Confirmation
         CreateLoanDisb1: Create Loan + Disbursement
         QA_top: QA
@@ -105,6 +126,7 @@ stateDiagram-v2
         Rejected
         Withdrawn
         Expired
+        ReturnedForRevision: returned_for_revision
     }
 
     [*] --> Draft
@@ -114,7 +136,14 @@ stateDiagram-v2
     Approval --> CreateFacility: Approve
     Approval --> Rejected: Reject
     Approval --> Draft: Request docs
-    CreateFacility --> Cash
+    CreateFacility --> DocCheck: Matcha task created
+    DocCheck --> WaitFund: Matcha approved
+    DocCheck --> ReturnedForRevision: Matcha returned
+    DocCheck --> Approval: Matcha referred
+    WaitFund --> WaitLoan: CB fund transfer success
+    WaitFund --> ReturnedForRevision: Matcha re-decision returned
+    WaitFund --> Approval: Matcha re-decision referred
+    WaitLoan --> Cash: next state TBD
     Cash --> Confirmation1: Cash
     Confirmation1 --> CreateLoanDisb1
     CreateLoanDisb1 --> QA_top
@@ -147,3 +176,5 @@ stateDiagram-v2
 
 - What is the configurable expiry time for Draft state? Is it per-campaign or global?
 - Can Supervisor recall from *any* active state, or only specific states?
+- What is the next state after `waiting_create_loan_operation`? Does the cash/non-cash routing (Cash?) apply at that point, or does it remain at the `Create Facility` stage as in the original design? Resolution is required before the Disbursement Orchestration capability can advance from Concept → Spec. See [Disbursement Orchestration — Open Question #2](../disbursement-orchestration/CAPABILITY.md).
+- `next_dummy_state` has been retired and replaced by `waiting_fund_transfer`. See [CHANGELOG_003](../../changelogs/CHANGELOG_003_disbursement-orchestration.md).
