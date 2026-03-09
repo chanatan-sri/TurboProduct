@@ -29,6 +29,7 @@ Provide a configurable, section-based loan application form that captures borrow
 | Stage Navigator | Concept | Locked-sequence stage progression (Borrower → Guarantor → Loan Setup → Summary → Document Upload) with completion tracking |
 | NCB Consent + OTP Flow | Concept | Embedded credit bureau inquiry consent with OTP verification inside the Borrower stage |
 | Document Upload Interface | Concept | Upload required supporting documents within the Draft stage; trigger Wasabi early-warning scan on upload |
+| Field Lockpoint Enforcement | Concept | Read-only rendering of field groups based on application `state_high_water_mark`; server-side API rejection of writes to locked fields |
 
 ---
 
@@ -51,6 +52,25 @@ Provide a configurable, section-based loan application form that captures borrow
 | Application Data | DocumentDB | Full JSON application document (all form sections, field values, uploaded document references) | Every save-draft and every workflow transition |
 | Workflow State | RDS | Current workflow state, transition history, timestamps, actor IDs, audit trail | Every workflow transition |
 
+### Field Lockpoint Groups
+
+Fields are organized into **Lockpoint Groups** bound to `state_high_water_mark` thresholds. Once the application's HWM reaches or exceeds a group's threshold, every field in that group becomes permanently read-only in all subsequent Draft states — regardless of what caused the return to Draft.
+
+| Lockpoint Group | Fields | Lock When HWM ≥ | Rationale |
+|-----------------|--------|-----------------|-----------|
+| `LOAN_TERMS` | Loan amount, interest rate, product type, loan term | `Approval` | These were reviewed and authorized by a credit authority. Post-approval changes bypass that authorization. |
+| `DISBURSEMENT_CHANNEL` | Disbursement channel, bank account number, payment details | `Create Facility` | The Core Banking facility is created against a specific disbursement type. Changing it post-facility requires a new facility — a new application. |
+| `ALL_FINANCIAL` | All fields in `LOAN_TERMS` + `DISBURSEMENT_CHANNEL` | `Create Loan + Disbursement` | Funds have been released. No financial field may be changed. |
+
+### Read-Only Rendering Rules
+
+| Rule | Specification |
+|------|---------------|
+| Locked fields render as read-only | Fields in a locked group display their stored value with a lock indicator. They are never hidden or removed from the form. |
+| Tooltip on locked fields | Each locked field shows a tooltip explaining which event caused the lock and the required remediation (e.g., *"Disbursement channel locked when facility was created in Core Banking. To change, cancel this application and submit a new one."*) |
+| Submit remains available | The Submit action is available whenever all non-locked required fields are filled. Locked fields do not block submission. |
+| Server-side enforcement | The application data update API rejects writes to fields in locked groups, regardless of client-side rendering state. The API lock is authoritative; the client lock is UX. |
+
 ### Field Definition Properties
 
 | Property | Description |
@@ -60,6 +80,7 @@ Provide a configurable, section-based loan application form that captures borrow
 | `required` | Whether the field is mandatory for form submission |
 | `type` | Input type (text, number, date, select, etc.) |
 | `validation` | Rules (regex, range, conditional) |
+| `lock_group` | Lockpoint Group this field belongs to (`LOAN_TERMS`, `DISBURSEMENT_CHANNEL`, `ALL_FINANCIAL`, or omitted for no locking) |
 
 ### Section Properties
 

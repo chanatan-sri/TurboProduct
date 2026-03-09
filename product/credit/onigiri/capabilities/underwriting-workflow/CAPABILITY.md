@@ -29,6 +29,7 @@ Provide a state-machine-driven workflow that governs the lifecycle of a loan app
 | Cash vs. Non-Cash Path Router | Concept | Automatic routing decision at Create Facility state based on disbursement type |
 | Return Paths to Draft | Concept | Multiple states can return application to Draft for corrections (Risk Assessment, Approval, QA) |
 | Workflow Audit Log | Concept | Immutable RDS record of every state transition with actor, timestamp, and reason |
+| Application High-Water Mark | Concept | Monotonically increasing `state_high_water_mark` on the application record; written on every state entry; drives Smart Form field lockpoints |
 
 ---
 
@@ -67,6 +68,35 @@ Provide a state-machine-driven workflow that governs the lifecycle of a loan app
 | QA (cash path) | Request document upload | Post-disbursement doc issues |
 | QA (non-cash path) | Request document upload | Pre-disbursement doc issues |
 | Any active state | Supervisor recall | Supervisor pulls back application |
+
+### State High-Water Mark (HWM)
+
+The application record maintains a `state_high_water_mark` — the highest-order state the application has **ever entered**, regardless of subsequent returns to Draft. HWM is monotonically increasing: it advances on every new state entry and never retreats.
+
+HWM is written at **state entry** (before execution steps run), ensuring it reflects every state the application has reached.
+
+| HWM Order | State |
+|-----------|-------|
+| 1 | Draft |
+| 2 | Risk Assessment |
+| 3 | Approval |
+| 4 | Create Facility |
+| 5 | Cash? / Confirmation / QA |
+| 6 | Create Loan + Disbursement |
+| 7 | Funded / Rejected / Withdrawn / Expired |
+
+The Smart Form reads HWM to determine which field groups are locked. See [Smart Form CAPABILITY.md](../smart-form/CAPABILITY.md) — Field Lockpoint Groups.
+
+### Execution Step Idempotency Guards
+
+Execution steps that call Core Banking carry pre-condition guards evaluated **before** the external call is made. These are defense-in-depth against the field lockpoints in Smart Form.
+
+| Execution Step | Pre-Condition Check | Action on Match |
+|----------------|---------------------|-----------------|
+| Create Facility | `facility_id` already exists on application record | Skip Core Banking call; reuse existing `facility_id` |
+| Create Loan + Disbursement | `disbursement_id` already exists on application record | **Hard block** — raise exception; requires supervisor override to proceed |
+
+The Create Loan + Disbursement guard is a hard stop, not a skip. A second disbursement against an existing loan record is never safe to silently bypass — it must be explicitly resolved by a supervisor.
 
 ### Configurable Execution Steps (Inside States)
 
