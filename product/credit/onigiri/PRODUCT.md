@@ -74,6 +74,33 @@ A single configurable platform that governs the full loan application lifecycle 
 
 ---
 
+## Cross-Capability Integrity Rules
+
+The following rules govern interactions between capabilities and are enforced at the product level.
+
+### Application State High-Water Mark (HWM)
+
+The application record maintains a `state_high_water_mark` field — the furthest workflow state ever entered by this application. HWM is monotonically increasing and never retreats, regardless of how many times the application returns to Draft.
+
+This field coordinates field mutability between the **Underwriting Workflow** and **Smart Form** capabilities:
+
+- **Underwriting Workflow** writes HWM on every state entry transition (before execution steps run)
+- **Smart Form** reads HWM to determine which Lockpoint Groups are read-only when the form renders in Draft
+
+**Lockpoint summary:**
+
+| Event | HWM Reached | Fields Locked |
+|-------|-------------|---------------|
+| Approver clicks Approve | `Approval` | Loan amount, interest rate, product type, loan term |
+| Create Facility state entered | `Create Facility` | **Disbursement channel**, bank account, payment details |
+| Create Loan + Disbursement completes | `Create Loan + Disbursement` | All financial fields |
+
+**Why disbursement channel is locked at Create Facility:** The Core Banking facility is created against a specific disbursement type. Allowing the channel to change post-facility causes the workflow to route through a different Decision path on re-entry — resulting in a second `Create Loan + Disbursement` execution against a new Core Banking record (double disbursement). The HWM lock is the primary prevention. Idempotency guards on the Create Facility and Create Loan + Disbursement execution steps are the defense-in-depth layer.
+
+**Remediation when channel must genuinely change:** Cancel the application and submit a new one. This generates a clean audit trail and ensures a fresh facility is created with the correct disbursement type.
+
+---
+
 ## Product-Level User Flow
 
 ```mermaid
