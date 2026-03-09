@@ -64,8 +64,9 @@ Credit Portfolio → Platform Portfolio
   Onigiri → DaVinci    : ApplicationCreated, ApplicationApproved events
 
 Credit Portfolio → External
-  Onigiri → Core Banking : Facility creation, loan disbursement
-  Onigiri → NCB          : Credit bureau inquiry via OTP consent
+  Onigiri    → Core Banking : Facility creation + fund transfer initiation
+  Core Banking → Onigiri   : Fund transfer COMPLETE callback { status, transferResult: Success|Reject, transferReferenceId }
+  Onigiri    → NCB          : Credit bureau inquiry via OTP consent
 ```
 
 ---
