@@ -4,7 +4,7 @@
 **Portfolio**: Credit → [PORTFOLIO](../../PORTFOLIO.md)
 **Status**: 📝 Draft
 **Executive Owner**: CPO
-**Last Updated**: 2026-03-09
+**Last Updated**: 2026-03-09 (workflow update)
 
 > *Onigiri (おにぎり) — A tightly packed, self-contained unit. Like the rice ball, Onigiri wraps the entire loan origination lifecycle into a single, cohesive product — from application intake through underwriting to disbursement. Everything the borrower needs, held together in one place.*
 
@@ -95,7 +95,7 @@ This field coordinates field mutability between the **Underwriting Workflow** an
 | Create Facility state entered | `Create Facility` | **Disbursement channel**, bank account, payment details |
 | Create Loan + Disbursement completes | `Create Loan + Disbursement` | All financial fields |
 
-**Why disbursement channel is locked at Create Facility:** The Core Banking facility is created against a specific disbursement type. Allowing the channel to change post-facility causes the workflow to route through a different Decision path on re-entry — resulting in a second `Create Loan + Disbursement` execution against a new Core Banking record (double disbursement). The HWM lock is the primary prevention. Idempotency guards on the Create Facility and Create Loan + Disbursement execution steps are the defense-in-depth layer.
+**Why disbursement channel is locked at Create Facility:** The Core Banking facility is created against a specific disbursement type. In the updated workflow, the cash/non-cash routing decision (Cash?) occurs before Create Facility — meaning by the time any Create Facility state is entered, the disbursement path is already committed. Allowing the channel to change post-facility would cause a path mismatch on re-entry — resulting in a second `Create Loan + Disbursement` execution against a new Core Banking record (double disbursement). The HWM lock is the primary prevention. Idempotency guards on the Create Facility and Create Loan + Disbursement execution steps are the defense-in-depth layer.
 
 **Remediation when channel must genuinely change:** Cancel the application and submit a new one. This generates a clean audit trail and ensures a fresh facility is created with the correct disbursement type.
 
@@ -117,14 +117,18 @@ stateDiagram-v2
     }
 
     state "Phase: Decision" as dec {
-        CreateFacility: Create Facility
         Cash: Cash?
-        Confirmation1: Confirmation
-        CreateLoanDisb1: Create Loan + Disbursement
-        QA_top: QA
-        QA_bottom: QA
-        ConfirmationBottom: Confirmation
-        CreateLoanDisbBottom: Create Loan + Disbursement
+        NeedConfCash: Need Confirmation?
+        ConfirmationCash: Confirmation
+        CreateFacilityCash: Create Facility
+        CreateLoanDisbCash: Create Loan + Disbursement
+        QA_cash: QA
+
+        QA_noncash: QA
+        NeedConfNonCash: Need Confirmation?
+        ConfirmationNonCash: Confirmation
+        CreateFacilityNonCash: Create Facility
+        CreateLoanDisbNonCash: Create Loan + Disbursement
     }
 
     state "Phase: Terminal" as term {
@@ -140,24 +144,27 @@ stateDiagram-v2
     RiskAssessment --> Approval
     RiskAssessment --> Draft: Request additional documents
 
-    Approval --> CreateFacility: Approve
+    Approval --> Cash: Approve
     Approval --> Rejected: Reject
     Approval --> Draft: Request document upload
 
-    CreateFacility --> Cash
+    Cash --> NeedConfCash: y (cash)
+    NeedConfCash --> ConfirmationCash: y
+    NeedConfCash --> CreateFacilityCash: n
+    ConfirmationCash --> CreateFacilityCash
+    CreateFacilityCash --> CreateLoanDisbCash
+    CreateLoanDisbCash --> QA_cash
+    QA_cash --> Funded
+    QA_cash --> Draft: Request document upload
 
-    Cash --> Confirmation1: y (cash)
-    Confirmation1 --> CreateLoanDisb1: Create loan
-    CreateLoanDisb1 --> QA_top
-    QA_top --> Funded
-
-    Cash --> QA_bottom: n (non-cash)
-    QA_bottom --> ConfirmationBottom
-    ConfirmationBottom --> CreateLoanDisbBottom: Create loan
-    CreateLoanDisbBottom --> Funded
-
-    QA_top --> Draft: Request document upload
-    QA_bottom --> Draft: Request document upload
+    Cash --> QA_noncash: n (non-cash)
+    QA_noncash --> NeedConfNonCash
+    QA_noncash --> Draft: Request document upload
+    NeedConfNonCash --> ConfirmationNonCash: y
+    NeedConfNonCash --> CreateFacilityNonCash: n
+    ConfirmationNonCash --> CreateFacilityNonCash
+    CreateFacilityNonCash --> CreateLoanDisbNonCash
+    CreateLoanDisbNonCash --> Funded
 
     Draft --> Withdrawn: Customer not interested
     Draft --> Expired: Application expired
