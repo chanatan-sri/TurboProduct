@@ -24,8 +24,9 @@ Receive external system callbacks that confirm document verification approval an
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| [Matcha Callback Handler (Approved Path)](features/FEATURE_matcha-callback-handler.md) | Concept | Receives Matcha `approved` outcome from `pending_document_checking`; transitions to `waiting_fund_transfer`. Also owns re-decision routing from `waiting_fund_transfer`. |
-| [Fund Transfer Callback Handler](features/FEATURE_fund-transfer-callback-handler.md) | Concept | Receives Core Banking fund transfer result; transitions from `waiting_fund_transfer` to `waiting_create_loan_operation` on success. |
+| [Receiver Account Pre-Check](features/FEATURE_receiver-account-pre-check.md) | Concept | Validates receiver bank account via bank API when the bank account section is completed in draft. Gates submission on a valid result. |
+| [Matcha Callback Handler](features/FEATURE_matcha-callback-handler.md) | Concept | Handles all three Matcha outcomes from `pending_document_checking`: `approved` → `waiting_for_confirmation` or `waiting_fund_transfer` (bypass if amount unchanged); `returned` → `draft` (request document upload); `referred` → `pending_approval`. Matcha callbacks are no-ops once the application is past `pending_document_checking`. |
+| [Fund Transfer Callback Handler](features/FEATURE_fund-transfer-callback-handler.md) | Concept | Loan officer Confirm → `waiting_create_facility` (system auto) → `waiting_fund_transfer`; Loan officer Reject → `rejected`. Core Banking `COMPLETE` callback routes to `waiting_create_loan_operation` (Success) or `rejected` (Reject). |
 
 ---
 
@@ -35,39 +36,40 @@ Receive external system callbacks that confirm document verification approval an
 
 Applies when: application is in state `pending_document_checking`.
 
-| Current State | `outcome` | `isReDecision` | Action |
-|---|---|---|---|
-| `pending_document_checking` | `approved` | `false` | Transition → `waiting_fund_transfer`. Store payload in MongoDB. |
-| `pending_document_checking` | `returned` | `false` | **OUT OF SCOPE** — owned by Underwriting Workflow capability. |
-| `pending_document_checking` | `referred` | `false` | **OUT OF SCOPE** — owned by Underwriting Workflow capability. |
-| Any state ≠ `pending_document_checking` | any | `false` | No-op. Store payload in MongoDB for audit. Return 200 OK. |
+| Current State | `outcome` | `isReDecision` | Loan Amount Changed? | Action |
+|---|---|---|---|---|
+| `pending_document_checking` | `approved` | `false` | Yes | Transition → `waiting_for_confirmation`. Store payload in MongoDB. |
+| `pending_document_checking` | `approved` | `false` | No | Bypass `waiting_for_confirmation`. Transition → `waiting_fund_transfer`. Store payload in MongoDB. |
+| `pending_document_checking` | `returned` | `false` | — | Transition → `draft`. Request document upload. Store payload in MongoDB. |
+| `pending_document_checking` | `referred` | `false` | — | Transition → `pending_approval`. Publish CA work-entry via Raijin (processId=3, CA role). Store payload in MongoDB. |
+| Any state ≠ `pending_document_checking` | any | `false` | — | No-op. Store payload in MongoDB for audit. Return 200 OK. |
+
+> **Loan amount changed** means the disbursement amount at `pending_document_checking` entry differs from the approved disbursement amount stored at the `pending_approval` → `create_facility` transition. The exact comparison field must be defined before this table can advance from Concept → Spec.
 
 ---
 
-### Decision Table 2: Matcha Re-Decision Routing
+### Decision Table 2: Loan Officer Actions from `waiting_for_confirmation`
 
-Applies when: application is in state `waiting_fund_transfer` and `isReDecision=true` (Matcha PENDING_REVIEW re-entry after car check late arrival).
+Applies when: application is in state `waiting_for_confirmation`. The only actors who can advance or exit this state are authorised loan officers. Matcha callbacks received while the application is in this state are no-ops — Matcha has no authority over state transitions once the application has passed document verification.
 
-| Current State | `outcome` | `isReDecision` | Action |
-|---|---|---|---|
-| `waiting_fund_transfer` | `approved` | `true` | No-op (application is already in the correct post-approval state). Store payload for audit. Return 200 OK. |
-| `waiting_fund_transfer` | `returned` | `true` | Transition → `returned_for_revision`. Store payload in MongoDB. Return 200 OK. |
-| `waiting_fund_transfer` | `referred` | `true` | Transition → `pending_approval`. Publish CA work-entry via Raijin (processId=3, CA role). Store payload in MongoDB. Return 200 OK. |
-| Any state ≠ `waiting_fund_transfer` | any | `true` | No-op. Store payload in MongoDB for audit. Return 200 OK. |
-
-> **Note:** `triggerReason` (`initial_submit` / `car_check_review`) does not affect routing logic. The same table applies regardless of trigger reason.
+| Current State | Action | Trigger | Immediate Next State | Notes |
+|---|---|---|---|---|
+| `waiting_for_confirmation` | Confirm | Loan officer calls `POST /applications/{id}/confirm-loan-payment` | `waiting_create_facility` | System state — no human action required. System auto-advances to `waiting_fund_transfer` on completion. |
+| `waiting_for_confirmation` | Reject | Loan officer calls `POST /applications/{id}/reject-confirmation` | `rejected` | Terminal state. |
+| `waiting_for_confirmation` | Any Matcha callback | Matcha POSTs any callback | — | No-op. Store payload in MongoDB for audit. Return 200 OK. |
 
 ---
 
 ### Decision Table 3: Core Banking Fund Transfer Callback Routing
 
-Applies when: Core Banking POSTs a fund transfer result callback to Onigiri.
+Applies when: Core Banking POSTs a `COMPLETE` fund transfer callback to Onigiri. The callback envelope always has `status=COMPLETE`; the routing decision is made on the `transferResult` field.
 
-| Current State | CB `result` | Action |
-|---|---|---|
-| `waiting_fund_transfer` | `success` | Transition → `waiting_create_loan_operation`. Store payload in MongoDB. Return 200 OK. |
-| `waiting_fund_transfer` | `failure` | No state transition. Store failure payload in MongoDB. Raise operational alert (mechanism TBD). Return 200 OK. |
-| Any state ≠ `waiting_fund_transfer` | any | No-op. Store payload in MongoDB for audit. Return 200 OK. |
+| Current State | CB `status` | CB `transferResult` | Action |
+|---|---|---|---|
+| `waiting_fund_transfer` | `COMPLETE` | `Success` | Transition → `waiting_create_loan_operation`. Store payload in MongoDB. Return 200 OK. |
+| `waiting_fund_transfer` | `COMPLETE` | `Reject` | Transition → `rejected`. Store payload in MongoDB. Return 200 OK. |
+| `waiting_fund_transfer` | `COMPLETE` | any other value | Reject. Response: 400. No state change. Flag in monitoring. |
+| Any state ≠ `waiting_fund_transfer` | any | any | No-op. Store payload in MongoDB for audit. Return 200 OK. |
 
 ---
 
@@ -77,22 +79,42 @@ Applies when: Core Banking POSTs a fund transfer result callback to Onigiri.
 stateDiagram-v2
     direction LR
 
+    state "Draft Phase" as draftPhase {
+        Draft: draft
+        CheckingAccount: checking_receiver_account
+    }
+
     state "Decision Phase (partial)" as dec {
         DocCheck: pending_document_checking
+        WaitConfirm: waiting_for_confirmation
+        WaitCreateFacility: waiting_create_facility\n[system — auto]
         WaitFund: waiting_fund_transfer
         WaitLoan: waiting_create_loan_operation
     }
 
-    state "Terminal" as term {
-        ReturnedForRevision: returned_for_revision
-        PendingApproval: pending_approval
+    state "Exits from this capability" as exits {
+        DraftExit: draft\n(request document upload)
+        PendingApprovalExit: pending_approval\n(re-referred)
+        Rejected: rejected
         NextTBD: [next state — TBD]
     }
 
-    DocCheck --> WaitFund : Matcha approved\n(isReDecision=false)
-    WaitFund --> WaitLoan : Core Banking\nfund transfer success
-    WaitFund --> ReturnedForRevision : Matcha returned\n(isReDecision=true)
-    WaitFund --> PendingApproval : Matcha referred\n(isReDecision=true)
+    %% waiting_for_confirmation exits via Confirm or Reject (officer) only
+    %% Confirm → waiting_create_facility (system auto) → waiting_fund_transfer
+    %% waiting_fund_transfer exits only to waiting_create_loan_operation (Success) or rejected (Reject)
+    %% waiting_for_confirmation is bypassed when loan amount has not changed
+
+    Draft --> CheckingAccount : Bank account section completed\n(Bank Account or PromptPay — auto-trigger)
+    CheckingAccount --> Draft : valid / invalid / check_failed\n(result stored, section flagged)
+    DocCheck --> WaitConfirm : Matcha approved\nloan amount changed
+    DocCheck --> WaitCreateFacility : Matcha approved\nloan amount unchanged\n[bypass waiting_for_confirmation]
+    DocCheck --> DraftExit : Matcha returned\nRequest document upload
+    DocCheck --> PendingApprovalExit : Matcha referred\nPublish CA work-entry
+    WaitConfirm --> WaitCreateFacility : Loan officer confirms\nPOST confirm-loan-payment
+    WaitConfirm --> Rejected : Loan officer rejects\nPOST reject-confirmation
+    WaitCreateFacility --> WaitFund : Facility created\n[system auto-advance]
+    WaitFund --> WaitLoan : Core Banking COMPLETE\ntransferResult=Success
+    WaitFund --> Rejected : Core Banking COMPLETE\ntransferResult=Reject
     WaitLoan --> NextTBD
 ```
 
