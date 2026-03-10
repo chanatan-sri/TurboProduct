@@ -4,7 +4,7 @@
 **Portfolio**: Credit
 **Product Owner**: TBD (Credit PO)
 **Status**: 📝 Draft — @FEATURE decomposition pending
-**Last Updated**: 2026-03-09
+**Last Updated**: 2026-03-10
 
 ---
 
@@ -35,6 +35,14 @@ Define and manage loan product configurations (campaigns) that house all configu
 ---
 
 ## Business Rules
+
+### Campaign Types
+
+| Type | Display Name | Description |
+|---|---|---|
+| `restructure` | Restructure | Loan restructure offer for an existing active borrower. A new Onigiri application is created using the campaign's Application Template, pre-populated with the existing loan reference. Uses 5 configuration dimensions. Participates in Campaign Eligibility Pre-Build — Pre-Build evaluates Eligibility Criteria including restructure-specific criteria (existing loan DPD, loan status, prior restructure count, loan age, outstanding balance) and Risk Strategy. |
+
+---
 
 ### Campaign Configuration Dimensions
 

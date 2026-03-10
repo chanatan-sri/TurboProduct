@@ -4,7 +4,7 @@
 **Portfolio**: Credit
 **Product Owner**: TBD (Credit PO)
 **Status**: 📝 Draft — @FEATURE decomposition pending
-**Last Updated**: 2026-03-10
+**Last Updated**: 2026-03-10 (restructure 1.3 — Topology D, EasyPass routing, change detection)
 
 ---
 
@@ -48,6 +48,7 @@ The workflow engine hosts multiple fixed topologies. Each topology defines its o
 | **A — Loan Application Workflow** | Loan application | 11 states across 4 phases | [Topology A diagram below](#workflow-diagram) |
 | **B — Rule Change Approval** | Risk strategy / policy / rule change | 5 states | [FEATURE](../../risk-assessment-engine/features/FEATURE_rule-change-authorization.md) |
 | **C — Campaign Publication Approval** | Campaign version | 6 states | [FEATURE](../../loan-campaign-configuration/features/FEATURE_campaign-publication-authorization.md) |
+| **D — Pre-Approval** | Pre-approval request | 6 states: `created`, `pending_approval`, `approved`, `rejected`, `expired`, `converted` | [CAPABILITY](../pre-approval/CAPABILITY.md) |
 
 All topologies share: transition atomicity, immutable audit trail, configurable execution steps per state.
 
@@ -144,6 +145,34 @@ Execution steps that call Core Banking carry pre-condition guards evaluated **be
 
 The Create Loan + Disbursement guard is a hard stop, not a skip. A second disbursement against an existing loan record is never safe to silently bypass — it must be explicitly resolved by a supervisor.
 
+### EasyPass Approval Routing at `pending_approval` (Restructure Applications)
+
+For restructure applications, a configurable execution step at `pending_approval` state entry evaluates `easypass_flag` on the application record and sets the approver queue.
+
+| `easypass_flag` | Approval Route |
+|---|---|
+| `true` | Local approver — campaign risk level is within CO authority |
+| `false` | Standard escalation path — higher authority required |
+| Absent (no pre-approval used) | Standard routing unchanged |
+
+`easypass_flag` is set on the application record by the Pre-Approval Draft Initializer, sourced from the Campaign Eligibility Pre-Build output.
+
+---
+
+### Change Detection at Draft Submission (Restructure Applications — Non-EasyPass Only)
+
+A configurable execution step at Draft submission evaluates whether the application data has changed since the pre-approval was approved. Applies only to restructure applications with a `pre_approval_id` and `easypass_flag = false` — where a higher-authority approver reviewed the plan at pre-approval stage.
+
+| Condition | Outcome |
+|---|---|
+| `pre_approval_id` present + `easypass_flag = false` + Draft data matches `pre_approval_snapshot` | Skip `pending_approval` — approver already reviewed this plan |
+| `pre_approval_id` present + `easypass_flag = false` + delta detected between Draft and snapshot | Route through `pending_approval` as normal |
+| No `pre_approval_id` (direct restructure application, no pre-approval used) | Full workflow — `pending_approval` runs unchanged |
+
+This step does not apply to EasyPass applications — they always route through `pending_approval` for local approval.
+
+---
+
 ### Configurable Execution Steps (Inside States)
 
 Execution steps inside each state can be plugged in via campaign configuration. Example steps: Document checks, Risk criteria checks, Integration calls (NCB, Core Banking, Wasabi), Approval routing, Printouts & reports.
@@ -220,6 +249,40 @@ stateDiagram-v2
     WaitLoan --> Funded
     Draft --> Withdrawn
     Draft --> Expired
+```
+
+---
+
+## Topology D Diagram — Pre-Approval
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    state "EasyPass Path" as ep {
+        Created_EP: created
+        Converted_EP: converted
+    }
+
+    state "Non-EasyPass Path" as nep {
+        Created_NEP: created
+        PendingApproval: pending_approval
+        Approved: approved
+        Rejected: rejected
+        Expired: expired
+        Converted_NEP: converted
+    }
+
+    [*] --> Created_EP: EasyPass plan selected
+    Created_EP --> Converted_EP: Auto-converts to Draft
+
+    [*] --> Created_NEP: Non-EasyPass plan selected
+    Created_NEP --> PendingApproval: CO submits Approval Request
+    PendingApproval --> Approved: Approver approves\n(expiry date set)
+    PendingApproval --> Rejected: Approver rejects
+    Approved --> Converted_NEP: CO converts to Draft
+    Converted_NEP --> Converted_NEP: CO converts again\n(reusable while not expired)
+    Approved --> Expired: Expiry date passed\n[system auto]
 ```
 
 ---

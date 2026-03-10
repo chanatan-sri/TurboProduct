@@ -4,7 +4,7 @@
 **Portfolio**: Credit → [PORTFOLIO](../../PORTFOLIO.md)
 **Status**: 📝 Draft
 **Executive Owner**: CPO
-**Last Updated**: 2026-03-09 (workflow update)
+**Last Updated**: 2026-03-10 (restructure 1.3 — Pre-Approval capability added)
 
 > *Onigiri (おにぎり) — A tightly packed, self-contained unit. Like the rice ball, Onigiri wraps the entire loan origination lifecycle into a single, cohesive product — from application intake through underwriting to disbursement. Everything the borrower needs, held together in one place.*
 
