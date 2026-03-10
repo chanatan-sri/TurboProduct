@@ -49,6 +49,7 @@ A single configurable platform that governs the full loan application lifecycle 
 - Dashi → canonical vehicle market rate `{ vehicle_id, canonical_rate, rate_basis, adjustment_applied }` → via REST API response
 - Wasabi → early-warning document verification report during Draft phase → via async callback
 - Matcha → verification outcome (APPROVED/RETURNED/REFERRED) → via webhook callback
+- Core Banking → fund transfer COMPLETE callback `{ status=COMPLETE, transferResult: Success|Reject, transferReferenceId }` → via webhook callback
 - NCB → credit bureau inquiry result → via API (triggered by OTP consent in Smart Form)
 
 **This product SENDS to:**
@@ -71,6 +72,7 @@ A single configurable platform that governs the full loan application lifecycle 
 | [Underwriting Workflow](capabilities/underwriting-workflow/CAPABILITY.md) | Engineering | Draft | Fixed-topology 4-phase state machine (Origination → Underwriting → Decision → Terminal). 11 states. Configurable execution steps inside each state. Cash vs. non-cash path divergence. |
 | [Loan Campaign Configuration](capabilities/loan-campaign-configuration/CAPABILITY.md) | Product | Draft | Single configuration umbrella per loan product: pricing, eligibility rules, application template, risk strategy, workflow execution steps. Zero code changes for new campaigns. |
 | [Risk Assessment Engine](capabilities/risk-assessment-engine/CAPABILITY.md) | Engineering | Draft | JMESPath-based configurable rule engine. Strategy → Policy → Rule hierarchy. Produces max risk level, deviation flags, conditional document requirements. Full evaluation trace for audit. |
+| [Disbursement Orchestration](capabilities/disbursement-orchestration/CAPABILITY.md) | Engineering | Draft | Owns post-document-verification states: receiver account pre-check (draft gate), Matcha callback routing from `pending_document_checking` (approved/returned/referred), loan officer confirm/reject from `waiting_for_confirmation`, system `waiting_create_facility`, Core Banking COMPLETE callback routing (Success / Reject). |
 
 ---
 
@@ -113,7 +115,7 @@ stateDiagram-v2
 
     state "Phase: Underwriting" as uw {
         RiskAssessment: Risk Assessment
-        Approval: Approval + Risk Level
+        Approval: pending_approval\n(Approval + Risk Level)
     }
 
     state "Phase: Decision" as dec {
@@ -125,15 +127,16 @@ stateDiagram-v2
         QA_cash: QA
 
         QA_noncash: QA
-        NeedConfNonCash: Need Confirmation?
-        ConfirmationNonCash: Confirmation
-        CreateFacilityNonCash: Create Facility
-        CreateLoanDisbNonCash: Create Loan + Disbursement
+        DocCheck: pending_document_checking
+        WaitConfirm: waiting_for_confirmation
+        WaitCreateFacility: waiting_create_facility\n[system]
+        WaitFund: waiting_fund_transfer
+        WaitLoan: waiting_create_loan_operation
     }
 
     state "Phase: Terminal" as term {
         Funded
-        Rejected
+        Rejected: rejected
         Withdrawn
         Expired
     }
@@ -158,13 +161,18 @@ stateDiagram-v2
     QA_cash --> Draft: Request document upload
 
     Cash --> QA_noncash: n (non-cash)
-    QA_noncash --> NeedConfNonCash
+    QA_noncash --> DocCheck: Submit to Matcha
     QA_noncash --> Draft: Request document upload
-    NeedConfNonCash --> ConfirmationNonCash: y
-    NeedConfNonCash --> CreateFacilityNonCash: n
-    ConfirmationNonCash --> CreateFacilityNonCash
-    CreateFacilityNonCash --> CreateLoanDisbNonCash
-    CreateLoanDisbNonCash --> Funded
+    DocCheck --> WaitConfirm: Matcha approved\n(loan amount changed)
+    DocCheck --> WaitCreateFacility: Matcha approved\n(loan amount unchanged — bypass)
+    DocCheck --> Draft: Matcha returned\n(request document upload)
+    DocCheck --> Approval: Matcha referred\n(re-refer to approver)
+    WaitConfirm --> WaitCreateFacility: Loan officer confirms
+    WaitConfirm --> Rejected: Loan officer rejects
+    WaitCreateFacility --> WaitFund: Facility created\n[system auto]
+    WaitFund --> WaitLoan: Core Banking Success
+    WaitFund --> Rejected: Core Banking Reject
+    WaitLoan --> Funded: Loan operation created
 
     Draft --> Withdrawn: Customer not interested
     Draft --> Expired: Application expired
@@ -198,7 +206,8 @@ graph LR
     Matcha -->|Outcome webhook| Onigiri
     Onigiri -->|TaskCreationRequest| Sensei
     Sensei -->|TaskCompleted| Onigiri
-    Onigiri -->|Create Facility| CoreBanking
+    Onigiri -->|Create Facility + Fund Transfer initiation| CoreBanking
+    CoreBanking -->|Fund Transfer COMPLETE callback| Onigiri
     Onigiri -->|NCB inquiry| NCB
 ```
 
