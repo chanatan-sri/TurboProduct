@@ -4,19 +4,20 @@
 **Portfolio**: Credit
 **Product Owner**: TBD (Credit PO)
 **Status**: 📝 Draft — @FEATURE decomposition pending
-**Last Updated**: 2026-03-04
+**Last Updated**: 2026-03-10
 
 ---
 
 ## Business Function
 
-Provide a state-machine-driven workflow that governs the lifecycle of a loan application from creation through to funding, with configurable execution steps within each state — without making the workflow topology itself customizable.
+Provide a multi-topology workflow engine that powers regulated business processes across Onigiri — each process runs as a fixed-topology state machine with configurable execution steps per state. The first and primary topology is the loan application lifecycle; additional topologies (rule change approval, campaign publication approval) run on the same engine.
 
 ## Why It Exists (First Principles)
 
-- **Process Integrity**: Loan underwriting is a regulated process with mandatory steps (risk assessment, approval authority, QA). The workflow topology must enforce this sequence.
-- **Maintenance Cost**: Fully customizable workflow engines (arbitrary state transitions, user-defined states) are extremely hard to maintain, test, and audit. Bugs in workflow logic can cause loans to skip mandatory checks.
-- **Practical Flexibility**: What changes frequently is not *which states exist* but *what happens inside each state* — the execution steps, the checks, the integrations. By fixing the workflow topology and making execution steps configurable, we get the right trade-off between rigidity (for compliance) and flexibility (for operations).
+- **Process Integrity**: Regulated processes (loan underwriting, risk rule changes, campaign publication) require mandatory, auditable steps. Fixed topologies enforce this — no step can be skipped.
+- **Maintenance Cost**: Fully customizable workflow engines are extremely hard to maintain, test, and audit. A single engine with multiple fixed topologies is testable and predictable.
+- **Practical Flexibility**: What changes frequently is not *which states exist* but *what happens inside each state*. Configurable execution steps provide operational flexibility without topology risk.
+- **Infrastructure Reuse**: Approval workflows for risk rules and campaign publication share the same state machine, audit trail, and execution step infrastructure as the loan application workflow — no parallel engine to build or maintain.
 
 ---
 
@@ -24,16 +25,33 @@ Provide a state-machine-driven workflow that governs the lifecycle of a loan app
 
 | Feature | Status | Description |
 |---------|--------|-------------|
+| Workflow Engine (Multi-Topology) | Spec | Shared engine that runs multiple fixed-topology state machines; each topology has its own states and configurable execution steps — [FEATURE](features/FEATURE_workflow-state-machine-engine.md) |
+| Loan Application Workflow (Topology A) | Concept | 4-phase fixed topology: Origination → Underwriting → Decision → Terminal with 11 named states |
 | 4-Phase State Machine | Concept | Fixed-topology workflow: Origination → Underwriting → Decision → Terminal with 17 named states (includes Disbursement Orchestration states) |
 | Configurable Execution Steps | Concept | Per-state pluggable step execution (document checks, risk criteria, integrations, approvals, printouts) |
 | Cash vs. Non-Cash Path Router | Concept | Automatic routing decision at Create Facility state based on disbursement type |
 | Return Paths to Draft | Concept | Multiple states can return application to Draft for corrections (Risk Assessment, Approval, QA) |
 | Workflow Audit Log | Concept | Immutable RDS record of every state transition with actor, timestamp, and reason |
+| Inbound Callback Authentication | Spec | HMAC-SHA256 signature verification on all inbound callbacks (Matcha, Wasabi) before any state transition is triggered — [FEATURE](features/FEATURE_inbound-callback-authentication.md) |
 | Application High-Water Mark | Concept | Monotonically increasing `state_high_water_mark` on the application record; written on every state entry; drives Smart Form field lockpoints |
 
 ---
 
 ## Business Rules
+
+### Shared Engine Topologies
+
+The workflow engine hosts multiple fixed topologies. Each topology defines its own state graph, but all share the same execution step infrastructure, audit trail, and transition atomicity guarantees.
+
+| Topology | Entity Type | States | Feature Spec |
+|----------|-------------|--------|-------------|
+| **A — Loan Application Workflow** | Loan application | 11 states across 4 phases | [Topology A diagram below](#workflow-diagram) |
+| **B — Rule Change Approval** | Risk strategy / policy / rule change | 5 states | [FEATURE](../../risk-assessment-engine/features/FEATURE_rule-change-authorization.md) |
+| **C — Campaign Publication Approval** | Campaign version | 6 states | [FEATURE](../../loan-campaign-configuration/features/FEATURE_campaign-publication-authorization.md) |
+
+All topologies share: transition atomicity, immutable audit trail, configurable execution steps per state.
+
+---
 
 ### State Definitions
 
@@ -76,6 +94,27 @@ Provide a state-machine-driven workflow that governs the lifecycle of a loan app
 | QA (non-cash path) | Request document upload | Pre-disbursement doc issues |
 | Any active state | Supervisor recall | Supervisor pulls back application |
 
+### Inbound Callback Authentication
+
+Matcha (document QA outcome) and Wasabi (AI verification report) send inbound callbacks that trigger workflow state transitions. All inbound callbacks must be authenticated before any state transition is triggered. Unauthenticated or invalid callbacks are rejected — no state transition occurs.
+
+| Caller | Callback Purpose | Authentication Requirement |
+|--------|-----------------|---------------------------|
+| Matcha | QA outcome: `APPROVED` / `RETURNED` / `REFERRED` | HMAC-SHA256 signature; shared secret stored in Onigiri secrets manager |
+| Wasabi | Async document verification report | HMAC-SHA256 signature; shared secret stored in Onigiri secrets manager |
+
+**Enforcement rules:**
+
+| Condition | Response | Side Effect |
+|-----------|----------|-------------|
+| Signature missing | HTTP 401 — reject | Raise security alert; no state transition |
+| Signature invalid | HTTP 403 — reject | Raise security alert; no state transition |
+| Signature valid but timestamp > 5 min old | HTTP 400 — reject | Log replay attempt; no state transition |
+| Signature valid and timestamp within window | HTTP 200 — accept | Trigger state transition normally |
+
+*Resolves audit finding IS-1.*
+
+---
 ### State High-Water Mark (HWM)
 
 The application record maintains a `state_high_water_mark` — the highest-order state the application has **ever entered**, regardless of subsequent returns to Draft. HWM is monotonically increasing: it advances on every new state entry and never retreats.
@@ -189,7 +228,7 @@ stateDiagram-v2
 
 | NFR | Requirement |
 |-----|-------------|
-| Fixed topology | Workflow state machine topology is hardcoded — not configurable by users |
+| Fixed topology per type | Each workflow type has a hardcoded topology — not configurable by users. New topologies require an engineering change; execution steps within states do not. |
 | Configurable execution | What happens inside each state is configurable via campaign config — zero code deployment |
 | Transition atomicity | Every state transition must be atomic — no partial transitions recorded |
 | Audit trail completeness | Every transition logged in RDS with actor, timestamp, trigger reason |
