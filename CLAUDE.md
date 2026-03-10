@@ -6,6 +6,36 @@
 
 ---
 
+## SESSION BOOTSTRAP PROTOCOL
+
+> **Every session must begin here — no exceptions.**
+
+Before doing any work, the assistant must:
+
+1. **Read `PORTFOLIO_CATALOG.md`** to orient to the current landscape.
+2. **Identify the product in scope** for this session.
+3. **Read that product's `BACKLOG.md`** to understand what is Live, In Progress, and pending.
+4. **Ask the user one question before proceeding:**
+
+---
+
+> **"Before we start — are you:**
+> **(A) Updating implementation status** — marking features as built, shipped, or deprecated based on work that has already been done?
+> **(B) Building out new capabilities or features** — designing, speccing, or planning work that hasn't been done yet?"**
+
+---
+
+The assistant must wait for an explicit answer before taking any action. The answer determines the operating mode for the entire session:
+
+| Answer | Mode | Primary Output |
+|---|---|---|
+| **A — Updating status** | `STATUS_UPDATE` | `BACKLOG.md` status changes + `CHANGELOG` entry |
+| **B — New capability/feature** | Normal `@PORTFOLIO` / `@PRODUCT` / `@CAPABILITY` / `@FEATURE` modes | New or updated spec documents |
+
+**If the user does not answer clearly,** ask again. Do not assume intent. Working on the wrong mode wastes sessions and creates documentation drift.
+
+---
+
 ## THE FOUR LAYERS
 
 This system adapts Atomic Design principles to Enterprise Product Management. Always identify which layer a request belongs to before responding.
@@ -32,6 +62,7 @@ This system adapts Atomic Design principles to Enterprise Product Management. Al
     │
     └── <product-name>/                   ← Product (Organism) — lowercase, hyphenated
         ├── PRODUCT.md                    ← Product definition, capability registry, integration map
+        ├── BACKLOG.md                    ← ★ Living implementation state. Read at every session start.
         ├── ARCHITECTURE.md               ← (Optional) Technical design — APIs, data models, infra
         │
         ├── capabilities/                 ← Capability (Molecule) folder
@@ -98,6 +129,23 @@ The primary source of truth for a product. This is the first file to read for an
 
 ---
 
+### BACKLOG.md ★
+The living implementation state for a product. **Updated at the end of every session.** The primary input to the Session Bootstrap Protocol.
+
+**Contains:**
+- All features grouped by implementation status: `Live`, `In Progress`, `Spec'd`, `Concept`, `Deprecated`
+- The capability each feature belongs to
+- Last updated date and session summary
+- A rolling session log: date, what was discussed, what changed
+
+**Does not contain:** Full feature specs (those live in `FEATURE_<name>.md`), business rules, technical implementation.
+
+**Critical rule:** `BACKLOG.md` and `FEATURE_<name>.md` statuses must always agree. If they conflict, `BACKLOG.md` is considered stale — update it immediately.
+
+See the **BACKLOG.md Schema** section below for the exact template.
+
+---
+
 ### CAPABILITY.md
 The Product Owner's document. Defines a named business function and everything needed to own it.
 
@@ -142,6 +190,92 @@ The technical "how." Lives at the product level. Written by and for engineers.
 Append-only. Never modified after creation. Records what changed, at which layer, and why.
 
 **Contains:** Layer affected (Portfolio / Product / Capability / Feature), what changed, rationale, decision log, links to updated documents.
+
+---
+
+## BACKLOG.md SCHEMA
+
+Use this exact template when creating a `BACKLOG.md` for any product. Copy verbatim; do not restructure.
+
+```markdown
+# BACKLOG: <Product Name>
+
+**Product:** <Codename> — <Full Product Name>
+**Portfolio:** <Portfolio Name>
+**Last Updated:** YYYY-MM-DD
+**Last Session:** <One-line summary of what was done in the most recent session>
+
+---
+
+## ✅ LIVE (Implemented & Deployed)
+
+| Feature | Capability | Shipped Date | Notes |
+|---|---|---|---|
+| | | | |
+
+---
+
+## 🔨 IN PROGRESS (In active development)
+
+| Feature | Capability | Owner | Started | Target |
+|---|---|---|---|---|
+| | | | | |
+
+---
+
+## 📋 SPEC'D (Fully specced — ready to build)
+
+| Feature | Capability | Priority | Spec Link |
+|---|---|---|---|
+| | | | |
+
+---
+
+## 💡 CONCEPT (Identified — not yet specced)
+
+| Feature | Capability | Notes |
+|---|---|---|
+| | | |
+
+---
+
+## 🗄️ DEPRECATED
+
+| Feature | Capability | Deprecated Date | Reason |
+|---|---|---|---|
+| | | | |
+
+---
+
+## SESSION LOG
+
+| Date | Session Type | Summary | Documents Changed |
+|---|---|---|---|
+| YYYY-MM-DD | Status Update / New Capability / New Feature | | |
+```
+
+---
+
+## STATUS_UPDATE MODE
+
+*Activated when the user answers **"A — Updating implementation status"** at session start.*
+
+**Purpose:** Sync documentation to reality. Features have been built; the docs need to catch up.
+
+**Protocol:**
+1. Ask the user: *"Which features have been completed or changed status since the last session?"*
+2. For each feature confirmed as implemented:
+   - Update the feature's `Status` field in its `FEATURE_<name>.md` to `Live`.
+   - Move the feature row in `BACKLOG.md` from its current section to `✅ LIVE`.
+   - Update the Feature Inventory table in the parent `CAPABILITY.md`.
+3. For each feature confirmed as in progress:
+   - Update `FEATURE_<name>.md` status to `In-Dev`.
+   - Move to `🔨 IN PROGRESS` in `BACKLOG.md`.
+4. Update `BACKLOG.md` header: set `Last Updated` to today's date and write a new `Last Session` summary.
+5. Append a new row to the `SESSION LOG` table in `BACKLOG.md`.
+6. Create a `CHANGELOG` entry recording all status changes.
+
+**Do not:** Add new features, modify acceptance criteria, or redesign capabilities in this mode. If the user raises new work, note it in `BACKLOG.md` under `💡 CONCEPT` and flag it for a future `@CAPABILITY` or `@FEATURE` session.
 
 ---
 
@@ -197,7 +331,7 @@ The assistant operates in four modes corresponding to the four architecture laye
 5. Map the happy path and all exception paths as Mermaid.js flow diagrams.
 6. Identify NFRs: scalability targets, latency bounds, consistency model (ACID vs. eventual), auditability requirements.
 
-**Outputs:** `CAPABILITY.md` creation or updates, feature inventory, business rule tables, Mermaid.js flow diagrams, `PRODUCT.md` capability registry update.
+**Outputs:** `CAPABILITY.md` creation or updates, feature inventory, business rule tables, Mermaid.js flow diagrams, `PRODUCT.md` capability registry update, `BACKLOG.md` updated with new `💡 CONCEPT` or `📋 SPEC'D` entries.
 
 ---
 
@@ -213,8 +347,9 @@ The assistant operates in four modes corresponding to the four architecture laye
 4. List all edge cases, error states, and out-of-scope conditions explicitly.
 5. Flag any NFRs to be escalated to the `@CAPABILITY` layer.
 6. Link to the parent `CAPABILITY.md` and update the feature inventory there.
+7. Add the feature to `BACKLOG.md` under `📋 SPEC'D` upon completion.
 
-**Outputs:** `FEATURE_<name>.md` creation or updates, parent `CAPABILITY.md` feature inventory update, `CHANGELOG` entry.
+**Outputs:** `FEATURE_<name>.md` creation or updates, parent `CAPABILITY.md` feature inventory update, `BACKLOG.md` update, `CHANGELOG` entry.
 
 ---
 
@@ -246,6 +381,8 @@ Diagrams live in `artifacts/diagrams/` or inline in the relevant `.md` document.
 
 ### Changelog Discipline
 Every session that modifies any document must produce a `CHANGELOG` entry. The changelog captures: which layer was modified, what changed, and why. Changelogs are append-only and are never edited after creation.
+
+Every session must also update `BACKLOG.md` — the `Last Updated` date, `Last Session` summary, and a new row in the `SESSION LOG` table.
 
 ---
 
