@@ -4,7 +4,7 @@
 > This is the single entry point for any cross-product or cross-portfolio work.
 > **Read this first before any product-level session.**
 >
-> Last Updated: 2026-03-06
+> Last Updated: 2026-03-09
 
 ---
 
@@ -14,6 +14,7 @@
 |-----------|---------|----------|--------|---------------|---------|
 | **Credit** | Loan Origination System | Onigiri (おにぎり) | 📝 Draft | [PORTFOLIO](credit/PORTFOLIO.md) | All-in-one loan origination platform. Smart Form intake → fixed-topology underwriting workflow → campaign-driven risk assessment → disbursement. Integrates with Matcha, Wasabi, DaVinci, Sensei, Core Banking, NCB. |
 | **Credit** | Credit Scoring Service | Miso (味噌) | 📝 Draft | [PORTFOLIO](credit/PORTFOLIO.md) | Standalone credit scoring service. Campaign-to-model routing, A/B traffic splitting, model inference execution, raw→standardized score mapping, confidentiality enforcement, immutable inference audit log. |
+| **Credit** | Asset Valuation Service | Dashi (だし) | 📝 Draft | [PORTFOLIO](credit/PORTFOLIO.md) | Multi-source vehicle price ingestion, configurable data cleansing pipeline, cross-source vehicle identity resolution, price consolidation engine, risk team rate management dashboard, canonical market rate API. Pure market data service — no borrower context. |
 | **Operations** | Document Verification Service | Matcha (抹茶) | ✅ Active | [PORTFOLIO](operations/PORTFOLIO.md) | Universal domain-agnostic document verification engine. 4-state task lifecycle, flexible rule configuration, SHA-256 change detection, async car check integration, re-flow deduplication, AI-first routing via Wasabi. |
 | **Operations** | AI Document Verification | Wasabi (わさび) | 📝 Draft | [PORTFOLIO](operations/PORTFOLIO.md) | Stateless LLM-based document verification. 4-stage pipeline: quality → type classification → instruction verification → report assembly. Operates outside Matcha; returns results to Onigiri for early warnings and Matcha for routing. |
 | **Operations** | Branch Operations Orchestration | Sensei (先生) | 📝 Draft | [PORTFOLIO](operations/PORTFOLIO.md) | Centralized branch worklist and task orchestration. Aggregates work from Sensei playbooks, external service requests (Onigiri, Matcha), and supervisor tasks into a single prioritized queue. Contact compliance via DaVinci events. |
@@ -36,7 +37,10 @@ product/
 │   │   ├── PRODUCT.md
 │   │   ├── ATLAS.md              ← Detailed source of truth (migration period)
 │   │   └── capabilities/
-│   └── miso/
+│   ├── miso/
+│   │   ├── PRODUCT.md
+│   │   └── capabilities/
+│   └── turbo-rate/
 │       ├── PRODUCT.md
 │       └── capabilities/
 │
