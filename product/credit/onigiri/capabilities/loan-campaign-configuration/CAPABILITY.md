@@ -4,7 +4,7 @@
 **Portfolio**: Credit
 **Product Owner**: TBD (Credit PO)
 **Status**: 📝 Draft — @FEATURE decomposition pending
-**Last Updated**: 2026-03-04
+**Last Updated**: 2026-03-09
 
 ---
 
@@ -30,6 +30,7 @@ Define and manage loan product configurations (campaigns) that house all configu
 | Application Template Assignment | Concept | Select which form pages/sections/fields appear; configure required documents; set conditional document logic |
 | Risk Strategy Assignment | Concept | Assign which risk strategy (Strategy → Policy → Rule hierarchy) executes for applications under this campaign |
 | Workflow Execution Steps Configuration | Concept | Configure which pluggable steps run inside each workflow state for applications under this campaign |
+| Campaign Publication Approval Workflow | Spec | Two-tier approval workflow before a campaign transitions to ACTIVE — Tier 1 (parallel): CPO + Risk Officer; Tier 2: CRO. Runs on the Underwriting Workflow state machine engine. — [FEATURE](features/FEATURE_campaign-publication-authorization.md) |
 
 ---
 
@@ -67,6 +68,40 @@ Define and manage loan product configurations (campaigns) that house all configu
 | Max LTV | 120% |
 | Min/Max credit line | Configurable per campaign |
 
+### Campaign Publication Authorization
+
+Any campaign version publication (Draft → ACTIVE) requires a two-tier approval workflow. Product managers cannot publish directly.
+
+Tier 1 is a **parallel gate** — both functional owners must approve simultaneously (in any order) before the change advances to Tier 2.
+
+| Tier | Approver Role | Mode | Responsibility |
+|------|--------------|------|----------------|
+| Tier 1 | CPO (Chief Product Officer) | Parallel | Reviews all 5 configuration dimensions for business intent, pricing soundness, and eligibility correctness |
+| Tier 1 | Risk Officer | Parallel | Reviews the assigned risk strategy for policy soundness and downstream evaluation impact |
+| Tier 2 | CRO (Chief Risk Officer) | Sequential (after both T1) | Final authorization — mandatory for all campaign publications |
+
+Both Tier 1 approvers must approve before the change advances to Tier 2. Either Tier 1 approver can reject, returning the campaign to Draft.
+
+**Campaign lifecycle states:**
+
+| State | Mutability | Description |
+|-------|------------|-------------|
+| Draft | Fully editable | Campaign is being configured; no version increment |
+| Pending Approval | Read-only | Submitted; both T1 approvers notified simultaneously |
+| Pending CRO | Read-only | Both T1 approvals received; awaiting CRO final sign-off |
+| ACTIVE | Append-only | Live; any change creates a new Draft version |
+| Archived | Read-only | Superseded by a newer version or manually sunset |
+
+In-flight applications use the campaign version at submission time — no retroactive version migration.
+
+**Risk strategy coupling:**
+
+Because the Risk Officer is a mandatory Tier 1 approver on every campaign publication, campaign version and risk strategy alignment is enforced structurally — neither side can be published without the other functional owner's sign-off.
+
+*Resolves audit finding AI-2 and the Open Question: "Is there a campaign approval workflow before publishing?" → **Yes.***
+
+---
+
 ### Zero-Code Launch Rule
 
 A new campaign must be launchable by a product manager without any code deployment. If configuring a new campaign requires a code change, it is a violation of this capability's design intent and must be escalated to engineering for resolution.
@@ -85,7 +120,21 @@ flowchart TD
     F --> G[Preview + Validate Campaign\ncheck for conflicts or missing required config]
     G --> H{Valid?}
     H -- Errors --> F
-    H -- Valid --> I[Publish Campaign\nCO can now create applications under this campaign]
+    H -- Valid --> I[Submit for Approval\nCampaign enters Pending Approval — read-only\nCPO + Risk Officer notified simultaneously]
+    I --> J1[Tier 1a: CPO Review\nreviews all 5 config dimensions]
+    I --> J2[Tier 1b: Risk Officer Review\nreviews assigned risk strategy]
+    J1 --> K1{CPO Decision}
+    J2 --> K2{Risk Officer Decision}
+    K1 -- Reject / Revise --> L[Return to Draft\nwith feedback]
+    K2 -- Reject / Revise --> L
+    L --> B
+    K1 -- Approve --> WAIT{Both T1\napproved?}
+    K2 -- Approve --> WAIT
+    WAIT -- No --> PENDING[Waiting for\nother T1 approver]
+    WAIT -- Yes --> M[Tier 2: CRO Review\nfinal authorization]
+    M --> N{CRO Decision}
+    N -- Reject / Revise --> L
+    N -- Approve --> O[Campaign ACTIVE\nCO can now create applications under this campaign]
 ```
 
 ---
@@ -103,5 +152,5 @@ flowchart TD
 ## Open Questions
 
 - Can a campaign be edited while applications are in-flight? Or must it be versioned + cloned?
-- Is there a campaign approval workflow before publishing, or can product managers publish directly?
+- ~~Is there a campaign approval workflow before publishing, or can product managers publish directly?~~ **Resolved**: Two-tier approval required (Tier 1: CPO, Tier 2: CRO). Product managers cannot publish directly. See Campaign Publication Authorization.
 - What is the campaign archive / sunset process for old campaigns?
