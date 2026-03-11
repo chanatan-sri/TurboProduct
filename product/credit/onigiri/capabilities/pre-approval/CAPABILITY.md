@@ -37,10 +37,10 @@ Enable a CO to evaluate which restructure plans a customer is eligible for and p
 
 EasyPass is a statement of authority alignment — not a shortcut. A CO initiating a pre-approval for an EasyPass campaign already satisfies the approval authority requirement because the campaign's risk level falls within local CO authority. The CO is not bypassing approval — the CO IS the approval authority for that risk level.
 
-| EasyPass (from pre-built) | Meaning | Pre-Approval Behaviour |
+| Campaign Designation (from pre-build) | Meaning | Pre-Approval Behaviour |
 |---|---|---|
-| `true` | Campaign risk level is within local CO authority | No Approval Request generated — CO converts directly to Draft. No expiry on pre-approval. |
-| `false` | Campaign risk level exceeds local CO authority | Approval Request required — submitted to designated approver. Approved pre-approval carries expiry date. |
+| EasyPass campaign | Campaign risk level is within local CO authority | No Approval Request generated — CO converts directly to Draft. No expiry on pre-approval. |
+| Non-EasyPass campaign | Campaign risk level exceeds local CO authority | Approval Request required — submitted to designated approver. Approved pre-approval carries expiry date. |
 
 ### Pre-Approval Lifecycle (Topology D)
 
@@ -101,8 +101,7 @@ Applies to **non-EasyPass restructure applications only** — where a higher-aut
 | Field | Type | Source | Purpose |
 |---|---|---|---|
 | `customer_reference` | reference | BOS context | Links pre-approval to the customer |
-| `selected_campaign` | reference | CO plan selection | Campaign chosen by CO from pre-built results |
-| `easypass_flag` | boolean | Pre-built output | Determines approval path — no Approval Request for EasyPass |
+| `selected_campaign` | reference | CO plan selection | Campaign chosen by CO from pre-built results — campaign type carries EasyPass designation |
 | `reason_for_restructure` | enum | CO dropdown selection (required) | Reason type selected by CO — surfaced to approver |
 | `reason_detail` | string | CO free-text (optional) | Additional explanation beyond the reason type — surfaced to approver |
 | `supporting_documents` | reference[] | CO file upload (optional) | Document references (e.g. medical cert, income proof) — accessible by approver |
@@ -112,9 +111,10 @@ Applies to **non-EasyPass restructure applications only** — where a higher-aut
 
 | Field | Type | Source | Purpose |
 |---|---|---|---|
-| `easypass_flag` | boolean | Pre-built output (via Draft Initializer) | Drives approval routing at `pending_approval` in full workflow |
 | `pre_approval_id` | reference | Draft Initializer | Links application to originating pre-approval for audit trail and change detection |
 | `pre_approval_snapshot` | JSON | Draft Initializer | Point-in-time copy of pre-approval data (including master data snapshot and reason for restructure) — compared at Draft submission for change detection |
+
+EasyPass routing is determined at `pending_approval` by the campaign type of the application's selected campaign — not by a stored flag. Campaign type is derived from the campaign record linked to the application.
 
 ---
 
@@ -135,7 +135,7 @@ Two systems can navigate into pre-approval. Each has a defined scope:
 flowchart TD
     A[BOS Customer Detail\nmaster data fetched\npre-built called\neligible campaigns loaded] --> B[CO selects EasyPass campaign]
     B --> C[Pre-approval record created\nstate: created]
-    C --> D[CO converts to Draft\napproval step bypassed\nDraft Initializer pre-populates form\neasypass_flag = true\nstate: converted]
+    C --> D[CO converts to Draft\napproval step bypassed\nDraft Initializer pre-populates form\nstate: converted]
     D --> E[Draft application created\n→ continues in Underwriting Workflow]
 ```
 
@@ -151,7 +151,7 @@ flowchart TD
     E -- Approve --> G[state: approved\nExpiry date set]
     G --> H{CO converts\nbefore expiry?}
     H -- No --> I[state: expired\nCO must start new request]
-    H -- Yes, via BOS --> J[Draft Initializer pre-populates form\neasypass_flag = false\npre_approval_snapshot stored\nstate: converted]
+    H -- Yes, via BOS --> J[Draft Initializer pre-populates form\npre_approval_snapshot stored\nstate: converted]
     H -- Yes, via CO Worklist --> J
     J --> K[Draft application created\n→ continues in Underwriting Workflow]
 ```

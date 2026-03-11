@@ -26,23 +26,23 @@ The Draft Initializer can be reached via two routes for non-EasyPass approvals:
 | **BOS** → Customer Detail → Pre-Approval | Pre-approval in `approved` state | CO navigates to the pre-approval screen from BOS and triggers Convert to Draft. |
 | **CO Worklist** | Pre-approval in `approved` state | Approved pre-approval surfaced in the CO's worklist. CO opens it directly and triggers Convert to Draft. |
 
-EasyPass path has no manual entry — Draft Initializer is triggered automatically on plan selection.
+EasyPass path has no manual entry point distinction — CO converts directly from `created` state (approval step bypassed). Both BOS and CO Worklist can surface EasyPass pre-approvals for conversion.
 
 ---
 
 ## Acceptance Criteria
 
-1. Draft Initializer is triggered:
-   - **EasyPass**: automatically on plan selection — no explicit CO action required. Pre-approval moves directly to `converted`.
-   - **Non-EasyPass**: CO-initiated Convert to Draft action, available from BOS or CO Worklist when pre-approval is in `approved` or `converted` state (not expired).
+1. Draft Initializer is triggered by CO-initiated Convert to Draft action:
+   - **EasyPass campaign**: available from `created` state — approval step bypassed, no Approval Request required.
+   - **Non-EasyPass campaign**: available from BOS or CO Worklist when pre-approval is in `approved` state (not expired or rejected).
 2. On conversion, a new Draft application is created pre-populated with:
    - Selected campaign from the pre-approval
    - Existing loan reference
    - Customer data from the pre-approval context
 3. The following fields are set on the application record:
-   - `easypass_flag` — set from the EasyPass value returned by pre-built for this pre-approval
    - `pre_approval_id` — reference to the originating pre-approval record
    - `pre_approval_snapshot` — immutable point-in-time copy of the pre-approval data at this conversion time
+   - EasyPass routing at `pending_approval` is determined by the campaign type of the selected campaign — not a stored flag.
 4. Pre-approval transitions to `converted` state on successful Draft creation. It remains reusable — the CO can convert the same pre-approval again as long as it is still valid.
 5. The Draft application enters the standard Underwriting Workflow from `draft` state.
 
@@ -62,6 +62,6 @@ EasyPass path has no manual entry — Draft Initializer is triggered automatical
 
 ## Dependencies
 
-- Underwriting Workflow engine must accept a new Draft application with `pre_approval_id`, `pre_approval_snapshot`, and `easypass_flag` on the application record.
+- Underwriting Workflow engine must accept a new Draft application with `pre_approval_id` and `pre_approval_snapshot` on the application record.
 - Smart Form must accept pre-populated field values from the pre-approval context on Draft creation.
 - Change detection execution step (Underwriting Workflow) depends on `pre_approval_snapshot` being stored correctly by this feature.

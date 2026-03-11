@@ -158,8 +158,7 @@ If either call fails or pre-built returns zero eligible campaigns, the pre-appro
 | Field | Type | Source | Purpose |
 |---|---|---|---|
 | `customer_reference` | reference | BOS context | Links pre-approval to the customer |
-| `selected_campaign` | reference | CO plan selection | Campaign chosen from pre-built results |
-| `easypass_flag` | boolean | Pre-built output | Determines approval path |
+| `selected_campaign` | reference | CO plan selection | Campaign chosen from pre-built results — campaign type carries EasyPass designation |
 | `reason_for_restructure` | enum | CO dropdown selection (required) | Reason type — surfaced to approver |
 | `reason_detail` | string | CO free-text (optional) | Additional explanation — surfaced to approver |
 | `supporting_documents` | reference[] | CO file upload (optional) | Document references (e.g. medical cert, income proof) — accessible by approver |
@@ -169,11 +168,10 @@ If either call fails or pre-built returns zero eligible campaigns, the pre-appro
 
 | Field | Type | Set by | Purpose |
 |---|---|---|---|
-| `easypass_flag` | boolean | Draft Initializer (from pre-built) | Drives approval routing at `pending_approval` in the full workflow |
 | `pre_approval_id` | reference | Draft Initializer | Links application to originating pre-approval for audit trail and change detection |
 | `pre_approval_snapshot` | JSON | Draft Initializer | Point-in-time copy of pre-approval data (including master data snapshot and reason for restructure) — compared at Draft submission for change detection |
 
-Note: There is no `restructure_flag` on the application record. The campaign's `campaign_type = restructure` implicitly identifies the application type. The `easypass_flag` on the application record is set by the Draft Initializer based on the value returned by pre-built — not from the campaign configuration.
+Note: There is no `restructure_flag` or `easypass_flag` on the application record. The campaign's `campaign_type = restructure` implicitly identifies the application type. EasyPass designation is determined at runtime from the campaign type of the application's selected campaign — not stored as a separate field. Campaign type is returned by Campaign Eligibility Pre-Build and is part of the campaign record.
 
 ---
 
@@ -241,8 +239,8 @@ At Draft submission, for applications with a `pre_approval_id` and `easypass_fla
 
 | Condition | Outcome |
 |---|---|
-| Draft data matches `pre_approval_snapshot` (no changes) | Skip `pending_approval` — approver already reviewed at pre-approval stage |
-| Delta detected (data changed since pre-approval) | Route through `pending_approval` as normal |
+| `pre_approval_id` present + non-EasyPass campaign + Draft data matches `pre_approval_snapshot` | Skip `pending_approval` — approver already reviewed at pre-approval stage |
+| `pre_approval_id` present + non-EasyPass campaign + delta detected | Route through `pending_approval` as normal |
 | No `pre_approval_id` (application created without pre-approval) | Full workflow — `pending_approval` runs unchanged |
 
 ---

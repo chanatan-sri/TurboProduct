@@ -148,26 +148,26 @@ The Create Loan + Disbursement guard is a hard stop, not a skip. A second disbur
 
 ### EasyPass Approval Routing at `pending_approval` (Restructure Applications)
 
-For restructure applications, a configurable execution step at `pending_approval` state entry evaluates `easypass_flag` on the application record and sets the approver queue.
+For restructure applications, a configurable execution step at `pending_approval` state entry evaluates the campaign type of the application's selected campaign and sets the approver queue.
 
-| `easypass_flag` | Approval Route |
+| Campaign Type | Approval Route |
 |---|---|
-| `true` | Local approver — campaign risk level is within CO authority |
-| `false` | Standard escalation path — higher authority required |
-| Absent (no pre-approval used) | Standard routing unchanged |
+| EasyPass campaign | Local approver — campaign risk level is within CO authority |
+| Non-EasyPass campaign | Standard escalation path — higher authority required |
+| No pre-approval used (direct application) | Standard routing unchanged |
 
-`easypass_flag` is set on the application record by the Pre-Approval Draft Initializer, sourced from the Campaign Eligibility Pre-Build output.
+Campaign EasyPass designation is derived from the campaign type returned by Campaign Eligibility Pre-Build — not from a stored flag on the application record.
 
 ---
 
 ### Change Detection at Draft Submission (Restructure Applications — Non-EasyPass Only)
 
-A configurable execution step at Draft submission evaluates whether the application data has changed since the pre-approval was approved. Applies only to restructure applications with a `pre_approval_id` and `easypass_flag = false` — where a higher-authority approver reviewed the plan at pre-approval stage.
+A configurable execution step at Draft submission evaluates whether the application data has changed since the pre-approval was approved. Applies only to restructure applications with a `pre_approval_id` linked to a non-EasyPass campaign — where a higher-authority approver reviewed the plan at pre-approval stage.
 
 | Condition | Outcome |
 |---|---|
-| `pre_approval_id` present + `easypass_flag = false` + Draft data matches `pre_approval_snapshot` | Skip `pending_approval` — approver already reviewed this plan |
-| `pre_approval_id` present + `easypass_flag = false` + delta detected between Draft and snapshot | Route through `pending_approval` as normal |
+| `pre_approval_id` present + non-EasyPass campaign + Draft data matches `pre_approval_snapshot` | Skip `pending_approval` — approver already reviewed this plan |
+| `pre_approval_id` present + non-EasyPass campaign + delta detected between Draft and snapshot | Route through `pending_approval` as normal |
 | No `pre_approval_id` (direct restructure application, no pre-approval used) | Full workflow — `pending_approval` runs unchanged |
 
 This step does not apply to EasyPass applications — they always route through `pending_approval` for local approval.
