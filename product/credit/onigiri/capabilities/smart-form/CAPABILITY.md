@@ -30,7 +30,6 @@ Provide a configurable, section-based loan application form that captures borrow
 | NCB Consent + OTP Flow | Concept | Embedded credit bureau inquiry consent with OTP verification inside the Borrower stage |
 | Document Upload Interface | Concept | Upload required supporting documents within the Draft stage; trigger Wasabi early-warning scan on upload |
 | Field Lockpoint Enforcement | Concept | Read-only rendering of field groups based on application `state_high_water_mark`; server-side API rejection of writes to locked fields |
-| Dynamic Field Options | Concept | Select-type fields whose option list is sourced from an external service result passed in at screen open time — rather than from static campaign configuration. Used by Pre-Approval to render eligible restructure campaigns returned by Campaign Eligibility Pre-Build. |
 
 ---
 
@@ -72,18 +71,6 @@ Fields are organized into **Lockpoint Groups** bound to `state_high_water_mark` 
 | Submit remains available | The Submit action is available whenever all non-locked required fields are filled. Locked fields do not block submission. |
 | Server-side enforcement | The application data update API rejects writes to fields in locked groups, regardless of client-side rendering state. The API lock is authoritative; the client lock is UX. |
 
-### Dynamic Field Options
-
-Select-type fields can declare their option source as `dynamic` in the field definition. When a screen opens with a dynamic-options field, the caller must supply the option list as a pre-loaded payload (fetched from an external service before screen open) — the Smart Form renders the options from that payload rather than from static campaign configuration.
-
-| Property | Description |
-|----------|-------------|
-| `options_source` | `static` (from campaign config) or `dynamic` (injected by caller at screen open time) |
-| `options_payload` | Pre-loaded option list injected when `options_source = dynamic`; shape is `[{ value, label, metadata }]` |
-
-Dynamic options are read-only at render time — the Smart Form does not call external services directly. The caller is responsible for fetching and passing the payload before opening the screen. If no payload is supplied for a dynamic-options field, the field renders as disabled with an error indicator.
-
----
 
 ### Field Definition Properties
 

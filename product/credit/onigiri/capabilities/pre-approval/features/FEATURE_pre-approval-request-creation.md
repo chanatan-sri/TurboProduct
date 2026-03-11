@@ -9,29 +9,54 @@
 
 ## User Story
 
-As a Credit Officer, I want to see which restructure plans my customer is eligible for when I open pre-approval, so that I can make an informed and accurate offer without committing to a formal application.
+As a Credit Officer, I want to evaluate which restructure plans my customer is eligible for before creating a formal application, so that I can make a grounded offer and ensure the right approval authority handles it.
 
 ## Job-to-be-Done
 
-The CO needs certainty before making an offer. The plan list must reflect real eligibility — not a guess — so the CO can present viable options to the customer at the branch.
+The CO needs to know what is achievable and who has the authority to approve it before committing to a full application. Pre-approval gives the CO a confirmed plan and routes the work to the correct approver upfront.
 
 ---
 
-## Pre-condition
+## Pre-conditions
 
-Campaign Eligibility Pre-Build must be called with the customer context before the pre-approval screen opens. If pre-built returns no eligible campaigns, the pre-approval screen must not open — the entry point blocks access and informs the CO that this customer has no eligible restructure plans.
+Before the pre-approval screen opens, the system must:
+1. Fetch customer master data from DaVinci — person detail, contract detail, collateral data.
+2. Call Campaign Eligibility Pre-Build with that customer context — returns eligible campaigns and EasyPass flag per campaign.
+
+If either call fails, or if pre-built returns no eligible campaigns, the screen must not open.
+
+---
+
+## What the CO Must Provide
+
+| Input | Required | Notes |
+|---|---|---|
+| Reason for restructure | Yes | Dropdown selection |
+| Additional detail | No | Free-text supplementary explanation |
+| Supporting documents | No | File upload — e.g. medical cert, income proof |
+| Financial data | Yes (primary income) | Pre-filled from DaVinci; CO may correct any field before confirming |
+
+Financial fields pre-filled from DaVinci: primary income, supplementary income, monthly debt burden, debt end date, monthly expenses, tax due date.
+
+---
+
+## What the System Must Display
+
+- Eligible campaigns returned by pre-built, each showing: campaign name, min/max tenor, EasyPass indicator.
+- Filters on the campaign list: by EasyPass designation and by tenor range. Filters apply client-side — no additional API call.
 
 ---
 
 ## Acceptance Criteria
 
-1. Pre-approval screen opens only when eligible campaigns are available from pre-built.
-2. The screen displays all eligible campaigns with pricing details and EasyPass indicator.
-3. CO can select one campaign from the list.
-4. On plan selection confirmation, a pre-approval record is created with the selected campaign and customer reference stored. Behaviour differs by EasyPass designation:
-   - **EasyPass**: pre-approval auto-converts to Draft immediately — Draft Initializer pre-populates the application; pre-approval transitions directly to `converted`.
-   - **Non-EasyPass**: pre-approval record created in `created` state; CO must proceed via Approval Request before conversion is available.
-5. The non-EasyPass pre-approval record in `created` state persists if the CO closes the screen without proceeding — it is not discarded.
+1. Screen opens only when master data fetch and pre-built both succeed and at least one eligible campaign is returned.
+2. Financial data fields are pre-filled from DaVinci and editable by the CO.
+3. CO must select a reason for restructure before confirming. Additional detail and document upload are optional.
+4. CO can filter and select one campaign from the pre-built results.
+5. On confirmation, a pre-approval record is created storing: selected campaign, customer reference, financial snapshot (CO-reviewed), reason for restructure, additional detail, and supporting document references.
+6. EasyPass: pre-approval auto-converts to Draft immediately on confirmation — no further CO action needed.
+7. Non-EasyPass: pre-approval is created in `created` state. CO proceeds via Approval Request separately.
+8. A non-EasyPass record in `created` state persists if the CO closes without proceeding — it is not discarded.
 
 ---
 
@@ -39,14 +64,17 @@ Campaign Eligibility Pre-Build must be called with the customer context before t
 
 | Scenario | Expected Behaviour |
 |---|---|
-| Pre-built call fails before screen opens | Entry point blocks navigation to pre-approval. CO informed of error. No pre-approval record created. |
-| CO closes screen after plan selection (state: `created`) | Record persists in `created` state — CO can return to it later. |
-| CO opens pre-approval for a customer who already has an in-flight pre-approval | Behaviour subject to deduplication rule — see Open Questions in CAPABILITY.md. |
+| Master data fetch fails | Screen blocked. CO informed. No record created. |
+| Pre-built call fails | Screen blocked. CO informed. No record created. |
+| Pre-built returns zero eligible campaigns | Screen blocked. CO informed. No record created. |
+| Master data partially unavailable (e.g. no collateral) | Pre-built called with available data. Missing fields shown empty on screen. |
+| CO closes screen after record created (`created` state) | Record persists — CO can return to it later. |
+| CO opens pre-approval for customer with existing in-flight pre-approval | Subject to deduplication rule — see Open Questions in CAPABILITY.md. |
 
 ---
 
 ## Dependencies
 
-- Calling entry point must call Campaign Eligibility Pre-Build with customer context and block access to pre-approval if no eligible campaigns are returned.
-- Smart Form — Dynamic Field Options feature must be available to render the plan selection list from pre-built results.
-- Campaign Eligibility Pre-Build (external) must return eligible campaigns + EasyPass flag per campaign.
+- DaVinci must provide person detail, contract detail, and collateral data by customer/contract reference.
+- Campaign Eligibility Pre-Build must return eligible campaigns with EasyPass flag, min tenor, and max tenor per campaign.
+- Pre-approval screen is a dedicated screen — Smart Form is not used for plan selection.

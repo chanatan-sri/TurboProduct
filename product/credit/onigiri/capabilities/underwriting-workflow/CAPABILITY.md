@@ -49,6 +49,7 @@ The workflow engine hosts multiple fixed topologies. Each topology defines its o
 | **B — Rule Change Approval** | Risk strategy / policy / rule change | 5 states | [FEATURE](../../risk-assessment-engine/features/FEATURE_rule-change-authorization.md) |
 | **C — Campaign Publication Approval** | Campaign version | 6 states | [FEATURE](../../loan-campaign-configuration/features/FEATURE_campaign-publication-authorization.md) |
 | **D — Pre-Approval** | Pre-approval request | 6 states: `created`, `pending_approval`, `approved`, `rejected`, `expired`, `converted` | [CAPABILITY](../pre-approval/CAPABILITY.md) |
+| **E — Restructure Application** | Restructure loan application (end-to-end) | Combined view: Topology D (pre-approval) → Topology A (underwriting) with EasyPass routing and change detection | [Topology E diagram below](#topology-e-diagram--restructure-end-to-end) |
 
 All topologies share: transition atomicity, immutable audit trail, configurable execution steps per state.
 
@@ -283,6 +284,36 @@ stateDiagram-v2
     Approved --> Converted_NEP: CO converts to Draft
     Converted_NEP --> Converted_NEP: CO converts again\n(reusable while not expired)
     Approved --> Expired: Expiry date passed\n[system auto]
+```
+
+---
+
+## Topology E Diagram — Restructure Pre-Approval Entry Flow
+
+Entry points and pre-approval journey for restructure applications. Shows how BOS and CO Worklist navigate into the pre-approval lifecycle, through creation, approval, and conversion to Draft.
+
+```mermaid
+flowchart LR
+    BOS(["BOS\nEntry Point"])
+    COW(["CO Worklist\nEntry Point"])
+
+    BOS --> CD["Customer Detail"]
+    CD --> Check{"Pre-Approval\nExists?"}
+
+    Check -- "No approved\npre-approval" --> Create["Creation\n[created]"]
+    Check -- "Approved\npre-approval exists" --> Confirmation
+
+    COW --> Confirmation["Confirmation\n[approved]"]
+
+    Create -- "EasyPass —\nauto-converts" --> Converted["Converted\n[converted]"]
+    Create -- "Non-EasyPass —\nsubmit for approval" --> PA["Pending Approval\n[pending_approval]"]
+
+    PA --> Result{"Result"}
+    Result -- "Approve\n(expiry date set)" --> Confirmation
+    Result -- "Reject" --> Rejected["Rejected\n[rejected]"]
+
+    Confirmation -- "CO converts to Draft\n(reusable)" --> Converted
+    Confirmation -- "Expiry passed\n[system auto]" --> Expired["Expired\n[expired]"]
 ```
 
 ---

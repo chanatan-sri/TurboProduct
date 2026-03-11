@@ -2,7 +2,7 @@
 
 **Author**: Product Owner session — 2026-03-10
 **Branch**: restructure-1.3
-**Status**: Concept confirmed — ready for CAPABILITY.md authoring
+**Status**: Implemented — CAPABILITY.md, feature files, and changelog created. Research updated to reflect all design decisions made during session.
 
 ---
 
@@ -62,9 +62,10 @@ Enable a CO to evaluate which restructure plans a customer is eligible for and p
 
 | Rule | Detail |
 |---|---|
-| EasyPass authority matching | `easypass_enabled = true` means the campaign's assessed risk level falls within local CO authority. A CO initiating a pre-approval for an EasyPass campaign already satisfies the approval authority requirement — no Approval Request is generated. |
-| Non-EasyPass authority gap | `easypass_enabled = false` means the campaign's risk level exceeds local CO authority. Approval Request is required — submitted to the designated approver above local level. |
+| EasyPass authority matching | EasyPass flag returned by pre-built = `true` means the campaign's assessed risk level falls within local CO authority. A CO initiating a pre-approval for an EasyPass campaign already satisfies the approval authority requirement — no Approval Request is generated. Pre-approval auto-converts to Draft on plan selection. |
+| Non-EasyPass authority gap | EasyPass flag = `false` means the campaign's risk level exceeds local CO authority. Approval Request is required — submitted to the designated approver above local level. |
 | EasyPass is not a shortcut | EasyPass is a statement of authority alignment. The CO is not bypassing approval — the CO IS the approval authority for that risk level. |
+| EasyPass source | The EasyPass flag is returned by Campaign Eligibility Pre-Build at evaluation time. It is **not** stored on the campaign configuration. Campaign configuration only stores eligibility and risk criteria — pre-built evaluates them against the customer context and returns the flag. |
 
 ---
 
@@ -81,19 +82,20 @@ Pre-approval runs as **Topology D** on the Underwriting Workflow engine — same
 | `approved` | Approver confirmed. Valid until expiry date. Non-EasyPass path only. |
 | `rejected` | Approver rejected. CO must initiate a new pre-approval request. Non-EasyPass path only. |
 | `expired` | Approved pre-approval passed its expiry date. Invalidated — new request required. Non-EasyPass path only. |
-| `converted` | Draft Initializer used this pre-approval to create an application. Terminal state. |
+| `converted` | Draft Initializer used this pre-approval to create an application. **Not terminal — reusable.** The same pre-approval can generate additional Drafts as long as it is not `rejected` or `expired` (e.g., if a prior Draft was withdrawn or rejected). |
 
 ### Path by EasyPass
 
 ```
 EasyPass (local authority met):
-  created → converted
-  No approval step. No expiry. CO converts directly to Draft.
+  plan selected → created → converted  [auto — no explicit CO convert action]
+  No approval step. No expiry. Draft Initializer triggered automatically on plan selection.
 
 Non-EasyPass (authority gap — escalation required):
-  created → pending_approval → approved (carries expiry) → converted
-                             → rejected
-                             → expired
+  plan selected → created → pending_approval → approved (carries expiry) → converted (reusable)
+                                             → rejected                    ↑ can convert again
+                                             → expired
+  CO converts via BOS (Customer Detail) or CO Worklist.
 ```
 
 ### Expiry Rule
@@ -114,40 +116,78 @@ Non-EasyPass (authority gap — escalation required):
 
 ---
 
-## 6. Feature Inventory
+## 6. Entry Points
 
-| Feature | Description |
-|---|---|
-| **Pre-Approval Request Creation** | CO initiates a pre-approval request for a selected plan + customer. Plan options are sourced from pre-built (external dependency). Plan selection uses Smart Form with Dynamic Field Options feature. |
-| **Approval Request** | Non-EasyPass path only. Pre-approval submitted to designated approver. Outcomes: Approve or Reject. Approver may revise own decision. CO may not. |
-| **Pre-Approval Expiry Management** | Non-EasyPass path only. Approved pre-approval carries an expiry date. System-configured default. Approver may override at approval time. On expiry: pre-approval invalidated, new request required. |
-| **Draft Initializer** | Converts a valid pre-approval (`approved` or EasyPass `created`) into a Draft application. Pre-populates form with selected plan data and existing loan reference. Stores pre-approval snapshot on application record for downstream change detection. Sets `easypass_flag` on application record. |
+Two systems navigate into pre-approval. Each has a defined scope:
+
+| Entry Point | Allowed Actions | Pre-conditions |
+|---|---|---|
+| **BOS** → Customer List → Customer Detail | **Create new pre-approval** — triggers master data fetch from DaVinci + Campaign Eligibility Pre-Build; opens pre-approval screen. Also allows **accessing an existing approved pre-approval** to convert to Draft. | Master data fetch must succeed; pre-built must return ≥1 eligible campaign (creation path). |
+| **CO Worklist** | **Access approved pre-approval only** — navigates CO to the approved record for conversion to Draft. Cannot create a new pre-approval. | Pre-approval must be in `approved` state. |
+
+### Pre-Screen Sequence (BOS — creation path)
+
+Before the pre-approval screen opens, BOS must complete these two calls in sequence:
+
+1. **Master Data Fetch** — Retrieve from DaVinci (Customer & Product Master Data):
+   - Person detail (customer profile, identification)
+   - Contract detail (existing loan reference, outstanding balance, loan status, DPD, prior restructure count, loan age)
+   - Collateral data (collateral type, valuation, status)
+
+2. **Campaign Eligibility Pre-Build** — Called with customer context (including contract and collateral data from step 1). Returns eligible campaigns + EasyPass flag per campaign.
+
+If either call fails or pre-built returns zero eligible campaigns, the pre-approval screen must not open. A snapshot of the fetched master data is stored on the pre-approval record at creation time.
 
 ---
 
-## 7. Application Record Additions
+## 7. Feature Inventory
+
+| Feature | Description |
+|---|---|
+| **Pre-Approval Request Creation** | Entry: BOS only. BOS calls master data fetch from DaVinci, then Campaign Eligibility Pre-Build, before screen opens. Dedicated pre-approval screen (not Smart Form) displays eligible campaigns (name, min/max tenor, EasyPass flag) with client-side EasyPass and tenor filters. CO selects a plan. Pre-approval record created with master data snapshot stored. EasyPass: auto-converts to Draft. Non-EasyPass: persists in `created`. |
+| **Approval Request** | Non-EasyPass path only. Pre-approval submitted to designated approver. Outcomes: Approve or Reject. Approver may revise own decision before `converted`. CO may not. |
+| **Pre-Approval Expiry Management** | Non-EasyPass path only. Approved pre-approval carries an expiry date. System-configured default. Approver may override at approval time. System auto-transitions `approved` → `expired`. Secondary guard at conversion time. EasyPass carries no expiry. |
+| **Draft Initializer** | Converts a valid pre-approval into a Draft. Entry: BOS or CO Worklist (non-EasyPass); auto-triggered for EasyPass. Pre-populates form with selected plan, existing loan reference, and master data snapshot. Sets `easypass_flag`, `pre_approval_id`, `pre_approval_snapshot` on application record. Pre-approval remains reusable after conversion. |
+
+---
+
+## 8. Application Record Additions
+
+### Pre-Approval Record Fields (stored at creation time)
+
+| Field | Type | Source | Purpose |
+|---|---|---|---|
+| `customer_reference` | reference | BOS context | Links pre-approval to the customer |
+| `selected_campaign` | reference | CO plan selection | Campaign chosen from pre-built results |
+| `easypass_flag` | boolean | Pre-built output | Determines approval path |
+| `reason_for_restructure` | enum | CO dropdown selection (required) | Reason type — surfaced to approver |
+| `reason_detail` | string | CO free-text (optional) | Additional explanation — surfaced to approver |
+| `supporting_documents` | reference[] | CO file upload (optional) | Document references (e.g. medical cert, income proof) — accessible by approver |
+| `financial_snapshot` | JSON | CO-reviewed (pre-filled from DaVinci, editable) | Primary income, supplementary income, monthly debt burden, debt end date, monthly expenses, tax due date — surfaced to approver in Approval Request view |
+
+### Application Record Fields (set by Draft Initializer at conversion)
 
 | Field | Type | Set by | Purpose |
 |---|---|---|---|
-| `easypass_flag` | boolean | Draft Initializer (from campaign `easypass_enabled`) | Drives approval routing at `pending_approval` in the full workflow |
+| `easypass_flag` | boolean | Draft Initializer (from pre-built) | Drives approval routing at `pending_approval` in the full workflow |
 | `pre_approval_id` | reference | Draft Initializer | Links application to originating pre-approval for audit trail and change detection |
-| `pre_approval_snapshot` | JSON | Draft Initializer | Point-in-time copy of pre-approval data for change detection at Draft submission |
+| `pre_approval_snapshot` | JSON | Draft Initializer | Point-in-time copy of pre-approval data (including master data snapshot and reason for restructure) — compared at Draft submission for change detection |
 
 Note: There is no `restructure_flag` on the application record. The campaign's `campaign_type = restructure` implicitly identifies the application type. The `easypass_flag` on the application record is set by the Draft Initializer based on the value returned by pre-built — not from the campaign configuration.
 
 ---
 
-## 8. Changes to Existing Capabilities
+## 9. Changes to Existing Capabilities
 
-### 8a. Smart Form — New Feature
+### 8a. Smart Form — No Change
 
-**Dynamic Field Options**: Enables a `select` field to bind its option list to an external service response at render time, rather than static configured values. Required by Pre-Approval Request Creation to surface eligible plan options from pre-built.
+Pre-approval plan selection is a **dedicated screen**, not a Smart Form. Smart Form is used for the Draft application form after conversion. Dynamic Field Options (previously proposed) is not needed and has been removed.
 
-New field definition property:
+The dedicated pre-approval screen renders eligible campaigns from the pre-built response directly, with client-side filtering by:
+- **EasyPass** — All / EasyPass only / Non-EasyPass only
+- **Tenor** — Numeric range input; filters campaigns whose min–max tenor overlaps the CO's input
 
-| Property | Description |
-|---|---|
-| `options_source` | (Optional) External service endpoint that returns the option list at render time. When present, overrides any static `options` configuration. |
+Each campaign card displays: campaign name, min/max tenor, EasyPass indicator.
 
 ### 8b. Loan Campaign Configuration — Additive Changes
 
@@ -161,27 +201,41 @@ Add one new row to the existing `### Campaign Types` table in the CAPABILITY.md:
 
 ### 8c. Underwriting Workflow — Additive Changes
 
-**1. Register Topology D**
+**1. Register Topology D and Topology E**
 
 | Topology | Entity | States |
 |---|---|---|
 | D — Pre-Approval | Pre-approval request | `created`, `pending_approval`, `approved`, `rejected`, `expired`, `converted` |
+| E — Restructure Application | Restructure loan application (end-to-end) | Combined view: Topology D (pre-approval) → Topology A (underwriting) with EasyPass routing and change detection |
 
 **2. New state: `pre_approval`**
 
 Added to Topology D. Runs on the same workflow engine. Pre-HWM — does not write to `state_high_water_mark`. HWM begins at `draft` as in Topology A.
 
-**3. EasyPass routing at `pending_approval` (Topology A — Restructure applications)**
+**3. Topology E Entry Flow Diagram**
+
+Topology E uses a flowchart design (not stateDiagram-v2) to show entry points explicitly. Two entry boxes — BOS and CO Worklist — lead into the pre-approval journey:
+
+- **BOS → Customer Detail → Check Pre-Approval**:
+  - No approved pre-approval → Creation `[created]`
+    - EasyPass: auto-converts to `[converted]`
+    - Non-EasyPass: submits for Approval → Pending Approval `[pending_approval]` → Result → Confirmation `[approved]` or Rejected `[rejected]`
+  - Approved pre-approval exists → Confirmation `[approved]`
+- **CO Worklist** → Confirmation `[approved]` directly (access-only — cannot create)
+- From Confirmation: CO converts to Draft `[converted]` (reusable); or system auto-expires `[expired]`
+
+**4. EasyPass routing at `pending_approval` (Topology A — Restructure applications)**
 
 At `pending_approval` state entry for restructure applications, a configurable execution step evaluates `easypass_flag` on the application record and sets the approver queue:
 
-| `easypass_flag` | Risk Level | Approval Route |
-|---|---|---|
-| `true` | LOW | Local approver (CO authority satisfied) |
-| `true` | MEDIUM / HIGH | Escalate — risk level overrides EasyPass |
-| `false` | Any | Standard escalation path (CA or higher) |
+| `easypass_flag` | Approval Route |
+|---|---|
+| `true` | Local approver — CO authority already satisfies the risk level by design (EasyPass campaigns only produce local-authority risk) |
+| `false` | Standard escalation path (designated higher authority) |
 
-**4. Change detection execution step at Draft submission (Non-EasyPass restructure applications only)**
+**Note**: There is no MEDIUM/HIGH override for EasyPass. EasyPass by design only designates campaigns whose risk level falls within local authority. A campaign that could produce MEDIUM/HIGH risk would not be designated EasyPass by pre-built.
+
+**5. Change detection execution step at Draft submission (Non-EasyPass restructure applications only)**
 
 At Draft submission, for applications with a `pre_approval_id` and `easypass_flag = false`:
 
@@ -193,7 +247,7 @@ At Draft submission, for applications with a `pre_approval_id` and `easypass_fla
 
 ---
 
-## 9. Full Workflow Paths for Restructure
+## 10. Full Workflow Paths for Restructure
 
 ### Path A — EasyPass, via pre-approval
 ```
@@ -224,7 +278,7 @@ Draft → Risk Assessment → pending_approval (full routing, unchanged)
 
 ---
 
-## 10. Files to Create / Modify
+## 11. Files to Create / Modify
 
 ### Files to CREATE
 
@@ -242,16 +296,17 @@ Draft → Risk Assessment → pending_approval (full routing, unchanged)
 | File | Change |
 |---|---|
 | `PRODUCT.md` | Add pre-approval to capability registry; update user flow with Topology D paths; update Product Boundary IS section |
-| `capabilities/smart-form/CAPABILITY.md` | Add Dynamic Field Options to feature inventory; add `options_source` to field definition properties |
+| `capabilities/smart-form/CAPABILITY.md` | No change — Dynamic Field Options removed; pre-approval uses a dedicated screen, not Smart Form |
 | `capabilities/loan-campaign-configuration/CAPABILITY.md` | Add `restructure` row to Campaign Types table |
 | `capabilities/underwriting-workflow/CAPABILITY.md` | Register Topology D; add `pre_approval` state; add EasyPass routing rule at `pending_approval`; add change detection execution step |
 
 ---
 
-## 11. Open Dependencies (Not in Scope for 1.3)
+## 12. Open Dependencies (Not in Scope for 1.3)
 
-| Dependency | Detail |
-|---|---|
-| `pre-built` capability | Provides campaign eligibility results consumed by Pre-Approval Request Creation. Exists separately — not defined here. Interface: returns eligible campaigns for a given customer + loan context. |
-| Existing loan data source | Pre-approval check may need existing loan status (DPD, balance, prior restructure count). Candidate sources: Core Banking (live) and/or Genesis (Contract & Collateral Master Data). Resolution deferred. |
-| Sensei notification | When Approval Request is submitted, approver notification via Sensei TaskCreationRequest. Deferred — not in scope for 1.3. |
+| Dependency | Status | Detail |
+|---|---|---|
+| `pre-built` capability | Open — external | Provides campaign eligibility results consumed by Pre-Approval Request Creation. Exists separately — not defined here. Interface: returns eligible campaigns for a given customer + loan context + EasyPass flag per campaign. |
+| DaVinci (Customer & Product Master Data) | **Resolved** | Source of person detail, contract detail, and collateral data. Called by BOS before pre-approval screen opens. Data used as context for CO and passed to pre-built as input. |
+| Sensei notification | Deferred | When Approval Request is submitted, approver notification via Sensei TaskCreationRequest. Deferred — not in scope for 1.3. |
+| CO Worklist implementation | Open — Sensei/BOS | CO Worklist must surface approved pre-approvals as actionable items. Implementation owner (Sensei or BOS) not yet resolved. |

@@ -17,11 +17,24 @@ Pre-approval captures a confirmed plan and customer context. Converting it to Dr
 
 ---
 
+## Entry Points
+
+The Draft Initializer can be reached via two routes for non-EasyPass approvals:
+
+| Entry | When Available | Description |
+|---|---|---|
+| **BOS** → Customer Detail → Pre-Approval | Pre-approval in `approved` state | CO navigates to the pre-approval screen from BOS and triggers Convert to Draft. |
+| **CO Worklist** | Pre-approval in `approved` state | Approved pre-approval surfaced in the CO's worklist. CO opens it directly and triggers Convert to Draft. |
+
+EasyPass path has no manual entry — Draft Initializer is triggered automatically on plan selection.
+
+---
+
 ## Acceptance Criteria
 
 1. Draft Initializer is triggered:
    - **EasyPass**: automatically on plan selection — no explicit CO action required. Pre-approval moves directly to `converted`.
-   - **Non-EasyPass**: CO-initiated Convert to Draft action, available when pre-approval is in `approved` or `converted` state (not expired).
+   - **Non-EasyPass**: CO-initiated Convert to Draft action, available from BOS or CO Worklist when pre-approval is in `approved` or `converted` state (not expired).
 2. On conversion, a new Draft application is created pre-populated with:
    - Selected campaign from the pre-approval
    - Existing loan reference

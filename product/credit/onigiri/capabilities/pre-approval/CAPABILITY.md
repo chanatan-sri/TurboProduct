@@ -24,7 +24,7 @@ Enable a CO to evaluate which restructure plans a customer is eligible for and p
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| [Pre-Approval Request Creation](features/FEATURE_pre-approval-request-creation.md) | Concept | CO arrives at pre-approval screen from BOS Customer Detail. Eligible campaigns are already loaded — Pre-Build was called by BOS before the screen opened. CO selects a plan. Pre-approval record created on plan selection. |
+| [Pre-Approval Request Creation](features/FEATURE_pre-approval-request-creation.md) | Concept | CO arrives at a dedicated pre-approval screen (not Smart Form) from BOS Customer Detail. Master data (person detail, contract detail, collateral) fetched from DaVinci, then Pre-Build called — both before screen opens. Screen displays eligible campaigns (name, min/max tenor, EasyPass flag) with EasyPass and tenor filters. CO selects a plan. Pre-approval record created on plan selection with master data snapshot stored. |
 | [Approval Request](features/FEATURE_approval-request.md) | Concept | Non-EasyPass path only. Pre-approval submitted to designated approver. Outcomes: Approve or Reject. Approver may revise own decision. CO may not. |
 | [Pre-Approval Expiry Management](features/FEATURE_pre-approval-expiry-management.md) | Concept | Non-EasyPass path only. Approved pre-approval carries an expiry date. System-configured default. Approver may override at approval time. Expired pre-approval is invalidated — new request required. |
 | [Draft Initializer](features/FEATURE_draft-initializer.md) | Concept | Converts a valid pre-approval into a Draft application. Pre-populates form with selected plan data and existing loan reference. Stores pre-approval snapshot on application record. Sets `easypass_flag` from pre-built output. Terminal action for this capability — full workflow continues from Draft. |
@@ -96,27 +96,44 @@ Applies to **non-EasyPass restructure applications only** — where a higher-aut
 | `pre_approval_id` present + `easypass_flag = false` + delta detected | Route through `pending_approval` as normal |
 | No `pre_approval_id` (direct restructure application, no pre-approval) | Full workflow — `pending_approval` runs unchanged |
 
+### Pre-Approval Record Fields (stored at creation)
+
+| Field | Type | Source | Purpose |
+|---|---|---|---|
+| `customer_reference` | reference | BOS context | Links pre-approval to the customer |
+| `selected_campaign` | reference | CO plan selection | Campaign chosen by CO from pre-built results |
+| `easypass_flag` | boolean | Pre-built output | Determines approval path — no Approval Request for EasyPass |
+| `reason_for_restructure` | enum | CO dropdown selection (required) | Reason type selected by CO — surfaced to approver |
+| `reason_detail` | string | CO free-text (optional) | Additional explanation beyond the reason type — surfaced to approver |
+| `supporting_documents` | reference[] | CO file upload (optional) | Document references (e.g. medical cert, income proof) — accessible by approver |
+| `financial_snapshot` | JSON | CO-reviewed (pre-filled from DaVinci, editable) | CO-reviewed financial figures: primary income, supplementary income, monthly debt burden, debt end date, monthly expenses, tax due date — surfaced to approver in Approval Request view |
+
 ### Application Record Fields Set by Draft Initializer
 
 | Field | Type | Source | Purpose |
 |---|---|---|---|
 | `easypass_flag` | boolean | Pre-built output (via Draft Initializer) | Drives approval routing at `pending_approval` in full workflow |
 | `pre_approval_id` | reference | Draft Initializer | Links application to originating pre-approval for audit trail and change detection |
-| `pre_approval_snapshot` | JSON | Draft Initializer | Point-in-time copy of pre-approval data — compared at Draft submission for change detection |
+| `pre_approval_snapshot` | JSON | Draft Initializer | Point-in-time copy of pre-approval data (including master data snapshot and reason for restructure) — compared at Draft submission for change detection |
 
 ---
 
 ## User Flows
 
-### Entry Point
+### Entry Points
 
-Pre-approval is entered from BOS → Customer List → Customer Detail. Before the pre-approval screen opens, BOS calls Campaign Eligibility Pre-Build with the customer context. The CO arrives on the pre-approval screen with eligible campaigns already loaded — no loading step inside pre-approval itself.
+Two systems can navigate into pre-approval. Each has a defined scope:
+
+| Entry Point | Allowed Actions | Pre-conditions |
+|---|---|---|
+| **BOS** (Branch Operations System) → Customer List → Customer Detail | **Create new pre-approval** — triggers master data fetch from DaVinci, then Campaign Eligibility Pre-Build; opens pre-approval screen with eligible campaigns loaded. Also allows **accessing an existing approved pre-approval** to convert to Draft. | Master data fetch must succeed; pre-built must return at least one eligible campaign (for creation path). |
+| **CO Worklist** | **Access an existing approved pre-approval only** — navigates CO directly to the approved pre-approval for conversion to Draft. Cannot initiate a new pre-approval from this entry. | Pre-approval must be in `approved` state. |
 
 ### EasyPass Path
 
 ```mermaid
 flowchart TD
-    A[BOS Customer Detail\nPre-Build already called\neligible campaigns loaded] --> B[CO selects EasyPass campaign]
+    A[BOS Customer Detail\nmaster data fetched\npre-built called\neligible campaigns loaded] --> B[CO selects EasyPass campaign]
     B --> C[Pre-approval record created\nstate: created]
     C --> D[Auto-converts to Draft\nDraft Initializer pre-populates form\neasypass_flag = true\nstate: converted]
     D --> E[Draft application created\n→ continues in Underwriting Workflow]
@@ -126,15 +143,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[BOS Customer Detail\nPre-Build already called\neligible campaigns loaded] --> B[CO selects non-EasyPass campaign]
+    A[BOS Customer Detail\nmaster data fetched\npre-built called\neligible campaigns loaded] --> B[CO selects non-EasyPass campaign]
     B --> C[Pre-approval record created\nstate: created]
     C --> D[CO submits Approval Request\nstate: pending_approval]
     D --> E{Approver Decision}
     E -- Reject --> F[state: rejected\nCO must start new request]
     E -- Approve --> G[state: approved\nExpiry date set]
-    G --> H{Converted\nbefore expiry?}
+    G --> H{CO converts\nbefore expiry?}
     H -- No --> I[state: expired\nCO must start new request]
-    H -- Yes --> J[Draft Initializer pre-populates form\neasypass_flag = false\npre_approval_snapshot stored\nstate: converted]
+    H -- Yes, via BOS --> J[Draft Initializer pre-populates form\neasypass_flag = false\npre_approval_snapshot stored\nstate: converted]
+    H -- Yes, via CO Worklist --> J
     J --> K[Draft application created\n→ continues in Underwriting Workflow]
 ```
 
@@ -156,10 +174,11 @@ flowchart TD
 
 | Dependency | Type | Detail |
 |---|---|---|
-| BOS (Branch Operations System) | Entry point | Pre-approval is initiated from BOS Customer Detail. BOS calls Campaign Eligibility Pre-Build before opening the pre-approval screen. Customer and existing loan context are provided by BOS. |
-| Campaign Eligibility Pre-Build | External capability | Called by BOS before the pre-approval screen opens. Returns eligible restructure campaigns + EasyPass flag per campaign. Not defined in this capability. |
-| Smart Form — Dynamic Field Options | Feature dependency | Required to render plan selection options sourced dynamically from pre-built. Must be available before Pre-Approval Request Creation can be built. |
-| Existing loan data source | Open | Pre-Build needs existing loan status (DPD, balance, prior restructure count). Source — Core Banking and/or Genesis — not yet resolved. Out of scope for 1.3. |
+| BOS (Branch Operations System) | Entry point | Two modes: (1) Create new pre-approval — BOS orchestrates master data fetch from DaVinci then Campaign Eligibility Pre-Build before opening the pre-approval screen. (2) Access existing approved pre-approval — BOS navigates CO to the approved record for conversion to Draft. |
+| CO Worklist | Entry point | Access-only. CO can navigate to an approved pre-approval from their worklist to convert it to Draft. Cannot create a new pre-approval from this entry. Pre-approval must be in `approved` state. |
+| DaVinci (Customer & Product Master Data) | Data source | Provides person detail, contract detail (outstanding balance, DPD, loan status, prior restructure count, loan age, existing loan reference), and collateral data (type, valuation, status) by customer/contract reference. Called before screen opens. |
+| Campaign Eligibility Pre-Build | External capability | Called by BOS after master data fetch. Receives customer context including contract and collateral data. Returns eligible restructure campaigns + EasyPass flag per campaign. Not defined in this capability. |
+| Smart Form | Form rendering | Used for the Draft application form after conversion. Pre-approval plan selection screen is a dedicated screen — not Smart Form. |
 | Sensei notification | Deferred | Approver notification via Sensei TaskCreationRequest when Approval Request is submitted. Out of scope for restructure 1.3. |
 
 ---
