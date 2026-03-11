@@ -93,6 +93,9 @@ Master research document capturing all design decisions, scope boundaries, featu
 | `converted` is not terminal | A pre-approval may need to generate multiple Drafts if prior attempts are withdrawn or rejected. Marking `converted` terminal would force unnecessary re-approval cycles. |
 | CO Worklist as second entry point (read/convert only) | COs should not have to navigate back through BOS Customer Detail to action an already-approved pre-approval. CO Worklist surfaces actionable items directly. Creation remains BOS-only (requires customer context to call pre-built). |
 | Master data fetch from DaVinci added to pre-approval entry | Pre-Build requires contract and collateral context to evaluate restructure eligibility criteria. Fetching this data upfront also populates the CO's read-only context panel — no redundant API calls. |
+| Plan Calculation API added as third pre-condition step | Pre-Build returns eligible campaigns but not specific plan options. A separate Plan Calculation API is required to determine what plan options are actually available per campaign for this customer (tenor, grace period, term of payment). Screen cannot open without valid plan options. |
+| Tenor filter enforces restructure validity | A restructure must always result in a longer tenor than the original loan — the intent is to reduce monthly payment burden. Tenor options ≤ original loan tenor are disabled client-side. If no plan option exceeds the original tenor, the screen is blocked. |
+| `selected_plan` added to pre-approval record | Pre-approval must store the specific plan option selected (tenor, grace period, term) alongside the campaign reference — the campaign reference alone is insufficient to reconstruct the agreed plan. |
 
 ---
 

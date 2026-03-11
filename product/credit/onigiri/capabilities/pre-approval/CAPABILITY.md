@@ -24,7 +24,7 @@ Enable a CO to evaluate which restructure plans a customer is eligible for and p
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| [Pre-Approval Request Creation](features/FEATURE_pre-approval-request-creation.md) | Concept | CO arrives at a dedicated pre-approval screen (not Smart Form) from BOS Customer Detail. Master data (person detail, contract detail, collateral) fetched from DaVinci, then Pre-Build called — both before screen opens. Screen displays eligible campaigns (name, min/max tenor, EasyPass flag) with EasyPass and tenor filters. CO selects a plan. Pre-approval record created on plan selection with master data snapshot stored. |
+| [Pre-Approval Request Creation](features/FEATURE_pre-approval-request-creation.md) | Concept | CO arrives at a dedicated pre-approval screen (not Smart Form) from BOS Customer Detail. Three pre-condition calls in sequence: (1) DaVinci master data fetch, (2) Campaign Eligibility Pre-Build → eligible campaigns with EasyPass designation, (3) Plan Calculation API → available plan options per campaign (tenor, grace period, term of payment). Screen displays plan options with EasyPass and tenor filters. Tenor options ≤ original loan tenor are disabled. CO selects a plan option. Pre-approval record created with master data snapshot and selected plan stored. |
 | [Approval Request](features/FEATURE_approval-request.md) | Concept | Non-EasyPass path only. Pre-approval submitted to designated approver. Outcomes: Approve or Reject. Approver may revise own decision. CO may not. |
 | [Pre-Approval Expiry Management](features/FEATURE_pre-approval-expiry-management.md) | Concept | Non-EasyPass path only. Approved pre-approval carries an expiry date. System-configured default. Approver may override at approval time. Expired pre-approval is invalidated — new request required. |
 | [Draft Initializer](features/FEATURE_draft-initializer.md) | Concept | Converts a valid pre-approval into a Draft application. Pre-populates form with selected plan data and existing loan reference. Stores pre-approval snapshot on application record. Sets `easypass_flag` from pre-built output. Terminal action for this capability — full workflow continues from Draft. |
@@ -86,6 +86,20 @@ Non-EasyPass (authority gap — escalation required):
 
 **Why expiry exists**: An approved pre-approval is a snapshot of campaign terms, eligibility conditions, and risk assessment at a point in time. If any of these change (campaign archived, eligibility rules updated, risk strategy revised), the pre-approval may no longer reflect valid conditions. Expiry enforces a recheck cadence.
 
+### Tenor Filter Business Rule
+
+Restructure is intended to extend the repayment period for customers whose ability to pay has reduced. A restructure that results in a tenor equal to or shorter than the original loan does not serve this purpose.
+
+| Condition | Behaviour |
+|---|---|
+| Plan option tenor > original loan tenor | Available — CO may select |
+| Plan option tenor ≤ original loan tenor | Disabled — CO cannot select; option displayed but not interactive |
+| All plan options for a campaign have tenor ≤ original loan tenor | No valid options for that campaign — campaign not selectable |
+
+Original loan tenor is sourced from DaVinci contract detail at master data fetch time.
+
+---
+
 ### Change Detection at Draft Submission
 
 Applies to **non-EasyPass restructure applications only** — where a higher-authority approver reviewed the plan at pre-approval stage. Executed as a configurable execution step inside the Underwriting Workflow at Draft submission.
@@ -101,7 +115,8 @@ Applies to **non-EasyPass restructure applications only** — where a higher-aut
 | Field | Type | Source | Purpose |
 |---|---|---|---|
 | `customer_reference` | reference | BOS context | Links pre-approval to the customer |
-| `selected_campaign` | reference | CO plan selection | Campaign chosen by CO from pre-built results — campaign type carries EasyPass designation |
+| `selected_campaign` | reference | CO plan selection | Campaign chosen by CO — campaign type carries EasyPass designation |
+| `selected_plan` | JSON | CO plan selection | Selected plan option from Plan Calculation API: tenor, grace period, term of payment |
 | `reason_for_restructure` | enum | CO dropdown selection (required) | Reason type selected by CO — surfaced to approver |
 | `reason_detail` | string | CO free-text (optional) | Additional explanation beyond the reason type — surfaced to approver |
 | `supporting_documents` | reference[] | CO file upload (optional) | Document references (e.g. medical cert, income proof) — accessible by approver |
@@ -177,7 +192,8 @@ flowchart TD
 | BOS (Branch Operations System) | Entry point | Two modes: (1) Create new pre-approval — BOS orchestrates master data fetch from DaVinci then Campaign Eligibility Pre-Build before opening the pre-approval screen. (2) Access existing approved pre-approval — BOS navigates CO to the approved record for conversion to Draft. |
 | CO Worklist | Entry point | Access-only. CO can navigate to an approved pre-approval from their worklist to convert it to Draft. Cannot create a new pre-approval from this entry. Pre-approval must be in `approved` state. |
 | DaVinci (Customer & Product Master Data) | Data source | Provides person detail, contract detail (outstanding balance, DPD, loan status, prior restructure count, loan age, existing loan reference), and collateral data (type, valuation, status) by customer/contract reference. Called before screen opens. |
-| Campaign Eligibility Pre-Build | External capability | Called by BOS after master data fetch. Receives customer context including contract and collateral data. Returns eligible restructure campaigns + EasyPass flag per campaign. Not defined in this capability. |
+| Campaign Eligibility Pre-Build | External capability | Called by BOS after master data fetch. Receives customer context including contract and collateral data. Returns eligible restructure campaigns with EasyPass designation per campaign. Not defined in this capability. |
+| Plan Calculation API | External capability | Called after Pre-Build with eligible campaigns and customer loan context. Returns available plan options per campaign — each option defined by tenor, grace period, and term of payment. Screen does not open if this call fails or returns no options. |
 | Smart Form | Form rendering | Used for the Draft application form after conversion. Pre-approval plan selection screen is a dedicated screen — not Smart Form. |
 | Sensei notification | Deferred | Approver notification via Sensei TaskCreationRequest when Approval Request is submitted. Out of scope for restructure 1.3. |
 

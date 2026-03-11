@@ -127,16 +127,22 @@ Two systems navigate into pre-approval. Each has a defined scope:
 
 ### Pre-Screen Sequence (BOS — creation path)
 
-Before the pre-approval screen opens, BOS must complete these two calls in sequence:
+Before the pre-approval screen opens, BOS must complete these three calls in sequence:
 
 1. **Master Data Fetch** — Retrieve from DaVinci (Customer & Product Master Data):
    - Person detail (customer profile, identification)
-   - Contract detail (existing loan reference, outstanding balance, loan status, DPD, prior restructure count, loan age)
+   - Contract detail (existing loan reference, outstanding balance, loan status, DPD, prior restructure count, loan age, **original loan tenor**)
    - Collateral data (collateral type, valuation, status)
 
-2. **Campaign Eligibility Pre-Build** — Called with customer context (including contract and collateral data from step 1). Returns eligible campaigns + EasyPass flag per campaign.
+2. **Campaign Eligibility Pre-Build** — Called with customer context (including contract and collateral data from step 1). Returns eligible campaigns with EasyPass designation per campaign.
 
-If either call fails or pre-built returns zero eligible campaigns, the pre-approval screen must not open. A snapshot of the fetched master data is stored on the pre-approval record at creation time.
+3. **Plan Calculation API** — Called with eligible campaigns and customer loan context. Returns available plan options per campaign. Each plan option is defined by: **tenor**, **grace period**, and **term of payment**. A campaign may have multiple plan options (e.g. different tenor lengths, different grace periods).
+
+If any call fails, or if pre-built returns zero eligible campaigns, or if plan calculation returns no options, the pre-approval screen must not open. A snapshot of the fetched master data is stored on the pre-approval record at creation time.
+
+### Tenor Filter Rule
+
+Restructure must always extend the repayment period — a restructure is only valid if the new tenor exceeds the customer's original loan tenor. Plan options with tenor ≤ original loan tenor are displayed as disabled on the tenor filter and cannot be selected. This is enforced client-side using the original loan tenor from the DaVinci contract detail.
 
 ---
 
@@ -159,6 +165,7 @@ If either call fails or pre-built returns zero eligible campaigns, the pre-appro
 |---|---|---|---|
 | `customer_reference` | reference | BOS context | Links pre-approval to the customer |
 | `selected_campaign` | reference | CO plan selection | Campaign chosen from pre-built results — campaign type carries EasyPass designation |
+| `selected_plan` | JSON | CO plan selection | Plan option from Plan Calculation API: tenor, grace period, term of payment |
 | `reason_for_restructure` | enum | CO dropdown selection (required) | Reason type — surfaced to approver |
 | `reason_detail` | string | CO free-text (optional) | Additional explanation — surfaced to approver |
 | `supporting_documents` | reference[] | CO file upload (optional) | Document references (e.g. medical cert, income proof) — accessible by approver |
