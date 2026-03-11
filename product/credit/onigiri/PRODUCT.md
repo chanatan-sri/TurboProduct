@@ -74,6 +74,7 @@ A single configurable platform that governs the full loan application lifecycle 
 | [Loan Campaign Configuration](capabilities/loan-campaign-configuration/CAPABILITY.md) | Product | Draft | Single configuration umbrella per loan product: pricing, eligibility rules, application template, risk strategy, workflow execution steps. Zero code changes for new campaigns. |
 | [Risk Assessment Engine](capabilities/risk-assessment-engine/CAPABILITY.md) | Engineering | Draft | JMESPath-based configurable rule engine. Strategy → Policy → Rule hierarchy. Produces max risk level, deviation flags, conditional document requirements. Full evaluation trace for audit. |
 | [Disbursement Orchestration](capabilities/disbursement-orchestration/CAPABILITY.md) | Engineering | Draft | Owns post-document-verification states: receiver account pre-check (draft gate), Matcha callback routing from `pending_document_checking` (approved/returned/referred), loan officer confirm/reject from `waiting_for_confirmation`, system `waiting_create_facility`, Core Banking COMPLETE callback routing (Success / Reject). |
+| [Product Type Configuration](capabilities/product-type-configuration/CAPABILITY.md) | Product | Draft | Self-service collateral type definition: template-based form section builder, document requirement declaration with conditional rules, Onigiri-owned document type registry with Matcha sync. Two-tier approval (CPO + Risk Officer → CRO). Upstream enabler for Campaign Configuration. |
 
 ---
 
