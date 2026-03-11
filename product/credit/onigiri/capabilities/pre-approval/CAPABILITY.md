@@ -48,7 +48,7 @@ Pre-approval runs as **Topology D** on the Underwriting Workflow engine — same
 
 | State | Description |
 |---|---|
-| `created` | Pre-approval record created after CO selects plan from pre-built results. For EasyPass plans, this state is transient — auto-converts to Draft immediately. For non-EasyPass plans, stays here until CO submits Approval Request; persists if CO closes without submitting. |
+| `created` | Pre-approval record created after CO selects plan from pre-built results. For EasyPass plans, stays here until CO converts to Draft — no Approval Request required (approval step bypassed). For non-EasyPass plans, stays here until CO submits Approval Request; persists if CO closes without submitting. |
 | `pending_approval` | Submitted for Approval Request. Waiting for designated approver. Non-EasyPass path only. |
 | `approved` | Approver confirmed. Valid until expiry date. Non-EasyPass path only. |
 | `rejected` | Approver rejected. CO must initiate a new pre-approval request. Non-EasyPass path only. |
@@ -62,7 +62,7 @@ Pre-approval runs as **Topology D** on the Underwriting Workflow engine — same
 ```
 EasyPass (local authority met):
   plan selected → created → converted → Draft application created
-                            [auto — no explicit CO convert action]
+                            [CO converts — approval step bypassed, no Approval Request]
 
 Non-EasyPass (authority gap — escalation required):
   plan selected → created → pending_approval → approved → converted (reusable) → Draft application created
@@ -135,7 +135,7 @@ Two systems can navigate into pre-approval. Each has a defined scope:
 flowchart TD
     A[BOS Customer Detail\nmaster data fetched\npre-built called\neligible campaigns loaded] --> B[CO selects EasyPass campaign]
     B --> C[Pre-approval record created\nstate: created]
-    C --> D[Auto-converts to Draft\nDraft Initializer pre-populates form\neasypass_flag = true\nstate: converted]
+    C --> D[CO converts to Draft\napproval step bypassed\nDraft Initializer pre-populates form\neasypass_flag = true\nstate: converted]
     D --> E[Draft application created\n→ continues in Underwriting Workflow]
 ```
 

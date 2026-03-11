@@ -54,8 +54,8 @@ Financial fields pre-filled from DaVinci: primary income, supplementary income, 
 3. CO must select a reason for restructure before confirming. Additional detail and document upload are optional.
 4. CO can filter and select one campaign from the pre-built results.
 5. On confirmation, a pre-approval record is created storing: selected campaign, customer reference, financial snapshot (CO-reviewed), reason for restructure, additional detail, and supporting document references.
-6. EasyPass: pre-approval auto-converts to Draft immediately on confirmation — no further CO action needed.
-7. Non-EasyPass: pre-approval is created in `created` state. CO proceeds via Approval Request separately.
+6. EasyPass: pre-approval is created in `created` state. Approval step is bypassed — CO converts to Draft directly without submitting an Approval Request.
+7. Non-EasyPass: pre-approval is created in `created` state. CO must submit an Approval Request and wait for approver decision before converting to Draft.
 8. A non-EasyPass record in `created` state persists if the CO closes without proceeding — it is not discarded.
 
 ---

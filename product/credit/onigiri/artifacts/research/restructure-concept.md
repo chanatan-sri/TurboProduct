@@ -62,7 +62,7 @@ Enable a CO to evaluate which restructure plans a customer is eligible for and p
 
 | Rule | Detail |
 |---|---|
-| EasyPass authority matching | EasyPass flag returned by pre-built = `true` means the campaign's assessed risk level falls within local CO authority. A CO initiating a pre-approval for an EasyPass campaign already satisfies the approval authority requirement — no Approval Request is generated. Pre-approval auto-converts to Draft on plan selection. |
+| EasyPass authority matching | EasyPass flag returned by pre-built = `true` means the campaign's assessed risk level falls within local CO authority. A CO initiating a pre-approval for an EasyPass campaign already satisfies the approval authority requirement — no Approval Request is generated. The approval step is bypassed: CO converts directly from `created` to Draft without submitting an Approval Request. |
 | Non-EasyPass authority gap | EasyPass flag = `false` means the campaign's risk level exceeds local CO authority. Approval Request is required — submitted to the designated approver above local level. |
 | EasyPass is not a shortcut | EasyPass is a statement of authority alignment. The CO is not bypassing approval — the CO IS the approval authority for that risk level. |
 | EasyPass source | The EasyPass flag is returned by Campaign Eligibility Pre-Build at evaluation time. It is **not** stored on the campaign configuration. Campaign configuration only stores eligibility and risk criteria — pre-built evaluates them against the customer context and returns the flag. |
@@ -88,8 +88,8 @@ Pre-approval runs as **Topology D** on the Underwriting Workflow engine — same
 
 ```
 EasyPass (local authority met):
-  plan selected → created → converted  [auto — no explicit CO convert action]
-  No approval step. No expiry. Draft Initializer triggered automatically on plan selection.
+  plan selected → created → converted  [CO converts — approval step bypassed, no Approval Request]
+  No approval step. No expiry. CO converts to Draft directly from created state.
 
 Non-EasyPass (authority gap — escalation required):
   plan selected → created → pending_approval → approved (carries expiry) → converted (reusable)

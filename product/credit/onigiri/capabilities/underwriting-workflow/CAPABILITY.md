@@ -275,7 +275,7 @@ stateDiagram-v2
     }
 
     [*] --> Created_EP: EasyPass plan selected
-    Created_EP --> Converted_EP: Auto-converts to Draft
+    Created_EP --> Converted_EP: CO converts to Draft\n(approval bypassed)
 
     [*] --> Created_NEP: Non-EasyPass plan selected
     Created_NEP --> PendingApproval: CO submits Approval Request
@@ -305,7 +305,7 @@ flowchart LR
 
     COW --> Confirmation["Confirmation\n[approved]"]
 
-    Create -- "EasyPass —\nauto-converts" --> Converted["Converted\n[converted]"]
+    Create -- "EasyPass —\napproval bypassed\nCO converts" --> Converted["Converted\n[converted]"]
     Create -- "Non-EasyPass —\nsubmit for approval" --> PA["Pending Approval\n[pending_approval]"]
 
     PA --> Result{"Result"}
