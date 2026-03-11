@@ -166,6 +166,7 @@ Restructure must always extend the repayment period — a restructure is only va
 | `customer_reference` | reference | BOS context | Links pre-approval to the customer |
 | `selected_campaign` | reference | CO plan selection | Campaign chosen from pre-built results — campaign type carries EasyPass designation |
 | `selected_plan` | JSON | CO plan selection | Plan option from Plan Calculation API: tenor, grace period, term of payment |
+| `payment_due_date` | date | CO-confirmed (pre-filled from DaVinci, editable) | Monthly payment due date — input to Plan Calculation; recalculates available options when changed |
 | `reason_for_restructure` | enum | CO dropdown selection (required) | Reason type — surfaced to approver |
 | `reason_detail` | string | CO free-text (optional) | Additional explanation — surfaced to approver |
 | `supporting_documents` | reference[] | CO file upload (optional) | Document references (e.g. medical cert, income proof) — accessible by approver |

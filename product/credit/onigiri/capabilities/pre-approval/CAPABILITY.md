@@ -117,6 +117,7 @@ Applies to **non-EasyPass restructure applications only** — where a higher-aut
 | `customer_reference` | reference | BOS context | Links pre-approval to the customer |
 | `selected_campaign` | reference | CO plan selection | Campaign chosen by CO — campaign type carries EasyPass designation |
 | `selected_plan` | JSON | CO plan selection | Selected plan option from Plan Calculation API: tenor, grace period, term of payment |
+| `payment_due_date` | date | CO-confirmed (pre-filled from DaVinci, editable) | Monthly payment due date — input to Plan Calculation API; stored at confirmation |
 | `reason_for_restructure` | enum | CO dropdown selection (required) | Reason type selected by CO — surfaced to approver |
 | `reason_detail` | string | CO free-text (optional) | Additional explanation beyond the reason type — surfaced to approver |
 | `supporting_documents` | reference[] | CO file upload (optional) | Document references (e.g. medical cert, income proof) — accessible by approver |
@@ -193,7 +194,7 @@ flowchart TD
 | CO Worklist | Entry point | Access-only. CO can navigate to an approved pre-approval from their worklist to convert it to Draft. Cannot create a new pre-approval from this entry. Pre-approval must be in `approved` state. |
 | DaVinci (Customer & Product Master Data) | Data source | Provides person detail, contract detail (outstanding balance, DPD, loan status, prior restructure count, loan age, existing loan reference), and collateral data (type, valuation, status) by customer/contract reference. Called before screen opens. |
 | Campaign Eligibility Pre-Build | External capability | Called by BOS after master data fetch. Receives customer context including contract and collateral data. Returns eligible restructure campaigns with EasyPass designation per campaign. Not defined in this capability. |
-| Plan Calculation API | External capability | Called after Pre-Build with eligible campaigns and customer loan context. Returns available plan options per campaign — each option defined by tenor, grace period, and term of payment. Screen does not open if this call fails or returns no options. |
+| Plan Calculation API | External capability | Called after Pre-Build with eligible campaigns, customer loan context, and monthly payment due date. Returns available plan options per campaign — each option defined by tenor, grace period, and term of payment. Re-called when CO changes the monthly payment due date; plan options refresh with each recalculation. Screen does not open if the initial call fails or returns no valid options. |
 | Smart Form | Form rendering | Used for the Draft application form after conversion. Pre-approval plan selection screen is a dedicated screen — not Smart Form. |
 | Sensei notification | Deferred | Approver notification via Sensei TaskCreationRequest when Approval Request is submitted. Out of scope for restructure 1.3. |
 

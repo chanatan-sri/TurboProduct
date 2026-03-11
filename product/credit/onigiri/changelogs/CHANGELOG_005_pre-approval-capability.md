@@ -96,6 +96,7 @@ Master research document capturing all design decisions, scope boundaries, featu
 | Plan Calculation API added as third pre-condition step | Pre-Build returns eligible campaigns but not specific plan options. A separate Plan Calculation API is required to determine what plan options are actually available per campaign for this customer (tenor, grace period, term of payment). Screen cannot open without valid plan options. |
 | Tenor filter enforces restructure validity | A restructure must always result in a longer tenor than the original loan — the intent is to reduce monthly payment burden. Tenor options ≤ original loan tenor are disabled client-side. If no plan option exceeds the original tenor, the screen is blocked. |
 | `selected_plan` added to pre-approval record | Pre-approval must store the specific plan option selected (tenor, grace period, term) alongside the campaign reference — the campaign reference alone is insufficient to reconstruct the agreed plan. |
+| `payment_due_date` triggers Plan Calculation recalculation | Monthly payment due date is an input to the Plan Calculation API. If CO changes the due date on screen, the API must be re-called and available plan options must refresh. CO cannot confirm a plan until recalculation completes successfully. `payment_due_date` stored on pre-approval record at confirmation. |
 
 ---
 
