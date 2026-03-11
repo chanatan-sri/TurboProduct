@@ -19,14 +19,13 @@ Pre-approval captures a confirmed plan and customer context. Converting it to Dr
 
 ## Entry Points
 
-The Draft Initializer can be reached via two routes for non-EasyPass approvals:
+The Draft Initializer is reached exclusively via BOS. No application number exists at pre-approval stage, so CO Worklist cannot surface pre-approval items.
 
 | Entry | When Available | Description |
 |---|---|---|
-| **BOS** → Customer Detail → Pre-Approval | Pre-approval in `approved` state | CO navigates to the pre-approval screen from BOS and triggers Convert to Draft. |
-| **CO Worklist** | Pre-approval in `approved` state | Approved pre-approval surfaced in the CO's worklist. CO opens it directly and triggers Convert to Draft. |
+| **BOS** → Customer List → Customer Detail → Pre-Approval Status section | EasyPass: pre-approval in `created` state. Non-EasyPass: pre-approval in `approved` state (not expired). | CO sees pre-approval status on Customer Detail and triggers Convert to Draft from the status section. |
 
-EasyPass path has no manual entry point distinction — CO converts directly from `created` state (approval step bypassed). Both BOS and CO Worklist can surface EasyPass pre-approvals for conversion.
+BOS surfaces the pre-approval state and provides the Convert to Draft action on Customer Detail via the Pre-Approval Status Visibility feature.
 
 ---
 
@@ -34,7 +33,7 @@ EasyPass path has no manual entry point distinction — CO converts directly fro
 
 1. Draft Initializer is triggered by CO-initiated Convert to Draft action:
    - **EasyPass campaign**: available from `created` state — approval step bypassed, no Approval Request required.
-   - **Non-EasyPass campaign**: available from BOS or CO Worklist when pre-approval is in `approved` state (not expired or rejected).
+   - **Non-EasyPass campaign**: available from BOS Customer Detail (Pre-Approval Status section) when pre-approval is in `approved` state (not expired or rejected).
 2. On conversion, a new Draft application is created pre-populated with:
    - Selected campaign from the pre-approval
    - Existing loan reference

@@ -290,26 +290,23 @@ stateDiagram-v2
 
 ## Topology E Diagram — Restructure Pre-Approval Entry Flow
 
-Entry points and pre-approval journey for restructure applications. Shows how BOS and CO Worklist navigate into the pre-approval lifecycle, through creation, approval, and conversion to Draft.
+Entry point is BOS only — no application number exists at pre-approval stage, so CO Worklist cannot surface pre-approval items. CO is notified of approval status changes via the Pre-Approval Status Visibility feature in BOS Customer Detail.
 
 ```mermaid
 flowchart LR
     BOS(["BOS\nEntry Point"])
-    COW(["CO Worklist\nEntry Point"])
 
-    BOS --> CD["Customer Detail"]
+    BOS --> CD["Customer List\n→ Customer Detail"]
     CD --> Check{"Pre-Approval\nExists?"}
 
-    Check -- "No approved\npre-approval" --> Create["Creation\n[created]"]
-    Check -- "Approved\npre-approval exists" --> Confirmation
-
-    COW --> Confirmation["Confirmation\n[approved]"]
+    Check -- "No pre-approval" --> Create["Creation\n[created]"]
+    Check -- "Approved pre-approval\n(status visible on\nCustomer Detail)" --> Confirmation
 
     Create -- "EasyPass —\napproval bypassed\nCO converts" --> Converted["Converted\n[converted]"]
     Create -- "Non-EasyPass —\nsubmit for approval" --> PA["Pending Approval\n[pending_approval]"]
 
     PA --> Result{"Result"}
-    Result -- "Approve\n(expiry date set)" --> Confirmation
+    Result -- "Approve\n(expiry date set)" --> Confirmation["Confirmation\n[approved]"]
     Result -- "Reject" --> Rejected["Rejected\n[rejected]"]
 
     Confirmation -- "CO converts to Draft\n(reusable)" --> Converted

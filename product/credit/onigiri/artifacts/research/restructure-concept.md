@@ -118,12 +118,18 @@ Non-EasyPass (authority gap — escalation required):
 
 ## 6. Entry Points
 
-Two systems navigate into pre-approval. Each has a defined scope:
+**BOS is the only entry point.** CO Worklist is not used for pre-approval — at this stage there is no application number, so there is no item to surface in a worklist. Instead, BOS Customer Detail surfaces the pre-approval status and provides the Convert to Draft action directly on the customer record.
 
 | Entry Point | Allowed Actions | Pre-conditions |
 |---|---|---|
-| **BOS** → Customer List → Customer Detail | **Create new pre-approval** — triggers master data fetch from DaVinci + Campaign Eligibility Pre-Build; opens pre-approval screen. Also allows **accessing an existing approved pre-approval** to convert to Draft. | Master data fetch must succeed; pre-built must return ≥1 eligible campaign (creation path). |
-| **CO Worklist** | **Access approved pre-approval only** — navigates CO to the approved record for conversion to Draft. Cannot create a new pre-approval. | Pre-approval must be in `approved` state. |
+| **BOS** → Customer List → Customer Detail | **Create new pre-approval** — triggers master data fetch (DaVinci), Campaign Eligibility Pre-Build, and Plan Calculation API; opens pre-approval screen. Also allows **converting an existing pre-approval to Draft** — via the Pre-Approval Status section on Customer Detail. | All three pre-condition calls must succeed; at least one valid plan option must be returned. |
+
+### Pre-Approval Status Visibility
+
+To replace the CO Worklist entry point, BOS must surface pre-approval status on the customer record so the CO knows when to act:
+
+- **Customer List**: badge indicator per customer when pre-approval is in an active state (`created`, `pending_approval`, `approved`, `rejected`, `expired`)
+- **Customer Detail**: Pre-Approval Status section showing current state, selected campaign, selected plan, expiry date (if applicable), and a context-sensitive action button (Convert to Draft or Submit Approval Request)
 
 ### Pre-Screen Sequence (BOS — creation path)
 
