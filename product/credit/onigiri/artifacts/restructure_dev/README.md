@@ -239,24 +239,25 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 
 ---
 
-### 8. Document Requirements and Verification
+### 8. Document Requirements
 
 | Document | Status | What It Covers |
 |---|---|---|
 | [smart-form/CAPABILITY.md](../../capabilities/smart-form/CAPABILITY.md) | ⚠️ Partial | Document upload rules exist. The restructure-specific required document list is not yet defined. |
-| [disbursement-orchestration/CAPABILITY.md](../../capabilities/disbursement-orchestration/CAPABILITY.md) | ⚠️ Partial | Wasabi and Matcha integration is documented for `new_booking`. Restructure-specific verification behaviour is not yet confirmed. |
 
-> **Open**: Required document types for restructure, the split between pre-approval stage documents and Draft stage documents, and any restructure-specific Wasabi scan rules are not yet defined.
+> **Note**: Disbursement Orchestration does **not** apply to restructure. Restructure does not disburse new money — it modifies the existing loan (extends tenor, adjusts repayment plan). The Disbursement Orchestration capability (fund transfer, Matcha verification at disbursement, Core Banking facility creation) is scoped to `new_booking` and `topup`. Wasabi early-warning scan on upload is triggered by the Smart Form Document Upload feature and applies to all loan types regardless.
+
+> **Open**: Required document types for restructure and the split between pre-approval stage documents and Draft stage documents are not yet defined.
 
 ---
 
-### 9. Core Banking Integration
+### 9. Core Banking Integration (Loan Contract Modification)
 
 | Document | Status | What It Covers |
 |---|---|---|
-| _(none)_ | ❌ Not documented | How Onigiri interacts with Core Banking at disbursement for restructure — closing the original loan contract and opening a new one. |
+| _(none)_ | ❌ Not documented | How Onigiri interacts with Core Banking to close the original loan contract and open a new restructured contract. |
 
-> **Required before development of the disbursement stage**: Restructure settles the original loan using proceeds from the new loan. The settlement amount calculation and the Core Banking API contract for contract closure and new contract creation are not defined anywhere.
+> **Required before development of the post-approval stage**: Restructure modifies the existing loan — it does not create a new disbursement. The Core Banking API contract for original contract closure and new contract creation (with updated tenor and repayment schedule) is not defined anywhere.
 
 ---
 
