@@ -97,7 +97,7 @@ EasyPass is a **campaign-type property** — it designates whether a restructure
 
 | EasyPass Designation | Effect on Pre-Approval Flow | Effect on Underwriting |
 |---|---|---|
-| **EasyPass** | CO submits Approval Request — routes to **local approver** at `pending_approval`; approved pre-approval carries expiry date | At `pending_approval`, routes to local approver queue |
+| **EasyPass** | Approval Request routes to **local approver** at `pending_approval`; CO may bypass as they hold local authority | At `pending_approval`, routes to local approver queue |
 | **Non-EasyPass** | CO submits Approval Request — routes to **higher authority** at `pending_approval`; approved pre-approval carries expiry date | At `pending_approval`, routes through standard escalation path — higher authority required |
 
 EasyPass designation is stored on the campaign configuration — not derived at runtime and not stored as a flag on the application record. The system reads `campaign.easypass` when routing the pre-approval approval step and the underwriting approval step.

@@ -36,12 +36,12 @@ Enable a CO to evaluate which restructure plans a customer is eligible for and p
 
 ### EasyPass Authority Rule
 
-EasyPass designates the **authority level** required — not whether approval exists. Both EasyPass and Non-EasyPass pre-approvals go through `pending_approval`. The difference is which approver queue the request routes to.
+EasyPass designates the **authority level** required. A CO initiating a pre-approval for an EasyPass campaign already satisfies the approval authority requirement — the campaign's risk level falls within local CO authority, so no separate Approval Request is needed. The CO converts directly to Draft.
 
-| Campaign Designation (from pre-build) | Meaning | Pre-Approval Behaviour |
-|---|---|---|
-| EasyPass campaign | Campaign risk level is within local CO authority | Approval Request routes to **local approver** — same `pending_approval` state, lower authority level. |
-| Non-EasyPass campaign | Campaign risk level exceeds local CO authority | Approval Request routes to **higher authority** — standard escalation path. |
+| Campaign Designation (from pre-build) | Meaning | Pre-Approval Behaviour | Underwriting Behaviour |
+|---|---|---|---|
+| EasyPass campaign | Campaign risk level is within local CO authority | CO converts directly from `created` to Draft — no Approval Request, no `pending_approval` in pre-approval | At `pending_approval`, routes to **local approver** queue |
+| Non-EasyPass campaign | Campaign risk level exceeds local CO authority | Approval Request required — pre-approval enters `pending_approval` → `approved` before Draft creation | At `pending_approval`, routes through standard escalation — higher authority required |
 
 ### Workflow State Machine — Topology D
 
@@ -76,7 +76,7 @@ Pre-approval runs as **Topology D** on the Underwriting Workflow engine — same
 | State | Description |
 |---|---|
 | `created` | Pre-approval record created after CO selects plan. Stays here until CO submits Approval Request. |
-| `pending_approval` | Approval Request submitted. EasyPass routes to local approver queue; Non-EasyPass routes to higher authority queue. |
+| `pending_approval` | Approval Request submitted. EasyPass routes to local approver; Non-EasyPass routes to higher authority. Note: EasyPass CO may bypass this step as they hold local authority. |
 | `approved` | Approver confirmed. Valid until expiry date. |
 | `rejected` | Approver rejected. CO must initiate a new pre-approval request. |
 | `expired` | Approved pre-approval passed its expiry date — invalidated. New request required. |
@@ -84,21 +84,19 @@ Pre-approval runs as **Topology D** on the Underwriting Workflow engine — same
 
 **HWM note**: Pre-approval is pre-Origination. It does not write to `state_high_water_mark`. HWM begins at `draft` as in Topology A.
 
-### Path (both EasyPass and Non-EasyPass)
+### Path by EasyPass
 
-Both paths follow the same state sequence — the difference is approver routing at `pending_approval`:
+Both paths follow the same state sequence:
 
 ```
-EasyPass:
-  plan selected → created → pending_approval → approved → converted (reusable) → Draft application created
-                                [local approver]         → rejected
-                                                         → expired
-
-Non-EasyPass:
-  plan selected → created → pending_approval → approved → converted (reusable) → Draft application created
-                              [higher authority]         → rejected
-                                                         → expired
+plan selected → created → pending_approval → approved → converted (reusable) → Draft application created
+                                            → rejected
+                                            → expired
 ```
+
+> **EasyPass note**: Because the CO holds local authority, they may bypass `pending_approval` and convert directly to Draft. Non-EasyPass always requires the full approval sequence.
+>
+> In the **underwriting workflow (Topology A)**, both EasyPass and Non-EasyPass go through `pending_approval`. EasyPass routes to the local approver queue; Non-EasyPass routes through standard escalation.
 
 ### Approval Decision Rules
 
@@ -109,12 +107,10 @@ Non-EasyPass:
 
 ### Expiry Rules
 
-Both EasyPass and Non-EasyPass approved pre-approvals carry an expiry date. The approver may override the expiry date at time of approval. On expiry, the pre-approval transitions to `expired` — CO must submit a new request.
-
 | Path | Expiry |
 |---|---|
-| EasyPass | Carries expiry date. Local approver approves — expiry date set at approval. |
-| Non-EasyPass | Carries expiry date. Higher authority approves — expiry date set at approval. |
+| EasyPass | No expiry — EasyPass pre-approval carries no expiry date. CO is local authority; no external approval required. |
+| Non-EasyPass | Carries expiry date. Default duration set by system configuration. Approver may override at approval time. On expiry: transitions to `expired` — CO must submit a new pre-approval request. |
 
 **Why expiry exists**: An approved pre-approval is a snapshot of campaign terms, eligibility conditions, and risk assessment at a point in time. If any of these change (campaign archived, eligibility rules updated, risk strategy revised), the pre-approval may no longer reflect valid conditions. Expiry enforces a recheck cadence.
 
@@ -188,11 +184,8 @@ flowchart TD
 
     B -- No pre-approval --> C[master data fetched\npre-build called\neligible campaigns loaded]
     C --> D[CO selects campaign and plan\nstate: created]
-    D --> E[CO submits Approval Request\nstate: pending_approval]
-    E -- EasyPass --> EA[Routes to local approver]
-    E -- Non-EasyPass --> NE[Routes to higher authority]
-    EA --> J{Approver Decision}
-    NE --> J
+    D --> E[CO submits Approval Request\nstate: pending_approval\nEasyPass → local approver\nNon-EasyPass → higher authority]
+    E --> J{Approver Decision}
     J -- Reject --> K[state: rejected\nCO must start new request]
     J -- Approve --> L[state: approved\nExpiry date set]
 
