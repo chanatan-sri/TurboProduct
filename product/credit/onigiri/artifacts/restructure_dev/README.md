@@ -209,6 +209,16 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 | Approver Data Aggregation | ⚠️ Requires restructure data groups | The engine is `application_type`-driven and requires no code change. The data groups to display at the Approval state for restructure are not yet defined. |
 | Finance Page | ❌ New feature — must be built | Supports campaign and plan selection, re-selection, Plan Calculation API integration, and tenor filter enforcement. Business rules are documented in smart-form/CAPABILITY.md. Screen-level specification is not yet written. |
 
+**Document Requirements**
+
+| Document | Status | What It Covers |
+|---|---|---|
+| [smart-form/CAPABILITY.md](../../capabilities/smart-form/CAPABILITY.md) | ⚠️ Partial | Document upload rules exist. The restructure-specific required document list is not yet defined. |
+
+> **Note**: Disbursement Orchestration does **not** apply to restructure. Restructure does not disburse new money — it modifies the existing loan (extends tenor, adjusts repayment plan). The Disbursement Orchestration capability (fund transfer, Matcha verification at disbursement, Core Banking facility creation) is scoped to `new_booking` and `topup`. Wasabi early-warning scan on upload is triggered by the Smart Form Document Upload feature and applies to all loan types regardless.
+
+> **Open**: Required document types for restructure and the split between pre-approval stage documents and Draft stage documents are not yet defined.
+
 ---
 
 ### 5. Campaign Eligibility Pre-Build
@@ -239,19 +249,7 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 
 ---
 
-### 8. Document Requirements
-
-| Document | Status | What It Covers |
-|---|---|---|
-| [smart-form/CAPABILITY.md](../../capabilities/smart-form/CAPABILITY.md) | ⚠️ Partial | Document upload rules exist. The restructure-specific required document list is not yet defined. |
-
-> **Note**: Disbursement Orchestration does **not** apply to restructure. Restructure does not disburse new money — it modifies the existing loan (extends tenor, adjusts repayment plan). The Disbursement Orchestration capability (fund transfer, Matcha verification at disbursement, Core Banking facility creation) is scoped to `new_booking` and `topup`. Wasabi early-warning scan on upload is triggered by the Smart Form Document Upload feature and applies to all loan types regardless.
-
-> **Open**: Required document types for restructure and the split between pre-approval stage documents and Draft stage documents are not yet defined.
-
----
-
-### 9. Core Banking Integration (Loan Contract Modification)
+### 8. Core Banking Integration (Loan Contract Modification)
 
 | Document | Status | What It Covers |
 |---|---|---|
