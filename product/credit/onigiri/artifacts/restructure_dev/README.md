@@ -156,15 +156,11 @@ stateDiagram-v2
 | [FEATURE_pre-approval-status-visibility.md](../../capabilities/pre-approval/features/FEATURE_pre-approval-status-visibility.md) | ✅ Done | Pre-approval status on Customer List and Customer Detail in BOS |
 | [FEATURE_pre-approval-expiry-management.md](../../capabilities/pre-approval/features/FEATURE_pre-approval-expiry-management.md) | ✅ Done | Expiry logic for approved pre-approvals |
 
-> **Open**: `pre_approval_snapshot` JSON structure is referenced across features but not formally defined as a schema.
-
 ---
 
 ### 3. Plan Calculation
 
 Plan Calculation is an **existing LOS API** — it is not a new build. Onigiri calls it as the third step in the pre-approval pre-conditions sequence (after DaVinci fetch and Campaign Eligibility Pre-Build), and again inside the Smart Form Finance Page whenever the CO changes the selected campaign, plan option, or payment due date.
-
-> **Open**: The integration contract — request parameters, response schema, and plan option structure (tenor, grace period, term of payment) — needs to be documented before development of the pre-approval screen and Finance Page can begin.
 
 ---
 
@@ -191,8 +187,6 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 
 > **Note**: Disbursement Orchestration does **not** apply to restructure. Restructure closes the existing loan and opens a new loan carrying the outstanding balance forward — no new money is disbursed to the customer. The Disbursement Orchestration capability (fund transfer, Matcha verification at disbursement, Core Banking facility creation) is scoped to `new_booking` and `topup`. Wasabi early-warning scan on upload is triggered by the Smart Form Document Upload feature and applies to all loan types regardless.
 
-> **Open**: Required document types for restructure and the split between pre-approval stage documents and Draft stage documents are not yet defined.
-
 ---
 
 ### 5. Campaign Eligibility Pre-Build
@@ -218,8 +212,6 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 | Document | Status | What It Covers |
 |---|---|---|
 | [risk-assessment-engine/CAPABILITY.md](../../capabilities/risk-assessment-engine/CAPABILITY.md) | ⚠️ Partial | Risk engine is fully documented. Restructure-specific strategy attributes and outcome threshold configuration are not yet specified. |
-
-> **Open**: The attributes evaluated in a restructure risk strategy and the expected `risk_level` threshold mapping have not been defined.
 
 ---
 
