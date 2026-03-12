@@ -38,9 +38,8 @@ Both paths produce the same application record structure and follow the same wor
 | [pre-approval/CAPABILITY.md](../../capabilities/pre-approval/CAPABILITY.md) | Topology D — pre-approval workflow state machine (created → pending_approval → approved → converted/rejected/expired). User Flow — Restructure Pre-Approval Entry (how CO navigates from BOS Customer Detail through pre-approval to Draft). Change Detection at Draft submission. |
 
 **EasyPass clarification:**
-- Both EasyPass and Non-EasyPass go through `pending_approval` in both pre-approval (Topology D) and underwriting (Topology A).
-- EasyPass routes to the **local approver**; Non-EasyPass routes to **higher authority**.
-- EasyPass does not bypass any approval step — it determines the authority level, not whether approval exists.
+- In **pre-approval (Topology D)**: EasyPass bypasses the Approval Request — CO converts directly from `created` to Draft without submitting for approval.
+- In **underwriting (Topology A)**: EasyPass applications still go through `pending_approval` — they route to the **local approver** (within CO authority level). Non-EasyPass routes through standard escalation to a higher authority.
 
 ---
 
@@ -116,6 +115,32 @@ stateDiagram-v2
     WaitLoan --> Funded
     Draft --> Withdrawn
     Draft --> Expired
+```
+
+---
+
+#### Topology D — Pre-Approval State Machine
+
+Pre-approval states for restructure. Both EasyPass and Non-EasyPass follow the same state sequence — EasyPass routes to local approver, Non-EasyPass to higher authority. EasyPass CO may bypass `pending_approval` as they hold local authority.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    created: created
+    pending_approval: pending_approval
+    approved: approved
+    rejected: rejected
+    expired: expired
+    converted: converted
+
+    [*] --> created: Plan selected
+    created --> pending_approval: CO submits Approval Request\n(EasyPass → local approver\nNon-EasyPass → higher authority)
+    pending_approval --> approved: Approver approves\n(expiry date set)
+    pending_approval --> rejected: Approver rejects
+    approved --> converted: CO converts to Draft
+    converted --> converted: CO converts again\n(reusable while not expired)
+    approved --> expired: Expiry date passed\n[system auto]
 ```
 
 ---
