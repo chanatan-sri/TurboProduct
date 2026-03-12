@@ -260,30 +260,21 @@ stateDiagram-v2
 stateDiagram-v2
     direction LR
 
-    state "EasyPass Path" as ep {
-        Created_EP: created
-        Converted_EP: converted
-    }
+    created: created
+    pending_approval: pending_approval
+    approved: approved
+    rejected: rejected
+    expired: expired
+    converted: converted
 
-    state "Non-EasyPass Path" as nep {
-        Created_NEP: created
-        PendingApproval: pending_approval
-        Approved: approved
-        Rejected: rejected
-        Expired: expired
-        Converted_NEP: converted
-    }
-
-    [*] --> Created_EP: EasyPass plan selected
-    Created_EP --> Converted_EP: CO converts to Draft\n(approval bypassed)
-
-    [*] --> Created_NEP: Non-EasyPass plan selected
-    Created_NEP --> PendingApproval: CO submits Approval Request
-    PendingApproval --> Approved: Approver approves\n(expiry date set)
-    PendingApproval --> Rejected: Approver rejects
-    Approved --> Converted_NEP: CO converts to Draft
-    Converted_NEP --> Converted_NEP: CO converts again\n(reusable while not expired)
-    Approved --> Expired: Expiry date passed\n[system auto]
+    [*] --> created: Plan selected\n(EasyPass or Non-EasyPass)
+    created --> converted: EasyPass — CO converts\n(approval bypassed)
+    created --> pending_approval: Non-EasyPass — CO submits\nApproval Request
+    pending_approval --> approved: Approver approves\n(expiry date set)
+    pending_approval --> rejected: Approver rejects
+    approved --> converted: CO converts to Draft
+    converted --> converted: CO converts again\n(reusable while not expired)
+    approved --> expired: Expiry date passed\n[system auto]
 ```
 
 ---

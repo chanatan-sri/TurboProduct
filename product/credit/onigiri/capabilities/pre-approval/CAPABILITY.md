@@ -147,30 +147,33 @@ Two systems can navigate into pre-approval. Each has a defined scope:
 
 CO Worklist is not an entry point for pre-approval — at this stage no application number exists, so there is no item to surface in a worklist. Instead, BOS Customer Detail surfaces the pre-approval status and provides the Convert to Draft action directly on the customer record (see Pre-Approval Status Visibility feature).
 
-### EasyPass Path
+### Pre-Approval Flow
 
 ```mermaid
 flowchart TD
-    A[BOS Customer Detail\nmaster data fetched\npre-built called\neligible campaigns loaded] --> B[CO selects EasyPass campaign]
-    B --> C[Pre-approval record created\nstate: created]
-    C --> D[CO converts to Draft\napproval step bypassed\nDraft Initializer pre-populates form\nstate: converted]
-    D --> E[Draft application created\n→ continues in Underwriting Workflow]
-```
+    A[BOS Customer Detail] --> B{Pre-approval\nexists?}
 
-### Non-EasyPass Path
+    B -- No pre-approval --> C[master data fetched\npre-build called\neligible campaigns loaded]
+    C --> D[CO selects campaign and plan]
+    D --> E{Campaign type?}
 
-```mermaid
-flowchart TD
-    A[BOS Customer Detail\nmaster data fetched\npre-built called\neligible campaigns loaded] --> B[CO selects non-EasyPass campaign]
-    B --> C[Pre-approval record created\nstate: created]
-    C --> D[CO submits Approval Request\nstate: pending_approval]
-    D --> E{Approver Decision}
-    E -- Reject --> F[state: rejected\nCO must start new request]
-    E -- Approve --> G[state: approved\nExpiry date set]
-    G --> H{CO converts\nbefore expiry?}
-    H -- No --> I[state: expired\nCO must start new request]
-    H -- Yes, via BOS\nCustomer Detail --> J[Draft Initializer pre-populates form\npre_approval_snapshot stored\nstate: converted]
-    J --> K[Draft application created\n→ continues in Underwriting Workflow]
+    E -- EasyPass --> F[Pre-approval record created\nstate: created]
+    F --> G[CO converts to Draft\napproval step bypassed\nstate: converted]
+
+    E -- Non-EasyPass --> H[Pre-approval record created\nstate: created]
+    H --> I[CO submits Approval Request\nstate: pending_approval]
+    I --> J{Approver Decision}
+    J -- Reject --> K[state: rejected\nCO must start new request]
+    J -- Approve --> L[state: approved\nExpiry date set]
+
+    B -- Approved pre-approval\nvisible on Customer Detail --> L
+
+    L --> M{CO converts\nbefore expiry?}
+    M -- No --> N[state: expired\nCO must start new request]
+    M -- Yes --> O[state: converted]
+
+    G --> P[Draft Initializer pre-populates form\npre_approval_snapshot stored\nDraft application created\n→ continues in Underwriting Workflow]
+    O --> P
 ```
 
 ---

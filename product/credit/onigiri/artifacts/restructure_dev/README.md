@@ -5,15 +5,15 @@
 **Audience**: Developer team building the restructure loan type
 **Last Updated**: 2026-03-12
 
-> This folder is a developer-facing reference for building the restructure feature within Onigiri. It does **not** replace the capability documents — it maps what already exists, what is partially defined, and what still needs to be specified before development can begin.
+> This guide maps what is already documented, what is partially specified, and what requires further clarification before development can begin. It does not replace the capability documents — use the links in each section to read the authoritative source.
 
 ---
 
 ## What Is Restructure
 
-A restructure is a loan modification offered to existing borrowers whose repayment ability has dropped. The business extends the loan tenor (always longer than the original) and adjusts the repayment plan. The existing loan contract is settled and a new contract is opened.
+A restructure is a loan modification for existing borrowers whose repayment capacity has decreased. The business extends the loan tenor beyond the original term and adjusts the repayment plan accordingly. The existing loan contract is closed and a new contract is opened.
 
-Restructure is a loan type (`application_type = restructure`) within the Onigiri application lifecycle — it follows the same workflow engine as other loan types but has distinct entry paths, form behaviour, and campaign configuration.
+Restructure is a loan type (`application_type = restructure`) within the Onigiri application lifecycle. It uses the same workflow engine as other loan types but has distinct entry paths, form behaviour, campaign configuration, and a pre-approval stage that other loan types do not have.
 
 ---
 
@@ -21,44 +21,158 @@ Restructure is a loan type (`application_type = restructure`) within the Onigiri
 
 | Path | Description |
 |---|---|
-| **Via Pre-Approval** | CO uses the pre-approval screen in BOS to evaluate eligibility and select a plan before creating a Draft. Draft Initializer creates the Draft with `pre_approval_id` and `pre_approval_snapshot`. |
-| **Direct (no pre-approval)** | CO creates a Draft directly without a prior pre-approval. Plan selection happens inside the Smart Form Finance Page. |
+| **Via Pre-Approval** | The Credit Officer (CO) completes a pre-approval in BOS — selecting an eligible campaign and plan — before creating a Draft application. The Draft Initializer creates the Draft with `pre_approval_id` and `pre_approval_snapshot` pre-populated. |
+| **Direct (no pre-approval)** | The CO creates a Draft application directly without a prior pre-approval. Campaign and plan selection occurs inside the Smart Form Finance Page. |
 
-Both paths produce the same application record and follow the same workflow from Draft onwards.
+Both paths produce the same application record structure and follow the same workflow from the Draft state onwards.
 
 ---
 
 ## What to Read — By Area
 
 ### 1. User Flow and State Machine
-| Document | Status | What It Covers |
-|---|---|---|
-| [underwriting-workflow/CAPABILITY.md](../../capabilities/underwriting-workflow/CAPABILITY.md) | ✅ Done | Topology A (direct restructure workflow), Topology D (pre-approval state machine), EasyPass routing, Change Detection |
 
-> **Gap**: No consolidated single-page flow showing both pre-approval path and direct path end-to-end. See [FLOW.md](./FLOW.md) — to be written.
+Full specification: [underwriting-workflow/CAPABILITY.md](../../capabilities/underwriting-workflow/CAPABILITY.md)
+
+Covers: Topology A (loan application workflow), Topology D (pre-approval state machine), EasyPass routing, Change Detection.
+
+---
+
+#### Topology D — Pre-Approval State Machine
+
+The pre-approval process has two paths determined by the campaign type:
+
+- **EasyPass**: The campaign's risk is within local CO authority. The approval step is bypassed — the CO converts directly from `created` to Draft.
+- **Non-EasyPass**: The campaign's risk requires higher authority. The CO submits an approval request. The approved pre-approval carries an expiry date. The `converted` state is reusable — the same pre-approval can generate multiple Drafts while it remains within its expiry window.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    state "EasyPass Path" as ep {
+        Created_EP: created
+        Converted_EP: converted
+    }
+
+    state "Non-EasyPass Path" as nep {
+        Created_NEP: created
+        PendingApproval: pending_approval
+        Approved: approved
+        Rejected: rejected
+        Expired: expired
+        Converted_NEP: converted
+    }
+
+    [*] --> Created_EP: EasyPass plan selected
+    Created_EP --> Converted_EP: CO converts to Draft\n(approval bypassed)
+
+    [*] --> Created_NEP: Non-EasyPass plan selected
+    Created_NEP --> PendingApproval: CO submits Approval Request
+    PendingApproval --> Approved: Approver approves\n(expiry date set)
+    PendingApproval --> Rejected: Approver rejects
+    Approved --> Converted_NEP: CO converts to Draft
+    Converted_NEP --> Converted_NEP: CO converts again\n(reusable while not expired)
+    Approved --> Expired: Expiry date passed\n[system auto]
+```
+
+---
+
+#### Topology A — Loan Application Workflow
+
+Applies to all loan types including restructure. The workflow begins at `draft` and ends at a terminal state (`funded`, `rejected`, `withdrawn`, or `expired`).
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    state "Origination" as orig {
+        Draft: draft
+    }
+
+    state "Underwriting" as uw {
+        RiskAssessment: risk_assessment
+        Approval: pending_approval\n(Approval + Risk Level)
+    }
+
+    state "Decision — Cash Path" as cash_path {
+        Confirmation1: confirmation
+        CreateLoanDisb1: create_loan_disbursement
+        QA_top: qa
+    }
+
+    state "Decision — Non-Cash Path (Disbursement Orchestration)" as noncash_path {
+        QA_bottom: qa
+        DocCheck: pending_document_checking
+        WaitConfirm: waiting_for_confirmation
+        WaitCreateFacility: waiting_create_facility
+        WaitFund: waiting_fund_transfer
+        WaitLoan: waiting_create_loan_operation
+    }
+
+    state "Decision — Routing" as routing {
+        CreateFacility: create_facility
+        Cash: cash_routing
+    }
+
+    state "Terminal" as term {
+        Funded: funded
+        Rejected: rejected
+        Withdrawn: withdrawn
+        Expired: expired
+    }
+
+    [*] --> Draft
+    Draft --> RiskAssessment: Submit
+    RiskAssessment --> Approval
+    RiskAssessment --> Draft: Request docs
+    Approval --> CreateFacility: Approve
+    Approval --> Rejected: Reject
+    Approval --> Draft: Request docs
+    CreateFacility --> Cash
+    Cash --> Confirmation1: Cash
+    Confirmation1 --> CreateLoanDisb1
+    CreateLoanDisb1 --> QA_top
+    QA_top --> Funded
+    QA_top --> Draft: Request docs
+    Cash --> QA_bottom: Non-cash
+    QA_bottom --> DocCheck: Submit to Matcha
+    QA_bottom --> Draft: Request docs
+    DocCheck --> WaitConfirm: Matcha approved\n(amount changed)
+    DocCheck --> WaitCreateFacility: Matcha approved\n(amount unchanged — bypass)
+    DocCheck --> Draft: Matcha returned\nRequest document upload
+    DocCheck --> Approval: Matcha referred\nRe-refer to approver
+    WaitConfirm --> WaitCreateFacility: Officer confirms
+    WaitConfirm --> Rejected: Officer rejects
+    WaitCreateFacility --> WaitFund: Facility created\n[system auto]
+    WaitFund --> WaitLoan: CB Success
+    WaitFund --> Rejected: CB Reject
+    WaitLoan --> Funded
+    Draft --> Withdrawn
+    Draft --> Expired
+```
 
 ---
 
 ### 2. Pre-Approval Screen
+
 | Document | Status | What It Covers |
 |---|---|---|
 | [pre-approval/CAPABILITY.md](../../capabilities/pre-approval/CAPABILITY.md) | ✅ Done | States, business rules, EasyPass bypass, tenor filter, expiry |
-| [FEATURE_pre-approval-request-creation.md](../../capabilities/pre-approval/features/FEATURE_pre-approval-request-creation.md) | ✅ Done | Pre-conditions (DaVinci → Pre-Build → Plan Calculation), CO inputs, ACs |
-| [FEATURE_draft-initializer.md](../../capabilities/pre-approval/features/FEATURE_draft-initializer.md) | ✅ Done | Draft creation from approved pre-approval, snapshot structure |
+| [FEATURE_pre-approval-request-creation.md](../../capabilities/pre-approval/features/FEATURE_pre-approval-request-creation.md) | ✅ Done | Pre-conditions (DaVinci → Pre-Build → Plan Calculation), CO inputs, acceptance criteria |
+| [FEATURE_draft-initializer.md](../../capabilities/pre-approval/features/FEATURE_draft-initializer.md) | ✅ Done | Draft creation from an approved pre-approval, snapshot structure |
 | [FEATURE_approval-request.md](../../capabilities/pre-approval/features/FEATURE_approval-request.md) | ✅ Done | Non-EasyPass approval submission |
-| [FEATURE_pre-approval-status-visibility.md](../../capabilities/pre-approval/features/FEATURE_pre-approval-status-visibility.md) | ✅ Done | Status badge on Customer List and Customer Detail in BOS |
+| [FEATURE_pre-approval-status-visibility.md](../../capabilities/pre-approval/features/FEATURE_pre-approval-status-visibility.md) | ✅ Done | Pre-approval status on Customer List and Customer Detail in BOS |
 | [FEATURE_pre-approval-expiry-management.md](../../capabilities/pre-approval/features/FEATURE_pre-approval-expiry-management.md) | ✅ Done | Expiry logic for approved pre-approvals |
 
-> **Gap**: `pre_approval_snapshot` JSON structure not formally defined. See [DATA_MODELS.md](./DATA_MODELS.md) — to be written.
+> **Open**: `pre_approval_snapshot` JSON structure is referenced across features but not formally defined as a schema.
 
 ---
 
 ### 3. Plan Calculation
-| Document | Status | What It Covers |
-|---|---|---|
-| [PLAN_CALCULATION_API.md](./PLAN_CALCULATION_API.md) | ⚠️ To document | Call sequence, request/response schema, plan option structure (tenor, grace period, term of payment), recalculation triggers |
 
-> **Note**: Plan Calculation is an existing LOS API — it is not a new build. The integration contract (how Onigiri calls it, what it returns, when to call it) needs to be documented before the dev team can integrate. See [PLAN_CALCULATION_API.md](./PLAN_CALCULATION_API.md) — to be written.
+Plan Calculation is an **existing LOS API** — it is not a new build. Onigiri calls it as the third step in the pre-approval pre-conditions sequence (after DaVinci fetch and Campaign Eligibility Pre-Build), and again inside the Smart Form Finance Page whenever the CO changes the selected campaign, plan option, or payment due date.
+
+> **Open**: The integration contract — request parameters, response schema, and plan option structure (tenor, grace period, term of payment) — needs to be documented before development of the pre-approval screen and Finance Page can begin.
 
 ---
 
@@ -68,85 +182,75 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 
 | Feature | Restructure Status | Notes |
 |---|---|---|
-| Page/Section/Field Composer | ✅ No change needed | Restructure uses the existing composer engine — sections and fields driven by campaign Application Template |
-| Auto-Prefill | ⚠️ Needs restructure implementation | Source: DaVinci (customer) + Core Banking (loan + collateral). Field list and editability per field not yet defined. See [PAGES.md](./PAGES.md). |
-| Save Draft (Mid-Session Persistence) | ✅ No change needed | Same behaviour as `new_booking` — full JSON persisted on every save and transition |
-| Stage Navigator | ✅ No change needed | Sequence driven by restructure campaign Application Template — no code change required |
-| NCB Consent + OTP Flow | ❓ Open question | Restructure is for existing borrowers — NCB consent applicability unclear. Confirm if credit bureau re-inquiry is required for restructure. |
-| Document Upload Interface | ⚠️ Needs restructure document list | Engine unchanged. Required document types for `restructure` not yet defined. See [DOCUMENT_REQUIREMENTS.md](./DOCUMENT_REQUIREMENTS.md). |
-| Approver Data Aggregation | ⚠️ Needs restructure data groups configured | Engine unchanged (`application_type`-driven). Restructure-specific data groups not yet defined. |
-| Finance Page | ❌ New feature to build | Plan selection, re-selection, Plan Calculation API call, tenor filter. Business rules documented in smart-form/CAPABILITY.md. Screen spec not yet written. See [PAGES.md](./PAGES.md). |
+| Page/Section/Field Composer | ✅ No change required | Restructure uses the existing composer engine. Sections and fields are defined by the campaign's Application Template. |
+| Auto-Prefill | ⚠️ Requires restructure implementation | Prefill source: DaVinci (customer profile) + Core Banking (loan record + collateral). The specific field list and per-field editability rules are not yet defined. |
+| Save Draft (Mid-Session Persistence) | ✅ No change required | Behaviour is identical to `new_booking` — full JSON document persisted on every save and every state transition. |
+| Stage Navigator | ✅ No change required | Stage sequence is determined by the restructure campaign's Application Template. No code change required. |
+| NCB Consent + OTP Flow | ❓ Open question | Restructure applies to existing borrowers. Confirm whether a credit bureau re-inquiry and NCB consent are required for restructure applications. |
+| Document Upload Interface | ⚠️ Requires restructure document list | The upload engine is unchanged. The required document types for a restructure application have not yet been defined. |
+| Approver Data Aggregation | ⚠️ Requires restructure data groups | The engine is `application_type`-driven and requires no code change. The data groups to display at the Approval state for restructure are not yet defined. |
+| Finance Page | ❌ New feature — must be built | Supports campaign and plan selection, re-selection, Plan Calculation API integration, and tenor filter enforcement. Business rules are documented in smart-form/CAPABILITY.md. Screen-level specification is not yet written. |
 
 ---
 
 ### 5. Campaign Eligibility Pre-Build
+
 | Document | Status | What It Covers |
 |---|---|---|
-| [campaign-eligibility-pre-build/CAPABILITY.md](../../capabilities/campaign-eligibility-pre-build/CAPABILITY.md) | ✅ Done | Full pre-build engine: two-phase evaluation, outcome classification, Maximum Amount, worklist flags |
+| [campaign-eligibility-pre-build/CAPABILITY.md](../../capabilities/campaign-eligibility-pre-build/CAPABILITY.md) | ✅ Done | Full pre-build engine: two-phase evaluation, outcome classification, Maximum Amount calculation, worklist flags |
 
-> **Note**: Pre-Build is campaign-type-agnostic — it produces outcome + Maximum Amount for any campaign type including restructure. No restructure-specific changes required to the Pre-Build engine.
+> The Pre-Build engine is campaign-type-agnostic — it produces outcome and Maximum Amount for any campaign type, including restructure. No restructure-specific changes are required to the Pre-Build engine.
 
 ---
 
 ### 6. Campaign Configuration (Restructure Campaign Type)
+
 | Document | Status | What It Covers |
 |---|---|---|
-| [loan-campaign-configuration/CAPABILITY.md](../../capabilities/loan-campaign-configuration/CAPABILITY.md) | ⚠️ Partial | General campaign configuration dimensions documented; restructure campaign type not yet specified |
+| [loan-campaign-configuration/CAPABILITY.md](../../capabilities/loan-campaign-configuration/CAPABILITY.md) | ⚠️ Partial | General campaign configuration dimensions are documented. The restructure campaign type and its specific configuration dimensions are not yet specified. |
 
-> **Gap**: What does a restructure campaign look like? What dimensions does it have? How does Plan Calculation connect to campaign config? See [CAMPAIGN_CONFIG.md](./CAMPAIGN_CONFIG.md) — to be written.
+> **Open**: The restructure campaign type configuration — eligibility criteria shape, plan calculation parameters, pricing dimensions — is not yet defined.
 
 ---
 
 ### 7. Risk Strategy (Restructure)
+
 | Document | Status | What It Covers |
 |---|---|---|
-| [risk-assessment-engine/CAPABILITY.md](../../capabilities/risk-assessment-engine/CAPABILITY.md) | ⚠️ Partial | Risk engine documented; restructure-specific strategy attributes and threshold config not specified |
+| [risk-assessment-engine/CAPABILITY.md](../../capabilities/risk-assessment-engine/CAPABILITY.md) | ⚠️ Partial | Risk engine is fully documented. Restructure-specific strategy attributes and outcome threshold configuration are not yet specified. |
 
-> **Gap**: What attributes are evaluated in a restructure risk strategy? What is the expected `risk_level` mapping for restructure outcomes? See [RISK_STRATEGY.md](./RISK_STRATEGY.md) — to be written.
+> **Open**: The attributes evaluated in a restructure risk strategy and the expected `risk_level` threshold mapping have not been defined.
 
 ---
 
 ### 8. Document Requirements and Verification
+
 | Document | Status | What It Covers |
 |---|---|---|
-| [smart-form/CAPABILITY.md](../../capabilities/smart-form/CAPABILITY.md) | ⚠️ Partial | Rules for document upload exist; restructure-specific document list not defined |
-| [disbursement-orchestration/CAPABILITY.md](../../capabilities/disbursement-orchestration/CAPABILITY.md) | ⚠️ Partial | Wasabi/Matcha integration documented for new_booking; restructure-specific verification behaviour unclear |
+| [smart-form/CAPABILITY.md](../../capabilities/smart-form/CAPABILITY.md) | ⚠️ Partial | Document upload rules exist. The restructure-specific required document list is not yet defined. |
+| [disbursement-orchestration/CAPABILITY.md](../../capabilities/disbursement-orchestration/CAPABILITY.md) | ⚠️ Partial | Wasabi and Matcha integration is documented for `new_booking`. Restructure-specific verification behaviour is not yet confirmed. |
 
-> **Gap**: What documents are required for a restructure application? Which are uploaded at pre-approval vs at Draft? Are there different Wasabi scan rules? See [DOCUMENT_REQUIREMENTS.md](./DOCUMENT_REQUIREMENTS.md) — to be written.
+> **Open**: Required document types for restructure, the split between pre-approval stage documents and Draft stage documents, and any restructure-specific Wasabi scan rules are not yet defined.
 
 ---
 
 ### 9. Core Banking Integration
+
 | Document | Status | What It Covers |
 |---|---|---|
-| _(none)_ | ❌ Missing | How restructure interacts with Core Banking at disbursement — settlement of original contract, opening new contract |
+| _(none)_ | ❌ Not documented | How Onigiri interacts with Core Banking at disbursement for restructure — closing the original loan contract and opening a new one. |
 
-> **Required before development**: Restructure closes the original loan and opens a new contract. The settlement amount calculation and Core Banking API contract for this are not defined anywhere. See [CORE_BANKING_INTEGRATION.md](./CORE_BANKING_INTEGRATION.md) — to be written.
-
----
-
-## Files To Be Written (Gaps)
-
-| File | Priority | What It Needs |
-|---|---|---|
-| [PLAN_CALCULATION_API.md](./PLAN_CALCULATION_API.md) | 🔴 High | API contract, request/response schema, plan option structure, recalculation trigger |
-| [DATA_MODELS.md](./DATA_MODELS.md) | 🔴 High | `pre_approval_snapshot` structure, application record fields for restructure, `selected_plan` schema |
-| [PAGES.md](./PAGES.md) | 🔴 High | Screen-by-screen: pre-approval screen, Finance Page states, prefill field editability list |
-| [CAMPAIGN_CONFIG.md](./CAMPAIGN_CONFIG.md) | 🟡 Medium | Restructure campaign type dimensions, plan configuration, eligibility criteria shape |
-| [DOCUMENT_REQUIREMENTS.md](./DOCUMENT_REQUIREMENTS.md) | 🟡 Medium | Required doc types per stage (pre-approval vs Draft), Wasabi rules for restructure |
-| [CORE_BANKING_INTEGRATION.md](./CORE_BANKING_INTEGRATION.md) | 🟡 Medium | Settlement API, new contract creation, disbursement flow for restructure |
-| [RISK_STRATEGY.md](./RISK_STRATEGY.md) | 🟠 Lower | Restructure-specific risk attributes, threshold configuration example |
-| [FLOW.md](./FLOW.md) | 🟠 Lower | Consolidated end-to-end flow (both entry paths) in a single diagram |
+> **Required before development of the disbursement stage**: Restructure settles the original loan using proceeds from the new loan. The settlement amount calculation and the Core Banking API contract for contract closure and new contract creation are not defined anywhere.
 
 ---
 
-## What You Do NOT Need to Build
+## What Does Not Require New Development
 
-The following are already implemented for `new_booking` and require only configuration — no code changes — to support restructure:
+The following are fully implemented for `new_booking` and require only configuration to support restructure. No code changes are needed:
 
-- Risk Assessment Engine rule evaluation
-- Campaign Eligibility Pre-Build engine
-- Underwriting workflow state machine
-- DocumentDB JSON storage
-- Wasabi document scan trigger
+- Risk Assessment Engine — rule evaluation engine
+- Campaign Eligibility Pre-Build — eligibility scan engine
+- Underwriting workflow state machine — Topology A
+- DocumentDB JSON document storage
+- Wasabi document scan trigger on upload
 - Worklist flag display
