@@ -11,7 +11,7 @@
 
 ## What Is Restructure
 
-A restructure is a loan modification for existing borrowers whose repayment capacity has decreased. The business extends the loan tenor beyond the original term and adjusts the repayment plan accordingly. The existing loan contract is modified — no new money is disbursed.
+A restructure is a loan product for existing borrowers whose repayment capacity has decreased. The existing loan is closed and a new loan is created carrying the outstanding balance forward, with an extended tenor and adjusted installments. No new money is disbursed to the customer.
 
 Restructure is a loan type (`application_type = restructure`) within the Onigiri application lifecycle. It uses the same workflow engine as other loan types but has distinct entry paths, form behaviour, campaign configuration, and a pre-approval stage that other loan types do not have.
 
@@ -215,7 +215,7 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 |---|---|---|
 | [smart-form/CAPABILITY.md](../../capabilities/smart-form/CAPABILITY.md) | ⚠️ Partial | Document upload rules exist. The restructure-specific required document list is not yet defined. |
 
-> **Note**: Disbursement Orchestration does **not** apply to restructure. Restructure does not disburse new money — it modifies the existing loan (extends tenor, adjusts repayment plan). The Disbursement Orchestration capability (fund transfer, Matcha verification at disbursement, Core Banking facility creation) is scoped to `new_booking` and `topup`. Wasabi early-warning scan on upload is triggered by the Smart Form Document Upload feature and applies to all loan types regardless.
+> **Note**: Disbursement Orchestration does **not** apply to restructure. Restructure closes the existing loan and opens a new loan carrying the outstanding balance forward — no new money is disbursed to the customer. The Disbursement Orchestration capability (fund transfer, Matcha verification at disbursement, Core Banking facility creation) is scoped to `new_booking` and `topup`. Wasabi early-warning scan on upload is triggered by the Smart Form Document Upload feature and applies to all loan types regardless.
 
 > **Open**: Required document types for restructure and the split between pre-approval stage documents and Draft stage documents are not yet defined.
 
@@ -253,9 +253,9 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 
 | Document | Status | What It Covers |
 |---|---|---|
-| _(none)_ | ❌ Not documented | How Onigiri interacts with Core Banking to modify the existing loan contract — updating the tenor and repayment schedule. |
+| _(none)_ | ❌ Not documented | How Onigiri interacts with Core Banking to close the existing loan and create a new loan carrying the outstanding balance forward with an extended tenor and adjusted repayment schedule. |
 
-> **Required before development of the post-approval stage**: Restructure modifies the existing loan contract — no new disbursement, no contract closure. The Core Banking API contract for updating tenor and repayment schedule on an existing loan is not defined anywhere.
+> **Required before development of the post-approval stage**: Restructure closes the existing loan and opens a new loan — no new money is disbursed to the customer. The Core Banking API contract for loan closure and new loan creation (carrying outstanding balance, extended tenor, adjusted installments) is not defined anywhere.
 
 ---
 
