@@ -10,7 +10,7 @@
 
 ## Business Function
 
-Run a batch eligibility scan across **all loans in Core Banking** (active and non-active) against **all published campaigns**. For each loan × campaign pair, evaluate the campaign's eligibility criteria and execute the campaign's Risk Strategy to produce: an outcome (Pass / Pass with Criteria / Deviate / Not Pass), a Maximum Amount, and installment amounts for each tenor option configured in the campaign. Surface the results per loan on the shared worklist, showing Credit Officers which campaigns each loan is eligible for, what the maximum offer is, and what the monthly payment looks like per tenor.
+Run a batch eligibility scan across **all loans in Core Banking** (active and non-active) against **all published campaigns**. For each loan × campaign pair, evaluate the campaign's eligibility criteria and execute the campaign's Risk Strategy to produce: an outcome (Pass / Pass with Criteria / Deviate / Not Pass), a Maximum Amount, and installment amounts for each tenor option configured in the campaign. Pre-Build's responsibility ends at producing this data — surfacing results to COs (e.g. worklist display) is handled by a separate capability (tentative, not yet defined).
 
 The Pre-Build engine itself is campaign-type-agnostic — it only produces eligibility outcomes, amounts, and installments. What the eligible campaign *does* (e.g., Topup Direct Charge, Topup New Contract, or any future campaign type) is defined entirely by the campaign configuration.
 
@@ -19,7 +19,7 @@ The Pre-Build engine itself is campaign-type-agnostic — it only produces eligi
 - **Proactive Offer Identification**: Many loan products are not customer-initiated. The business must identify which existing applications qualify for a given campaign before making an offer. Without a pre-build engine, CO teams must assess eligibility manually — which is unscalable and error-prone.
 - **Campaign-Driven Eligibility**: The criteria for who qualifies for any campaign change per product launch. The pre-build engine reads from the campaign's configured eligibility rules — not from hardcoded logic — so that launching a new campaign does not require a code change.
 - **Universal Scope**: Restricting pre-build to only active loans or only certain campaign types creates a maintenance problem as new campaign types are introduced. The engine must work generically across all loan states and all campaign types.
-- **Outcome-Aware Worklist**: Not every eligible application has the same eligibility quality. The four-outcome classification (Pass / Pass with Criteria / Deviate / Not Pass) allows COs to prioritize and manage their pipeline per campaign.
+- **Outcome-Aware Results**: Not every eligible application has the same eligibility quality. The four-outcome classification (Pass / Pass with Criteria / Deviate / Not Pass) allows downstream consumers to prioritize and manage their pipeline per campaign.
 - **Campaign Type as Config**: The Pre-Build does not decide what a campaign *does* — that is the campaign's responsibility. A campaign of type Topup Online (Direct Charge) defines that eligibility unlocks a contract amendment. A campaign of type Topup Offline (New Contract) defines that eligibility unlocks a new application. Future campaign types do not require Pre-Build changes.
 
 ---
@@ -33,7 +33,7 @@ The Pre-Build engine itself is campaign-type-agnostic — it only produces eligi
 | Risk Strategy Executor (Pre-Build) | Concept | For applications that pass the pre-filter for a given campaign, runs the campaign's assigned `strategy_id` via the Risk Assessment Engine against the Application Evaluation Document. Rules in the strategy reference Attribute Registry entries resolved from Core Banking + DaVinci. Produces: `risk_level` + `deviation_flags`. |
 | Outcome Classifier | Concept | Maps `risk_level` + `deviation_flags` from the Risk Strategy output to the four Pre-Build outcomes using the campaign's configured threshold ranges. Produces one outcome per application per campaign. |
 | Offer Calculator | Concept | For each actionable outcome (Pass / Pass with Criteria / Deviate), computes: (1) Maximum Amount — the highest eligible loan amount based on collateral LTV and campaign cap; (2) Installment amounts — monthly payment for each tenor option configured in the campaign Pricing dimension, calculated at the Maximum Amount. Produces one Maximum Amount and one installment schedule per application per campaign. |
-| Campaign Eligibility Flag Writer | Concept | For each loan × campaign pair, writes the outcome, Maximum Amount, and installment schedule as a flag on the loan's entry in the shared worklist. Loans may carry multiple flags — one per campaign evaluated. Pre-Build's responsibility ends here. |
+| Eligibility Result Writer | Concept | For each loan × campaign pair, writes the outcome, Maximum Amount, and installment schedule to the eligibility result store. Pre-Build's responsibility ends here. Surfacing results to COs (worklist display, customer detail flags) is handled by a separate capability — tentative, not yet defined. |
 
 ---
 
@@ -217,21 +217,18 @@ Current campaign types and their defined actions:
 
 > **Rule**: `topup_new_contract` uses an Application Template to create a full Onigiri application. `topup_direct_charge` execution happens outside Onigiri — Pre-Build surfaces the eligibility flag only; no Onigiri application is created.
 
-### Worklist Rules
+### Result Output Rules
 
-Pre-Build results surface as campaign eligibility flags on application entries in the **shared worklist** (the same list COs use for all applications). No separate worklist is created. Each application may carry multiple flags — one per campaign where a result exists.
+Pre-Build produces one result record per loan × campaign pair and writes it to the eligibility result store. How these results are surfaced to COs (worklist display, customer detail flags, notifications) is **out of scope for this capability** — that is the responsibility of a separate display capability (tentative, not yet defined).
 
 | Rule | Description |
 |------|-------------|
-| Shared worklist | Pre-Build results appear as flags on existing application entries — not in a separate view |
-| Multiple flags per application | An application may be eligible (or not) for multiple campaigns simultaneously. Each campaign's result appears as a separate flag on the same application entry. |
-| Flag visible on all applications | Every application entry shows its campaign eligibility flags. If Pre-Build has not been run, the flag is blank. If outcome is `Not Pass`, the flag shows outcome only — no action available. |
-| Outcome displayed | Flag shows outcome clearly: Pass / Pass with Criteria / Deviate / Not Pass |
-| Campaign action displayed | For actionable outcomes: flag shows the action the campaign type enables (e.g., "Topup Direct Charge", "Topup New Contract") |
-| Maximum Amount displayed | For actionable outcomes: flag shows computed Maximum Amount |
-| Installment amounts displayed | For actionable outcomes: flag shows monthly installment for each tenor option configured in the campaign — e.g. "12m: ฿X,XXX / 24m: ฿X,XXX / 36m: ฿X,XXX" |
-| Initiate action | Depends on campaign type. For `topup_new_contract`: CO clicks initiate — `campaign_id` resolves the New Contract Application Template, pricing, risk strategy, and workflow steps automatically. For `topup_direct_charge`: action defined by campaign config — `campaign_id` resolves the Direct Charge Application Template. `Not Pass` flags are read-only with no action for any campaign type. |
-| CO access | Only COs with access to the relevant branch/region can see and act on worklist entries |
+| One result per loan × campaign | Each loan × campaign pair produces exactly one result record: outcome + Maximum Amount + installment schedule |
+| Multiple results per loan | A loan may have results for multiple campaigns simultaneously — one record per campaign |
+| Idempotent write | Re-running pre-build updates the existing result for the same loan × campaign pair — no duplicates created |
+| Outcome values | Pass / Pass with Criteria / Deviate / Not Pass |
+| Actionable outcomes | Pass, Pass with Criteria, Deviate — Maximum Amount and installments are computed and stored |
+| Non-actionable outcome | Not Pass — outcome stored; Maximum Amount and installments are not computed |
 
 ---
 
