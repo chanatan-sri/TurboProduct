@@ -38,8 +38,9 @@ Both paths produce the same application record structure and follow the same wor
 | [pre-approval/CAPABILITY.md](../../capabilities/pre-approval/CAPABILITY.md) | Topology D — pre-approval workflow state machine (created → pending_approval → approved → converted/rejected/expired). User Flow — Restructure Pre-Approval Entry (how CO navigates from BOS Customer Detail through pre-approval to Draft). Change Detection at Draft submission. |
 
 **EasyPass clarification:**
-- In **pre-approval (Topology D)**: EasyPass bypasses the Approval Request — CO converts directly from `created` to Draft without submitting for approval.
-- In **underwriting (Topology A)**: EasyPass applications still go through `pending_approval` — they route to the **local approver** (within CO authority level). Non-EasyPass routes through standard escalation to a higher authority.
+- Both EasyPass and Non-EasyPass go through `pending_approval` in both pre-approval (Topology D) and underwriting (Topology A).
+- EasyPass routes to the **local approver**; Non-EasyPass routes to **higher authority**.
+- EasyPass does not bypass any approval step — it determines the authority level, not whether approval exists.
 
 ---
 
