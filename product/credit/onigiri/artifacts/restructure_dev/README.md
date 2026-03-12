@@ -11,7 +11,7 @@
 
 ## What Is Restructure
 
-A restructure is a loan modification for existing borrowers whose repayment capacity has decreased. The business extends the loan tenor beyond the original term and adjusts the repayment plan accordingly. The existing loan contract is closed and a new contract is opened.
+A restructure is a loan modification for existing borrowers whose repayment capacity has decreased. The business extends the loan tenor beyond the original term and adjusts the repayment plan accordingly. The existing loan contract is modified — no new money is disbursed.
 
 Restructure is a loan type (`application_type = restructure`) within the Onigiri application lifecycle. It uses the same workflow engine as other loan types but has distinct entry paths, form behaviour, campaign configuration, and a pre-approval stage that other loan types do not have.
 
@@ -255,9 +255,9 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 
 | Document | Status | What It Covers |
 |---|---|---|
-| _(none)_ | ❌ Not documented | How Onigiri interacts with Core Banking to close the original loan contract and open a new restructured contract. |
+| _(none)_ | ❌ Not documented | How Onigiri interacts with Core Banking to modify the existing loan contract — updating the tenor and repayment schedule. |
 
-> **Required before development of the post-approval stage**: Restructure modifies the existing loan — it does not create a new disbursement. The Core Banking API contract for original contract closure and new contract creation (with updated tenor and repayment schedule) is not defined anywhere.
+> **Required before development of the post-approval stage**: Restructure modifies the existing loan contract — no new disbursement, no contract closure. The Core Banking API contract for updating tenor and repayment schedule on an existing loan is not defined anywhere.
 
 ---
 
