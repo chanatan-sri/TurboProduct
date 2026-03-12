@@ -77,6 +77,21 @@ All topologies share: transition atomicity, immutable audit trail, configurable 
 | `withdrawn` | Withdrawn | Terminal | Customer not interested / withdrew | End state |
 | `expired` | Expired | Terminal | Application exceeded time limit | End state — system-triggered |
 
+### Handoff to Disbursement Orchestration
+
+At `waiting_fund_transfer`, this capability hands off ownership to the [Disbursement Orchestration](../disbursement-orchestration/CAPABILITY.md) capability.
+
+The Matcha callback endpoint (`POST /api/credit-application/verification-callback`) is shared between capabilities. Routing is by **current application state**:
+
+| Application State | Outcome | Owning Capability |
+|---|---|---|
+| `pending_document_checking` | `approved` | Disbursement Orchestration |
+| `pending_document_checking` | `returned` | Underwriting Workflow (this capability) |
+| `pending_document_checking` | `referred` | Underwriting Workflow (this capability) |
+| `waiting_fund_transfer` | any (`isReDecision=true`) | Disbursement Orchestration |
+
+---
+
 ### Cash vs. Non-Cash Path
 
 | Path | Sequence After Create Facility | Rationale |
@@ -199,7 +214,14 @@ stateDiagram-v2
     Approval --> CreateFacility: Approve
     Approval --> Rejected: Reject
     Approval --> Draft: Request docs
-    CreateFacility --> Cash
+    CreateFacility --> DocCheck: Matcha task created
+    DocCheck --> WaitFund: Matcha approved
+    DocCheck --> ReturnedForRevision: Matcha returned
+    DocCheck --> Approval: Matcha referred
+    WaitFund --> WaitLoan: CB fund transfer success
+    WaitFund --> ReturnedForRevision: Matcha re-decision returned
+    WaitFund --> Approval: Matcha re-decision referred
+    WaitLoan --> Cash: next state TBD
     Cash --> Confirmation1: Cash
     Confirmation1 --> CreateLoanDisb1
     CreateLoanDisb1 --> QA_top
@@ -240,3 +262,5 @@ stateDiagram-v2
 
 - What is the configurable expiry time for Draft state? Is it per-campaign or global?
 - Can Supervisor recall from *any* active state, or only specific states?
+- What is the next state after `waiting_create_loan_operation`? Does the cash/non-cash routing (Cash?) apply at that point, or does it remain at the `Create Facility` stage as in the original design? Resolution is required before the Disbursement Orchestration capability can advance from Concept → Spec. See [Disbursement Orchestration — Open Question #2](../disbursement-orchestration/CAPABILITY.md).
+- `next_dummy_state` has been retired and replaced by `waiting_fund_transfer`. See [CHANGELOG_003](../../changelogs/CHANGELOG_003_disbursement-orchestration.md).
