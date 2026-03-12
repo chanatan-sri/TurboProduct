@@ -32,66 +32,14 @@ Both paths produce the same application record structure and follow the same wor
 
 ### 1. User Flow and State Machine
 
-Full specification: [underwriting-workflow/CAPABILITY.md](../../capabilities/underwriting-workflow/CAPABILITY.md)
+| Document | Covers |
+|---|---|
+| [underwriting-workflow/CAPABILITY.md](../../capabilities/underwriting-workflow/CAPABILITY.md) | Topology A — loan application workflow (Draft → funded/rejected/withdrawn/expired). EasyPass routes to local approver at `pending_approval`; Non-EasyPass routes through standard escalation. Both paths go through `pending_approval` — EasyPass does not bypass the underwriting approval step. |
+| [pre-approval/CAPABILITY.md](../../capabilities/pre-approval/CAPABILITY.md) | Topology D — pre-approval workflow state machine (created → pending_approval → approved → converted/rejected/expired). User Flow — Restructure Pre-Approval Entry (how CO navigates from BOS Customer Detail through pre-approval to Draft). Change Detection at Draft submission. |
 
-Covers: Topology A (loan application workflow), Topology D (pre-approval state machine), Topology E (restructure end-to-end entry flow), EasyPass routing, Change Detection.
-
----
-
-#### Topology D — Pre-Approval State Machine
-
-The pre-approval process has two paths determined by the campaign type:
-
-- **EasyPass**: The campaign's risk is within local CO authority. The approval step is bypassed — the CO converts directly from `created` to Draft.
-- **Non-EasyPass**: The campaign's risk requires higher authority. The CO submits an approval request. The approved pre-approval carries an expiry date. The `converted` state is reusable — the same pre-approval can generate multiple Drafts while it remains within its expiry window.
-
-```mermaid
-stateDiagram-v2
-    direction LR
-
-    created: created
-    pending_approval: pending_approval
-    approved: approved
-    rejected: rejected
-    expired: expired
-    converted: converted
-
-    [*] --> created: Plan selected\n(EasyPass or Non-EasyPass)
-    created --> converted: EasyPass — CO converts\n(approval bypassed)
-    created --> pending_approval: Non-EasyPass — CO submits\nApproval Request
-    pending_approval --> approved: Approver approves\n(expiry date set)
-    pending_approval --> rejected: Approver rejects
-    approved --> converted: CO converts to Draft
-    converted --> converted: CO converts again\n(reusable while not expired)
-    approved --> expired: Expiry date passed\n[system auto]
-```
-
----
-
-#### Topology E — Restructure Pre-Approval Entry Flow
-
-Entry point is BOS only — no application number exists at pre-approval stage, so the CO Worklist cannot surface pre-approval items. The CO is notified of approval status changes via the Pre-Approval Status Visibility feature in BOS Customer Detail.
-
-```mermaid
-flowchart LR
-    BOS(["BOS\nEntry Point"])
-
-    BOS --> CD["Customer List\n→ Customer Detail"]
-    CD --> Check{"Pre-Approval\nExists?"}
-
-    Check -- "No pre-approval" --> Create["Creation\n[created]"]
-    Check -- "Approved pre-approval\n(status visible on\nCustomer Detail)" --> Confirmation
-
-    Create -- "EasyPass —\napproval bypassed\nCO converts" --> Converted["Converted\n[converted]"]
-    Create -- "Non-EasyPass —\nsubmit for approval" --> PA["Pending Approval\n[pending_approval]"]
-
-    PA --> Result{"Result"}
-    Result -- "Approve\n(expiry date set)" --> Confirmation["Confirmation\n[approved]"]
-    Result -- "Reject" --> Rejected["Rejected\n[rejected]"]
-
-    Confirmation -- "CO converts to Draft\n(reusable)" --> Converted
-    Confirmation -- "Expiry passed\n[system auto]" --> Expired["Expired\n[expired]"]
-```
+**EasyPass clarification:**
+- In **pre-approval (Topology D)**: EasyPass bypasses the Approval Request — CO converts directly from `created` to Draft without submitting for approval.
+- In **underwriting (Topology A)**: EasyPass applications still go through `pending_approval` — they route to the **local approver** (within CO authority level). Non-EasyPass routes through standard escalation to a higher authority.
 
 ---
 

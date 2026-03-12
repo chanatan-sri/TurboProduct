@@ -43,6 +43,33 @@ EasyPass is a statement of authority alignment — not a shortcut. A CO initiati
 | EasyPass campaign | Campaign risk level is within local CO authority | No Approval Request generated — CO converts directly to Draft. No expiry on pre-approval. |
 | Non-EasyPass campaign | Campaign risk level exceeds local CO authority | Approval Request required — submitted to designated approver. Approved pre-approval carries expiry date. |
 
+### Workflow State Machine — Topology D
+
+Pre-approval runs as **Topology D** on the Underwriting Workflow engine. The diagram below shows the workflow states and transitions — not the user journey. For the user-facing entry flow, see [User Flow — Restructure Pre-Approval Entry](#user-flows) below.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    created: created
+    pending_approval: pending_approval
+    approved: approved
+    rejected: rejected
+    expired: expired
+    converted: converted
+
+    [*] --> created: Plan selected\n(EasyPass or Non-EasyPass)
+    created --> converted: EasyPass — CO converts\n(approval step bypassed)
+    created --> pending_approval: Non-EasyPass — CO submits\nApproval Request
+    pending_approval --> approved: Approver approves\n(expiry date set)
+    pending_approval --> rejected: Approver rejects
+    approved --> converted: CO converts to Draft
+    converted --> converted: CO converts again\n(reusable while not expired)
+    approved --> expired: Expiry date passed\n[system auto]
+```
+
+---
+
 ### Pre-Approval Lifecycle (Topology D)
 
 Pre-approval runs as **Topology D** on the Underwriting Workflow engine — same audit trail, same execution step infrastructure, same transition atomicity as all other topologies.
@@ -137,6 +164,8 @@ EasyPass routing is determined at `pending_approval` by the campaign type of the
 
 ## User Flows
 
+> User flows describe how the CO navigates through the system. They are distinct from the workflow state machine (Topology D above) — which describes engine states only.
+
 ### Entry Points
 
 Two systems can navigate into pre-approval. Each has a defined scope:
@@ -147,7 +176,7 @@ Two systems can navigate into pre-approval. Each has a defined scope:
 
 CO Worklist is not an entry point for pre-approval — at this stage no application number exists, so there is no item to surface in a worklist. Instead, BOS Customer Detail surfaces the pre-approval status and provides the Convert to Draft action directly on the customer record (see Pre-Approval Status Visibility feature).
 
-### Pre-Approval Flow
+### User Flow — Restructure Pre-Approval Entry
 
 ```mermaid
 flowchart TD
