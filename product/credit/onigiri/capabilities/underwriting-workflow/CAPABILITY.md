@@ -4,7 +4,7 @@
 **Portfolio**: Credit
 **Product Owner**: TBD (Credit PO)
 **Status**: 📝 Draft — @FEATURE decomposition pending
-**Last Updated**: 2026-03-10 (restructure 1.3 — Topology D, EasyPass routing, change detection)
+**Last Updated**: 2026-03-10
 
 ---
 
@@ -48,8 +48,6 @@ The workflow engine hosts multiple fixed topologies. Each topology defines its o
 | **A — Loan Application Workflow** | Loan application | 11 states across 4 phases | [Topology A diagram below](#workflow-diagram) |
 | **B — Rule Change Approval** | Risk strategy / policy / rule change | 5 states | [FEATURE](../../risk-assessment-engine/features/FEATURE_rule-change-authorization.md) |
 | **C — Campaign Publication Approval** | Campaign version | 6 states | [FEATURE](../../loan-campaign-configuration/features/FEATURE_campaign-publication-authorization.md) |
-| **D — Pre-Approval** | Pre-approval request | 6 states: `created`, `pending_approval`, `approved`, `rejected`, `expired`, `converted` | [CAPABILITY](../pre-approval/CAPABILITY.md) |
-| **E — Restructure Application** | Restructure loan application (end-to-end) | Combined view: Topology D (pre-approval) → Topology A (underwriting) with EasyPass routing and change detection | [Topology E diagram below](#topology-e-diagram--restructure-end-to-end) |
 
 All topologies share: transition atomicity, immutable audit trail, configurable execution steps per state.
 
@@ -78,6 +76,21 @@ All topologies share: transition atomicity, immutable audit trail, configurable 
 | `rejected` | Rejected | Terminal | Application rejected — at Approval, via loan officer reject from `waiting_for_confirmation`, or via Core Banking `Reject` callback | End state |
 | `withdrawn` | Withdrawn | Terminal | Customer not interested / withdrew | End state |
 | `expired` | Expired | Terminal | Application exceeded time limit | End state — system-triggered |
+
+### Handoff to Disbursement Orchestration
+
+At `waiting_fund_transfer`, this capability hands off ownership to the [Disbursement Orchestration](../disbursement-orchestration/CAPABILITY.md) capability.
+
+The Matcha callback endpoint (`POST /api/credit-application/verification-callback`) is shared between capabilities. Routing is by **current application state**:
+
+| Application State | Outcome | Owning Capability |
+|---|---|---|
+| `pending_document_checking` | `approved` | Disbursement Orchestration |
+| `pending_document_checking` | `returned` | Underwriting Workflow (this capability) |
+| `pending_document_checking` | `referred` | Underwriting Workflow (this capability) |
+| `waiting_fund_transfer` | any (`isReDecision=true`) | Disbursement Orchestration |
+
+---
 
 ### Cash vs. Non-Cash Path
 
@@ -146,34 +159,6 @@ Execution steps that call Core Banking carry pre-condition guards evaluated **be
 
 The Create Loan + Disbursement guard is a hard stop, not a skip. A second disbursement against an existing loan record is never safe to silently bypass — it must be explicitly resolved by a supervisor.
 
-### EasyPass Approval Routing at `pending_approval` (Restructure Applications)
-
-For restructure applications, a configurable execution step at `pending_approval` state entry evaluates the campaign type of the application's selected campaign and sets the approver queue.
-
-| Campaign Type | Approval Route |
-|---|---|
-| EasyPass campaign | Local approver — campaign risk level is within CO authority |
-| Non-EasyPass campaign | Standard escalation path — higher authority required |
-| No pre-approval used (direct application) | Standard routing unchanged |
-
-Campaign EasyPass designation is derived from the campaign type returned by Campaign Eligibility Pre-Build — not from a stored flag on the application record.
-
----
-
-### Change Detection at Draft Submission (Restructure Applications — Non-EasyPass Only)
-
-A configurable execution step at Draft submission evaluates whether the application data has changed since the pre-approval was approved. Applies only to restructure applications with a `pre_approval_id` linked to a non-EasyPass campaign — where a higher-authority approver reviewed the plan at pre-approval stage.
-
-| Condition | Outcome |
-|---|---|
-| `pre_approval_id` present + non-EasyPass campaign + Draft data matches `pre_approval_snapshot` | Skip `pending_approval` — approver already reviewed this plan |
-| `pre_approval_id` present + non-EasyPass campaign + delta detected between Draft and snapshot | Route through `pending_approval` as normal |
-| No `pre_approval_id` (direct restructure application, no pre-approval used) | Full workflow — `pending_approval` runs unchanged |
-
-This step does not apply to EasyPass applications — they always route through `pending_approval` for local approval.
-
----
-
 ### Configurable Execution Steps (Inside States)
 
 Execution steps inside each state can be plugged in via campaign configuration. Example steps: Document checks, Risk criteria checks, Integration calls (NCB, Core Banking, Wasabi), Approval routing, Printouts & reports.
@@ -229,7 +214,14 @@ stateDiagram-v2
     Approval --> CreateFacility: Approve
     Approval --> Rejected: Reject
     Approval --> Draft: Request docs
-    CreateFacility --> Cash
+    CreateFacility --> DocCheck: Matcha task created
+    DocCheck --> WaitFund: Matcha approved
+    DocCheck --> ReturnedForRevision: Matcha returned
+    DocCheck --> Approval: Matcha referred
+    WaitFund --> WaitLoan: CB fund transfer success
+    WaitFund --> ReturnedForRevision: Matcha re-decision returned
+    WaitFund --> Approval: Matcha re-decision referred
+    WaitLoan --> Cash: next state TBD
     Cash --> Confirmation1: Cash
     Confirmation1 --> CreateLoanDisb1
     CreateLoanDisb1 --> QA_top
@@ -306,6 +298,7 @@ flowchart LR
 
 ---
 
+
 ## NFRs
 
 | NFR | Requirement |
@@ -322,3 +315,5 @@ flowchart LR
 
 - What is the configurable expiry time for Draft state? Is it per-campaign or global?
 - Can Supervisor recall from *any* active state, or only specific states?
+- What is the next state after `waiting_create_loan_operation`? Does the cash/non-cash routing (Cash?) apply at that point, or does it remain at the `Create Facility` stage as in the original design? Resolution is required before the Disbursement Orchestration capability can advance from Concept → Spec. See [Disbursement Orchestration — Open Question #2](../disbursement-orchestration/CAPABILITY.md).
+- `next_dummy_state` has been retired and replaced by `waiting_fund_transfer`. See [CHANGELOG_003](../../changelogs/CHANGELOG_003_disbursement-orchestration.md).

@@ -4,7 +4,7 @@
 **Portfolio**: Credit → [PORTFOLIO](../../PORTFOLIO.md)
 **Status**: 📝 Draft
 **Executive Owner**: CPO
-**Last Updated**: 2026-03-10 (restructure 1.3 — Pre-Approval capability added)
+**Last Updated**: 2026-03-09 (workflow update)
 
 > *Onigiri (おにぎり) — A tightly packed, self-contained unit. Like the rice ball, Onigiri wraps the entire loan origination lifecycle into a single, cohesive product — from application intake through underwriting to disbursement. Everything the borrower needs, held together in one place.*
 
@@ -51,6 +51,7 @@ A single configurable platform that governs the full loan application lifecycle 
 - Matcha → verification outcome (APPROVED/RETURNED/REFERRED) → via webhook callback
 - Core Banking → fund transfer COMPLETE callback `{ status=COMPLETE, transferResult: Success|Reject, transferReferenceId }` → via webhook callback
 - NCB → credit bureau inquiry result → via API (triggered by OTP consent in Smart Form)
+- Core Banking → fund transfer result (success / failure) → via webhook callback
 
 **This product SENDS to:**
 - Miso → application JSON + campaign ID on Risk Assessment state entry → via REST API
@@ -73,7 +74,7 @@ A single configurable platform that governs the full loan application lifecycle 
 | [Loan Campaign Configuration](capabilities/loan-campaign-configuration/CAPABILITY.md) | Product | Draft | Single configuration umbrella per loan product: pricing, eligibility rules, application template, risk strategy, workflow execution steps. Zero code changes for new campaigns. |
 | [Risk Assessment Engine](capabilities/risk-assessment-engine/CAPABILITY.md) | Engineering | Draft | JMESPath-based configurable rule engine. Strategy → Policy → Rule hierarchy. Produces max risk level, deviation flags, conditional document requirements. Full evaluation trace for audit. |
 | [Disbursement Orchestration](capabilities/disbursement-orchestration/CAPABILITY.md) | Engineering | Draft | Owns post-document-verification states: receiver account pre-check (draft gate), Matcha callback routing from `pending_document_checking` (approved/returned/referred), loan officer confirm/reject from `waiting_for_confirmation`, system `waiting_create_facility`, Core Banking COMPLETE callback routing (Success / Reject). |
-| [Campaign Eligibility Pre-Build](capabilities/campaign-eligibility-pre-build/CAPABILITY.md) | Product | Draft | Batch eligibility scan: evaluates all loans × all published campaigns. Phase 1: eligibility pre-filter (Eligibility Criteria dimension). Phase 2: Risk Strategy execution via Risk Assessment Engine. Produces Pass / Pass with Criteria / Deviate / Not Pass outcome and Maximum Amount per loan per campaign. Surfaces results as flags on the shared worklist. |
+| [Product Type Configuration](capabilities/product-type-configuration/CAPABILITY.md) | Product | Draft | Self-service collateral type definition: template-based form section builder, document requirement declaration with conditional rules, Onigiri-owned document type registry with Matcha sync. Two-tier approval (CPO + Risk Officer → CRO). Upstream enabler for Campaign Configuration. |
 
 ---
 
@@ -140,6 +141,7 @@ stateDiagram-v2
         Rejected: rejected
         Withdrawn
         Expired
+        ReturnedForRevision: returned_for_revision
     }
 
     [*] --> Draft: Create application
@@ -186,7 +188,6 @@ stateDiagram-v2
 ```mermaid
 graph LR
     Onigiri[Onigiri\nLoan Origination]
-    Miso[Miso\nCredit Scoring]
     DaVinci[DaVinci\nMaster Data]
     Wasabi[Wasabi\nAI Verification]
     Matcha[Matcha\nDoc Verification]

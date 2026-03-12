@@ -4,7 +4,7 @@
 **Portfolio**: Credit
 **Product Owner**: TBD (Credit PO)
 **Status**: 📝 Draft — @FEATURE decomposition pending
-**Last Updated**: 2026-03-10
+**Last Updated**: 2026-03-09
 
 ---
 
@@ -36,14 +36,6 @@ Define and manage loan product configurations (campaigns) that house all configu
 
 ## Business Rules
 
-### Campaign Types
-
-| Type | Display Name | Description |
-|---|---|---|
-| `restructure` | Restructure | Loan restructure offer for an existing active borrower. A new Onigiri application is created using the campaign's Application Template, pre-populated with the existing loan reference. Uses 5 configuration dimensions. Participates in Campaign Eligibility Pre-Build — Pre-Build evaluates Eligibility Criteria including restructure-specific criteria (existing loan DPD, loan status, prior restructure count, loan age, outstanding balance) and Risk Strategy. |
-
----
-
 ### Campaign Configuration Dimensions
 
 | Dimension | What It Configures |
@@ -53,18 +45,6 @@ Define and manage loan product configurations (campaigns) that house all configu
 | **Application Template** | Which pages/sections/fields appear; required documents; conditional document logic |
 | **Risk Strategy** | Which risk assessment strategy to execute (Strategy → Policy → Rule) |
 | **Workflow Execution Steps** | What pluggable steps run inside each workflow state |
-
-### Eligibility Criteria Examples
-
-| Criteria | Operator | Example Value |
-|----------|----------|---------------|
-| Customer type | `=` | "new" |
-| Customer age | `>=` | 20 |
-| Customer age | `<=` | 70 |
-| Car brand | `like` | Toyota, Honda |
-| Collateral type | `=` | "car" |
-| Occupation group | `in` | Civil servant |
-| B-score | `>` | 500 |
 
 ### Pricing Parameters
 
@@ -113,6 +93,79 @@ Because the Risk Officer is a mandatory Tier 1 approver on every campaign public
 ### Zero-Code Launch Rule
 
 A new campaign must be launchable by a product manager without any code deployment. If configuring a new campaign requires a code change, it is a violation of this capability's design intent and must be escalated to engineering for resolution.
+
+---
+
+### Collateral Type as a Configuration Driver
+
+Collateral Type is the primary axis that differentiates campaigns within Onigiri. A campaign is, in practice, a collateral type + credit policy combination. Every one of the five configuration dimensions is shaped by Collateral Type:
+
+| Configuration Dimension | How Collateral Type Affects It |
+|------------------------|-------------------------------|
+| **Pricing** | LTV ceiling and loan amount range differ by collateral type (e.g., land carries a lower LTV ceiling than vehicles) |
+| **Eligibility Criteria** | The `collateral_type =` rule gates which campaign a customer enters |
+| **Application Template** | Exactly one Collateral Section (from the Smart Form Collateral Section Registry) is selected per campaign; each section carries its own field list and document declarations |
+| **Risk Strategy** | A named strategy (e.g., `BikeTitleDefault`, `LandTitleDefault`) is assigned; each strategy contains policies specific to that collateral type's risk characteristics |
+| **Workflow Execution Steps** | Identical across all collateral types — the fixed underwriting topology does not change by collateral type |
+
+To launch Bike, Tractor, or Land campaigns, no new capability is required. A product manager creates a campaign, selects the appropriate Collateral Section in the Application Template, assigns the collateral-specific risk strategy, and configures pricing. Everything else is inherited from the existing infrastructure.
+
+---
+
+### Collateral Type Variants Reference
+
+Authoritative cross-reference for all four supported collateral types. Each row maps a collateral type to its Smart Form section ID, Matcha document keys, and indicative pricing parameters. Values marked "(example)" require confirmation from the Credit PO and Risk Officer before campaign go-live.
+
+| Collateral Type | Campaign Example | Smart Form Section ID | Matcha Document Keys (type-specific) | Typical LTV Ceiling | Typical Loan Amount Range |
+|----------------|-----------------|----------------------|--------------------------------------|--------------------|-----------------------|
+| **Car** | Car Title Default 2026 | `collateral_car` | `vehicle_registration_book`, `vehicle_insurance` | 120% (example) | 3,000 – 500,000 (example) |
+| **Bike (Motorbike)** | Bike Title Default 2026 | `collateral_bike` | `motorbike_registration_book`, `motorbike_insurance` | 80% (example) | 3,000 – 150,000 (example) |
+| **Tractor** | Tractor Title Default 2026 | `collateral_tractor` | `tractor_registration_document`, `proof_of_agricultural_use` | 70% (example) | 5,000 – 300,000 (example) |
+| **Land** | Land Title Default 2026 | `collateral_land` | `land_title_deed`, `land_appraisal_certificate` | 50% (example) | 10,000 – 2,000,000 (example) |
+
+**Shared Base Document Set (all collateral types):**
+
+| Matcha Document Key | Document Name |
+|--------------------|--------------|
+| `applicant_id_card` | National ID Card |
+| `proof_of_income` | Proof of Income (payslip / bank statement / business registration) |
+| `household_registration` | Household Registration (ทะเบียนบ้าน) |
+
+**How the document list reaches Matcha:** The Application Template for a campaign declares the required document type keys (shared base + collateral-type-specific). When the application transitions to `create_facility`, the Onigiri worker reads this list from the `document_verification_mapping` table and constructs the `documents[]` array in the POST /task payload to Matcha. Campaign configuration is therefore the upstream source of Matcha's document checklist — not a separate configuration maintained in Matcha.
+
+---
+
+### Eligibility Criteria Examples
+
+The table below shows representative eligibility rules per collateral type. A campaign for one collateral type combines the collateral type gate with age, B-score, and occupation criteria.
+
+| Criteria | Operator | Car Campaign | Bike Campaign | Tractor Campaign | Land Campaign |
+|----------|----------|-------------|--------------|-----------------|--------------|
+| Collateral type | `=` | `"car"` | `"bike"` | `"tractor"` | `"land"` |
+| Customer age | `>=` | 20 | 20 | 20 | 20 |
+| Customer age | `<=` | 70 | 70 | 70 | 70 |
+| Customer type | `=` | `"new"` / `"existing"` | `"new"` / `"existing"` | `"new"` / `"existing"` | `"new"` / `"existing"` |
+| B-score | `>` | 500 (example) | 500 (example) | 450 (example) | 600 (example) |
+| Occupation group | `in` | Civil servant, Salaried | Civil servant, Salaried | Farmer, Agricultural worker | Any (example) |
+| Vehicle brand | `like` | Toyota, Honda (example) | Honda, Yamaha, Kawasaki (example) | Kubota, Yanmar (example) | — |
+| Land title deed type | `=` | — | — | — | `"Chanote"` (example) |
+
+> **Note on land deed type:** Land campaigns may restrict eligible collateral to specific deed types (e.g., Chanote only vs. accepting NS-3K/NS-3G). This is an eligibility rule, not a form field — the gate is evaluated before the form loads. Confirm acceptable deed types per campaign with the Credit PO.
+
+---
+
+### Risk Strategy Names by Collateral Type
+
+Each collateral type should have at least one named strategy in the Risk Assessment Engine. Strategies are created in the admin UI — no code deployment required. The naming convention is `<CollateralType>Title<Variant>`:
+
+| Collateral Type | Example Strategy Name | Notes |
+|----------------|----------------------|-------|
+| Car | `CarTitleDefault` | Existing strategy — reference implementation |
+| Bike | `BikeTitleDefault` | To be created — mirrors CarTitleDefault structure with bike-specific policies (brand, age, engine size) |
+| Tractor | `TractorTitleDefault` | To be created — likely adds agricultural usage area and seasonal income policies |
+| Land | `LandTitleDefault` | To be created — likely adds title deed type, land area, and appraisal value policies |
+
+Strategy design (which policies and rules to include) is a separate @CAPABILITY session with the Risk Officer.
 
 ---
 
