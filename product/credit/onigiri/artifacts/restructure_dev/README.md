@@ -34,7 +34,7 @@ Both paths produce the same application record structure and follow the same wor
 
 Full specification: [underwriting-workflow/CAPABILITY.md](../../capabilities/underwriting-workflow/CAPABILITY.md)
 
-Covers: Topology A (loan application workflow), Topology D (pre-approval state machine), EasyPass routing, Change Detection.
+Covers: Topology A (loan application workflow), Topology D (pre-approval state machine), Topology E (restructure end-to-end entry flow), EasyPass routing, Change Detection.
 
 ---
 
@@ -49,30 +49,48 @@ The pre-approval process has two paths determined by the campaign type:
 stateDiagram-v2
     direction LR
 
-    state "EasyPass Path" as ep {
-        Created_EP: created
-        Converted_EP: converted
-    }
+    created: created
+    pending_approval: pending_approval
+    approved: approved
+    rejected: rejected
+    expired: expired
+    converted: converted
 
-    state "Non-EasyPass Path" as nep {
-        Created_NEP: created
-        PendingApproval: pending_approval
-        Approved: approved
-        Rejected: rejected
-        Expired: expired
-        Converted_NEP: converted
-    }
+    [*] --> created: Plan selected\n(EasyPass or Non-EasyPass)
+    created --> converted: EasyPass — CO converts\n(approval bypassed)
+    created --> pending_approval: Non-EasyPass — CO submits\nApproval Request
+    pending_approval --> approved: Approver approves\n(expiry date set)
+    pending_approval --> rejected: Approver rejects
+    approved --> converted: CO converts to Draft
+    converted --> converted: CO converts again\n(reusable while not expired)
+    approved --> expired: Expiry date passed\n[system auto]
+```
 
-    [*] --> Created_EP: EasyPass plan selected
-    Created_EP --> Converted_EP: CO converts to Draft\n(approval bypassed)
+---
 
-    [*] --> Created_NEP: Non-EasyPass plan selected
-    Created_NEP --> PendingApproval: CO submits Approval Request
-    PendingApproval --> Approved: Approver approves\n(expiry date set)
-    PendingApproval --> Rejected: Approver rejects
-    Approved --> Converted_NEP: CO converts to Draft
-    Converted_NEP --> Converted_NEP: CO converts again\n(reusable while not expired)
-    Approved --> Expired: Expiry date passed\n[system auto]
+#### Topology E — Restructure Pre-Approval Entry Flow
+
+Entry point is BOS only — no application number exists at pre-approval stage, so the CO Worklist cannot surface pre-approval items. The CO is notified of approval status changes via the Pre-Approval Status Visibility feature in BOS Customer Detail.
+
+```mermaid
+flowchart LR
+    BOS(["BOS\nEntry Point"])
+
+    BOS --> CD["Customer List\n→ Customer Detail"]
+    CD --> Check{"Pre-Approval\nExists?"}
+
+    Check -- "No pre-approval" --> Create["Creation\n[created]"]
+    Check -- "Approved pre-approval\n(status visible on\nCustomer Detail)" --> Confirmation
+
+    Create -- "EasyPass —\napproval bypassed\nCO converts" --> Converted["Converted\n[converted]"]
+    Create -- "Non-EasyPass —\nsubmit for approval" --> PA["Pending Approval\n[pending_approval]"]
+
+    PA --> Result{"Result"}
+    Result -- "Approve\n(expiry date set)" --> Confirmation["Confirmation\n[approved]"]
+    Result -- "Reject" --> Rejected["Rejected\n[rejected]"]
+
+    Confirmation -- "CO converts to Draft\n(reusable)" --> Converted
+    Confirmation -- "Expiry passed\n[system auto]" --> Expired["Expired\n[expired]"]
 ```
 
 ---
@@ -207,9 +225,7 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 
 | Document | Status | What It Covers |
 |---|---|---|
-| [loan-campaign-configuration/CAPABILITY.md](../../capabilities/loan-campaign-configuration/CAPABILITY.md) | ⚠️ Partial | General campaign configuration dimensions are documented. The restructure campaign type and its specific configuration dimensions are not yet specified. |
-
-> **Open**: The restructure campaign type configuration — eligibility criteria shape, plan calculation parameters, pricing dimensions — is not yet defined.
+| [loan-campaign-configuration/CAPABILITY.md](../../capabilities/loan-campaign-configuration/CAPABILITY.md) | ✅ Done | Campaign configuration dimensions documented. Restructure campaign type added: EasyPass designation, eligibility criteria shape (DPD range, contract age, outstanding balance), and Plan Calculation pricing parameters. |
 
 ---
 
