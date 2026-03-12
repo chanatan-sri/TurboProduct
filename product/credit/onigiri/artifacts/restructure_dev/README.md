@@ -204,7 +204,7 @@ Capability reference: [smart-form/CAPABILITY.md](../../capabilities/smart-form/C
 | Auto-Prefill | ⚠️ Requires restructure implementation | Prefill source: DaVinci (customer profile) + Core Banking (loan record + collateral). The specific field list and per-field editability rules are not yet defined. |
 | Save Draft (Mid-Session Persistence) | ✅ No change required | Behaviour is identical to `new_booking` — full JSON document persisted on every save and every state transition. |
 | Stage Navigator | ✅ No change required | Stage sequence is determined by the restructure campaign's Application Template. No code change required. |
-| NCB Consent + OTP Flow | ❓ Open question | Restructure applies to existing borrowers. Confirm whether a credit bureau re-inquiry and NCB consent are required for restructure applications. |
+| NCB Consent + OTP Flow | ✅ No change required | Restructure applications require NCB consent and OTP flow — same as other loan types. No code change needed. |
 | Document Upload Interface | ⚠️ Requires restructure document list | The upload engine is unchanged. The required document types for a restructure application have not yet been defined. |
 | Approver Data Aggregation | ⚠️ Requires restructure data groups | The engine is `application_type`-driven and requires no code change. The data groups to display at the Approval state for restructure are not yet defined. |
 | Finance Page | ❌ New feature — must be built | Supports campaign and plan selection, re-selection, Plan Calculation API integration, and tenor filter enforcement. Business rules are documented in smart-form/CAPABILITY.md. Screen-level specification is not yet written. |
