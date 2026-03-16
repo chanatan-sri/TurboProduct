@@ -48,6 +48,7 @@ The workflow engine hosts multiple fixed topologies. Each topology defines its o
 | **A — Loan Application Workflow** | Loan application | 11 states across 4 phases | [Topology A diagram below](#workflow-diagram) |
 | **B — Rule Change Approval** | Risk strategy / policy / rule change | 5 states | [FEATURE](../../risk-assessment-engine/features/FEATURE_rule-change-authorization.md) |
 | **C — Campaign Publication Approval** | Campaign version | 6 states | [FEATURE](../../loan-campaign-configuration/features/FEATURE_campaign-publication-authorization.md) |
+| **D — Pre-Approval** | Restructure pre-approval record | 6 states | [Pre-Approval CAPABILITY.md](../pre-approval/CAPABILITY.md) |
 
 All topologies share: transition atomicity, immutable audit trail, configurable execution steps per state.
 

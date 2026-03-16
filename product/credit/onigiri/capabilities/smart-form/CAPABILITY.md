@@ -4,7 +4,7 @@
 **Portfolio**: Credit
 **Product Owner**: TBD (Credit PO)
 **Status**: 📝 Draft — @FEATURE decomposition pending
-**Last Updated**: 2026-03-06
+**Last Updated**: 2026-03-12
 
 ---
 
@@ -25,11 +25,13 @@ Provide a configurable, section-based loan application form that captures borrow
 | Feature | Status | Description |
 |---------|--------|-------------|
 | Page/Section/Field Composer | Concept | Configuration engine for composing form pages from reusable sections containing typed fields |
+| Auto-Prefill | Concept | Pre-populate form fields from authoritative data sources (DaVinci, Core Banking) based on `application_type`; prefilled fields render with source indicators |
 | Save Draft (Mid-Session Persistence) | Concept | Persist full JSON application document to DocumentDB on every explicit save and every stage transition |
 | Stage Navigator | Concept | Locked-sequence stage progression (Borrower → Guarantor → Loan Setup → Summary → Document Upload) with completion tracking |
 | NCB Consent + OTP Flow | Concept | Embedded credit bureau inquiry consent with OTP verification inside the Borrower stage |
 | Document Upload Interface | Concept | Upload required supporting documents within the Draft stage; trigger Wasabi early-warning scan on upload |
 | Field Lockpoint Enforcement | Concept | Read-only rendering of field groups based on application `state_high_water_mark`; server-side API rejection of writes to locked fields |
+| Finance Page | Concept | Renders eligible campaign and plan options within Loan Setup; supports plan selection, re-selection, and Plan Calculation API recalculation on campaign, plan option, or payment due date change |
 
 ---
 
@@ -318,6 +320,81 @@ A campaign selects exactly one Collateral Section from the registry above. Multi
 
 ---
 
+### Auto-Prefill Rules
+
+#### Auto-Prefill — `restructure`
+
+Prefill source: **DaVinci** (customer record) + **Core Banking** (existing loan record).
+
+Applies to both restructure entry paths (via pre-approval and direct).
+
+| Data Group | Source | Fields Prefilled |
+|---|---|---|
+| Customer identity and profile | DaVinci | Name, ID card, address, contact details |
+| Existing loan reference | Core Banking | Loan account number, product type |
+| Loan financial data | Core Banking | Outstanding balance, original tenor, DPD, contract age, interest rate |
+| Collateral data | Core Banking / DaVinci | Collateral type, valuation amount, appraisal date |
+
+For restructure **via pre-approval**: `pre_approval_snapshot` carries the selected campaign and plan as a starting point for the Finance Page. This is separate from form field prefill — the snapshot is not used as a field data source.
+
+#### Prefill Field Editability
+
+Editability of prefilled fields is determined per field per `application_type`. A prefilled field may be editable (CO can override), read-only (CO cannot change), or conditionally editable (editable until a workflow state threshold is reached). Detail is defined per loan type section.
+
+---
+
+### Application Types — `restructure`
+
+Restructure has two entry paths. Both produce the same application record structure and follow the same workflow from Draft onwards.
+
+**Path 1 — Via Pre-Approval (Draft Initializer)**
+
+- Draft is created from a confirmed pre-approval (`pre_approval_id` present on the application)
+- Form fields prefilled from DaVinci + Core Banking
+- Finance Page pre-populates from `pre_approval_snapshot` as the starting point
+- CO may re-select campaign or plan option on the Finance Page
+
+**Path 2 — Direct (No Pre-Approval)**
+
+- Draft is created without a prior pre-approval
+- Form fields prefilled from DaVinci + Core Banking
+- CO selects campaign and plan option on the Finance Page
+
+Both paths support Finance Page re-selection and Plan Calculation API recalculation triggered by any change.
+
+---
+
+### Finance Page Rules by Application Type
+
+| Application Type | Behaviour |
+|---|---|
+| `new_booking` | No Finance Page — standard Loan Setup fields only |
+| `topup` | Campaign pre-selected at worklist; Finance Page renders plan details for CO confirmation; campaign cannot be switched inside Smart Form |
+| `restructure` (via pre-approval) | Finance Page pre-populates from `pre_approval_snapshot`; CO may change campaign or plan option; any change triggers Plan Calculation API recalculation |
+| `restructure` (direct) | Finance Page renders eligible campaigns and plan options; CO selects; any change triggers Plan Calculation API recalculation |
+
+- The restructure Finance Page must call the Plan Calculation API whenever the CO changes the selected campaign, plan option, or payment due date. The CO cannot progress to Summary until a successful recalculation response confirms the selected plan.
+- The pre-approval plan is the **default selection**, not a lock. Changes made in Smart Form override the snapshot. `pre_approval_snapshot` is preserved for change detection at submission.
+
+---
+
+### Tenor Filter (Restructure Only)
+
+- Tenor options **equal to or shorter than** the original loan tenor are disabled on the Finance Page for all restructure paths.
+- Applies to both restructure entry paths (via pre-approval and direct).
+- If no valid tenor options remain after Plan Calculation API recalculation, the CO cannot progress to Summary.
+
+---
+
+### Document Upload Rules by Application Type
+
+- The required document checklist is always driven by the campaign's **Application Template** — not hardcoded by `application_type`.
+- `restructure` uses a restructure-specific document set defined in the restructure campaign template.
+- Documents uploaded at the **pre-approval stage** are stored on the pre-approval record — not on the Draft application. If the campaign template requires the same document type at the Draft stage, the CO must upload again on the application.
+- Wasabi early-warning scan is triggered on every document upload regardless of `application_type`.
+
+---
+
 ## User Flow
 
 ```mermaid
@@ -346,6 +423,7 @@ flowchart TD
 | Schema-free evolution | New fields and sections added via configuration — zero DDL changes |
 | DocumentDB write on every save-draft | Full JSON document persisted, not incremental patch |
 | Stage sequence locked | Stages cannot be reordered or skipped at runtime |
+| Plan Calculation guard | Restructure Finance Page must block Summary progression until a successful Plan Calculation API response confirms the selected plan |
 
 ---
 

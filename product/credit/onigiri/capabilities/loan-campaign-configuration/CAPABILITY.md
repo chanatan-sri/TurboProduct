@@ -4,7 +4,7 @@
 **Portfolio**: Credit
 **Product Owner**: TBD (Credit PO)
 **Status**: 📝 Draft — @FEATURE decomposition pending
-**Last Updated**: 2026-03-09
+**Last Updated**: 2026-03-12
 
 ---
 
@@ -40,7 +40,8 @@ Define and manage loan product configurations (campaigns) that house all configu
 
 | Dimension | What It Configures |
 |-----------|-------------------|
-| **Pricing** | Loan amount range, interest rate, available tenors, max LTV, min/max credit line |
+| **Campaign Type** | `application_type` this campaign targets (`new_booking`, `topup`, `restructure`); for restructure campaigns, whether it is EasyPass or Non-EasyPass |
+| **Pricing** | Loan amount range, interest rate, available tenors, max LTV, min/max credit line; for restructure campaigns, Plan Calculation parameters (tenor options, interest rate for installment computation) |
 | **Eligibility Criteria** | Rule-based gateway (customer type, age, collateral, credit score, occupation) — evaluated before full application entry |
 | **Application Template** | Which pages/sections/fields appear; required documents; conditional document logic |
 | **Risk Strategy** | Which risk assessment strategy to execute (Strategy → Policy → Rule) |
@@ -87,6 +88,52 @@ In-flight applications use the campaign version at submission time — no retroa
 Because the Risk Officer is a mandatory Tier 1 approver on every campaign publication, campaign version and risk strategy alignment is enforced structurally — neither side can be published without the other functional owner's sign-off.
 
 *Resolves audit finding AI-2 and the Open Question: "Is there a campaign approval workflow before publishing?" → **Yes.***
+
+---
+
+### EasyPass Campaign Designation (Restructure Campaigns Only)
+
+EasyPass is a **campaign-type property** — it designates whether a restructure campaign's risk level is within local CO authority. This determination is made at campaign configuration time by the Risk Officer, based on the campaign's assigned risk strategy and pricing parameters.
+
+| EasyPass Designation | Effect on Pre-Approval Flow | Effect on Underwriting |
+|---|---|---|
+| **EasyPass** | Approval Request routes to **local approver** at `pending_approval`; CO may bypass as they hold local authority | At `pending_approval`, routes to local approver queue |
+| **Non-EasyPass** | CO submits Approval Request — routes to **higher authority** at `pending_approval`; approved pre-approval carries expiry date | At `pending_approval`, routes through standard escalation path — higher authority required |
+
+EasyPass designation is stored on the campaign configuration — not derived at runtime and not stored as a flag on the application record. The system reads `campaign.easypass` when routing the pre-approval approval step and the underwriting approval step.
+
+---
+
+### Restructure Campaign Type
+
+Restructure campaigns differ from `new_booking` and `topup` campaigns in their eligibility shape and pricing parameters.
+
+**Eligibility Criteria — Restructure**
+
+Restructure campaigns target **existing borrowers** whose repayment capacity has decreased. Eligibility is evaluated against the existing loan record (from Core Banking), not a new application profile.
+
+| Criteria | Description |
+|---|---|
+| `customer_type = existing` | Only existing borrowers are eligible |
+| `loan_status = active` | Loan must be active (not already closed or written off) |
+| `dpd_range` | Days past due within a configured band (e.g., 30–90 DPD) — too low means no hardship; too high means unrecoverable |
+| `contract_age_months` | Minimum contract age before a restructure is offered |
+| `outstanding_balance` | Minimum outstanding balance to make a restructure economically viable |
+| `collateral_type` | Collateral type gate (same as other campaign types) |
+
+> Specific threshold values (DPD band, min contract age, min outstanding balance) are configured per campaign by the Credit PO and Risk Officer. These are not hardcoded.
+
+**Pricing Parameters — Restructure**
+
+In addition to the standard Pricing dimension, restructure campaigns carry Plan Calculation parameters used by the Plan Calculation API and displayed on the Finance Page.
+
+| Parameter | Description |
+|---|---|
+| Loan amount range | Derived from Outstanding Balance + any additional top-up amount (if applicable) |
+| Interest rate | Rate applied to the restructured loan — may differ from the original loan's rate |
+| Available tenors | Tenor options offered to the CO on the Finance Page; must all be **longer than** the original loan tenor (tenor filter enforced by Smart Form) |
+| Max LTV | Maximum loan-to-value ratio based on current collateral valuation |
+| Plan Calculation input | Tenor list + interest rate passed to Plan Calculation API to compute installment schedule per tenor option |
 
 ---
 
