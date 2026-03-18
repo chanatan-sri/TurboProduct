@@ -88,13 +88,265 @@ Each section must carry: Section ID (unique), Field List (ordered, with types an
 
 ---
 
-### Collateral Section Variants
+### Section & Variant Registry
 
-The **Loan Setup** stage includes exactly one Collateral Section per campaign. The Collateral Section is selected via Application Template Assignment in the Loan Campaign Configuration capability. This table is the registry of all defined Collateral Sections. Engineering must implement each section before it can be referenced by a campaign.
+Each section can have **multiple variants** — different field configurations for different use cases. A product type selects which sections to include and picks one variant per section. Engineering implements each variant; PO selects from available variants in the Product Type Builder.
 
-Each campaign selects one Section ID from this registry. Fields, document declarations, and open questions are defined per section below.
+The registry is organized by section. Collateral variants have full field specifications below. Standard section variants (Identity, Address, Occupation, etc.) follow.
 
 ---
+
+#### Standard Section Variants
+
+##### `identity_thai_national` — Identity: Thai National
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `id_prefix` | Prefix | คำนำหน้า | select | Yes | Options: นาย/นาง/นางสาว |
+| `id_first_name` | First Name | ชื่อ | text | Yes | |
+| `id_last_name` | Last Name | นามสกุล | text | Yes | |
+| `id_national_id` | National ID Number | เลขบัตรประจำตัวประชาชน | text | Yes | 13-digit Thai ID format |
+| `id_date_of_birth` | Date of Birth | วันเดือนปีเกิด | date | Yes | |
+| `id_gender` | Gender | เพศ | select | Yes | |
+| `id_marital_status` | Marital Status | สถานภาพ | select | Yes | |
+| `id_nationality` | Nationality | สัญชาติ | select | Yes | Default: Thai |
+| `id_phone_primary` | Primary Phone | เบอร์โทรศัพท์หลัก | text | Yes | Thai mobile format |
+| `id_phone_secondary` | Secondary Phone | เบอร์โทรศัพท์สำรอง | text | No | |
+| `id_email` | Email | อีเมล | text | No | |
+| `id_line_id` | LINE ID | ไลน์ไอดี | text | No | |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `identity_foreigner` — Identity: Foreigner
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `id_prefix` | Prefix | คำนำหน้า | select | Yes | Mr./Mrs./Ms./Dr. |
+| `id_first_name` | First Name | ชื่อ | text | Yes | |
+| `id_middle_name` | Middle Name | ชื่อกลาง | text | No | |
+| `id_last_name` | Last Name | นามสกุล | text | Yes | |
+| `id_passport_number` | Passport Number | เลขหนังสือเดินทาง | text | Yes | |
+| `id_passport_expiry` | Passport Expiry Date | วันหมดอายุหนังสือเดินทาง | date | Yes | Must be > today |
+| `id_work_permit_number` | Work Permit Number | เลขใบอนุญาตทำงาน | text | Yes | |
+| `id_work_permit_expiry` | Work Permit Expiry | วันหมดอายุใบอนุญาตทำงาน | date | Yes | Must be > today |
+| `id_date_of_birth` | Date of Birth | วันเดือนปีเกิด | date | Yes | |
+| `id_gender` | Gender | เพศ | select | Yes | |
+| `id_marital_status` | Marital Status | สถานภาพ | select | Yes | |
+| `id_nationality` | Nationality | สัญชาติ | select | Yes | |
+| `id_phone_primary` | Primary Phone | เบอร์โทรศัพท์หลัก | text | Yes | |
+| `id_email` | Email | อีเมล | text | Yes | Required for foreigners |
+| `id_thai_address_proof` | Thai Address Proof | เอกสารยืนยันที่อยู่ในไทย | select | Yes | Lease / work permit / embassy letter |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `identity_corporate` — Identity: Corporate Entity
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `corp_name_th` | Company Name (Thai) | ชื่อบริษัท (ไทย) | text | Yes | |
+| `corp_name_en` | Company Name (English) | ชื่อบริษัท (อังกฤษ) | text | Yes | |
+| `corp_tax_id` | Tax ID | เลขประจำตัวผู้เสียภาษี | text | Yes | 13-digit Thai tax ID |
+| `corp_registration_number` | Registration Number | เลขทะเบียนนิติบุคคล | text | Yes | |
+| `corp_registration_date` | Registration Date | วันที่จดทะเบียน | date | Yes | |
+| `corp_type` | Company Type | ประเภทนิติบุคคล | select | Yes | Ltd / PLC / Partnership |
+| `corp_registered_capital` | Registered Capital (THB) | ทุนจดทะเบียน | number | Yes | |
+| `corp_business_type` | Business Type | ประเภทธุรกิจ | select | Yes | |
+| `corp_authorized_signatory` | Authorized Signatory | ผู้มีอำนาจลงนาม | text | Yes | |
+| `corp_signatory_position` | Signatory Position | ตำแหน่ง | text | Yes | |
+| `corp_signatory_id` | Signatory National ID | เลขบัตรประชาชนผู้ลงนาม | text | Yes | 13-digit |
+| `corp_phone` | Company Phone | เบอร์โทรบริษัท | text | Yes | |
+| `corp_email` | Company Email | อีเมลบริษัท | text | Yes | |
+| `corp_website` | Website | เว็บไซต์ | text | No | |
+| `corp_employee_count` | Number of Employees | จำนวนพนักงาน | number | No | |
+| `corp_annual_revenue` | Annual Revenue (THB) | รายได้ต่อปี | number | Yes | |
+| `corp_years_in_business` | Years in Business | จำนวนปีที่ดำเนินธุรกิจ | number | Yes | |
+| `corp_director_count` | Number of Directors | จำนวนกรรมการ | number | Yes | |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `address_standard` — Address: Standard
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `addr_current_house_number` | House Number | บ้านเลขที่ | text | Yes | |
+| `addr_current_village` | Village / Building | หมู่บ้าน/อาคาร | text | No | |
+| `addr_current_moo` | Moo | หมู่ | text | No | |
+| `addr_current_soi` | Soi | ซอย | text | No | |
+| `addr_current_road` | Road | ถนน | text | No | |
+| `addr_current_subdistrict` | Subdistrict | แขวง/ตำบล | select | Yes | Cascading dropdown |
+| `addr_current_district` | District | เขต/อำเภอ | select | Yes | Cascading dropdown |
+| `addr_current_province` | Province | จังหวัด | select | Yes | Thai province enumeration |
+| `addr_current_postcode` | Postcode | รหัสไปรษณีย์ | text | Yes | 5-digit Thai postal code |
+| `addr_current_years` | Years at Current Address | อาศัยมาแล้ว (ปี) | number | No | |
+| `addr_registration_same` | Registration Address Same as Current | ที่อยู่ตามทะเบียนบ้านตรงกับที่อยู่ปัจจุบัน | boolean | Yes | If true, copy fields |
+| `addr_reg_house_number` | Reg. House Number | บ้านเลขที่ (ทะเบียนบ้าน) | text | Conditional | Required if `addr_registration_same` = false |
+| `addr_reg_subdistrict` | Reg. Subdistrict | แขวง/ตำบล (ทะเบียนบ้าน) | select | Conditional | |
+| `addr_reg_district` | Reg. District | เขต/อำเภอ (ทะเบียนบ้าน) | select | Conditional | |
+| `addr_reg_province` | Reg. Province | จังหวัด (ทะเบียนบ้าน) | select | Conditional | |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `address_rural` — Address: Rural / Agricultural
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `addr_village_name` | Village Name | ชื่อหมู่บ้าน | text | Yes | |
+| `addr_moo` | Moo Number | หมู่ที่ | text | Yes | |
+| `addr_tambon` | Tambon | ตำบล | select | Yes | |
+| `addr_amphoe` | Amphoe | อำเภอ | select | Yes | |
+| `addr_province` | Province | จังหวัด | select | Yes | |
+| `addr_postcode` | Postcode | รหัสไปรษณีย์ | text | Yes | |
+| `addr_land_title_ref` | Nearby Land Title Reference | เลขที่โฉนดใกล้เคียง | text | No | |
+| `addr_gps_latitude` | GPS Latitude | ละติจูด | number | No | |
+| `addr_gps_longitude` | GPS Longitude | ลองติจูด | number | No | |
+| `addr_years_in_area` | Years in Area | อาศัยในพื้นที่ (ปี) | number | No | |
+| `addr_housing_type` | Housing Type | ลักษณะที่อยู่อาศัย | select | Yes | Own / Rent / Family |
+| `addr_nearest_landmark` | Nearest Landmark | จุดสังเกตใกล้เคียง | text | No | |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `occupation_employed` — Occupation: Employed
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `occ_employment_status` | Employment Status | สถานะการทำงาน | select | Yes | Permanent / Contract / Probation |
+| `occ_employer_name` | Employer Name | ชื่อบริษัท/นายจ้าง | text | Yes | |
+| `occ_employer_phone` | Employer Phone | เบอร์โทรที่ทำงาน | text | No | |
+| `occ_position` | Position / Title | ตำแหน่ง | text | Yes | |
+| `occ_department` | Department | แผนก | text | No | |
+| `occ_years_employed` | Years at Current Employer | อายุงาน (ปี) | number | Yes | |
+| `occ_monthly_income` | Monthly Income (THB) | รายได้ต่อเดือน | number | Yes | |
+| `occ_income_proof_type` | Income Proof Type | ประเภทเอกสารรายได้ | select | Yes | Payslip / Bank statement / Tax cert |
+| `occ_business_type` | Business / Industry Type | ประเภทธุรกิจ | select | Yes | |
+| `occ_work_address_same` | Work Address Same as Employer | ที่อยู่ทำงานตรงกับที่อยู่บริษัท | boolean | No | |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `occupation_self_employed` — Occupation: Self-Employed
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `occ_business_name` | Business Name | ชื่อกิจการ | text | Yes | |
+| `occ_business_registration` | Business Registration Number | เลขทะเบียนพาณิชย์ | text | No | |
+| `occ_business_type` | Business Type | ประเภทกิจการ | select | Yes | |
+| `occ_years_in_business` | Years in Business | ดำเนินกิจการมาแล้ว (ปี) | number | Yes | |
+| `occ_monthly_revenue` | Monthly Revenue (THB) | รายรับต่อเดือน | number | Yes | |
+| `occ_monthly_expenses` | Monthly Business Expenses (THB) | รายจ่ายกิจการต่อเดือน | number | Yes | |
+| `occ_net_income` | Estimated Net Income (THB) | รายได้สุทธิประมาณ | number | Yes | |
+| `occ_employee_count` | Number of Employees | จำนวนพนักงาน | number | No | |
+| `occ_business_address` | Business Address | ที่อยู่กิจการ | text | Yes | |
+| `occ_business_phone` | Business Phone | เบอร์โทรกิจการ | text | No | |
+| `occ_income_proof_type` | Income Proof Type | ประเภทเอกสารรายได้ | select | Yes | Bank statement / Tax filing / Revenue receipt |
+| `occ_tax_filing_status` | Tax Filing Status | สถานะการยื่นภาษี | select | Yes | Filed / Not filed |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `occupation_freelance` — Occupation: Freelance / Gig
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `occ_work_type` | Type of Work | ลักษณะงาน | text | Yes | |
+| `occ_primary_platform` | Primary Platform / Client | แพลตฟอร์มหลัก/ลูกค้าหลัก | text | No | e.g., Grab, Shopee, direct clients |
+| `occ_years_freelancing` | Years Freelancing | ทำงานอิสระมาแล้ว (ปี) | number | Yes | |
+| `occ_avg_monthly_income` | Avg Monthly Income (THB) | รายได้เฉลี่ยต่อเดือน | number | Yes | |
+| `occ_income_frequency` | Income Frequency | ความถี่ของรายได้ | select | Yes | Daily / Weekly / Monthly / Per-job |
+| `occ_bank_account_for_income` | Bank Account for Income | บัญชีรับรายได้ | text | Yes | |
+| `occ_income_proof_type` | Income Proof Type | ประเภทเอกสารรายได้ | select | Yes | Bank statement / Platform screenshot |
+| `occ_has_secondary_income` | Has Secondary Income | มีรายได้เสริม | boolean | No | |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `income_standard` — Income & Expenses: Standard
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `inc_monthly_income` | Total Monthly Income (THB) | รายได้รวมต่อเดือน | number | Yes | |
+| `inc_monthly_expenses` | Total Monthly Expenses (THB) | รายจ่ายรวมต่อเดือน | number | Yes | |
+| `inc_existing_loan_payments` | Existing Loan Payments (THB) | ภาระหนี้สินต่อเดือน | number | Yes | All existing loan installments |
+| `inc_number_of_dependents` | Number of Dependents | จำนวนผู้อยู่ในอุปการะ | number | Yes | |
+| `inc_housing_cost` | Monthly Housing Cost (THB) | ค่าที่พักต่อเดือน | number | No | Rent / mortgage |
+| `inc_other_obligations` | Other Monthly Obligations (THB) | ภาระอื่นๆ ต่อเดือน | number | No | |
+| `inc_savings_account` | Has Savings Account | มีบัญชีออมทรัพย์ | boolean | No | |
+| `inc_debt_to_income_ratio` | Debt-to-Income Ratio | อัตราส่วนหนี้สินต่อรายได้ | number | No | Auto-calculated |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `income_detailed` — Income & Expenses: Detailed
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `inc_salary` | Monthly Salary (THB) | เงินเดือน | number | Yes | |
+| `inc_bonus_avg` | Avg Monthly Bonus (THB) | โบนัสเฉลี่ยต่อเดือน | number | No | |
+| `inc_commission` | Monthly Commission (THB) | ค่าคอมมิชชั่นต่อเดือน | number | No | |
+| `inc_rental_income` | Rental Income (THB) | รายได้จากการเช่า | number | No | |
+| `inc_investment_income` | Investment Income (THB) | รายได้จากการลงทุน | number | No | |
+| `inc_other_income` | Other Income (THB) | รายได้อื่นๆ | number | No | |
+| `inc_total_income` | Total Monthly Income (THB) | รายได้รวมต่อเดือน | number | Yes | Auto-sum of above |
+| `inc_housing_cost` | Housing Cost (THB) | ค่าที่พัก | number | Yes | |
+| `inc_food_transport` | Food & Transport (THB) | ค่าอาหารและเดินทาง | number | Yes | |
+| `inc_utilities` | Utilities (THB) | ค่าสาธารณูปโภค | number | No | |
+| `inc_education` | Education (THB) | ค่าการศึกษา | number | No | |
+| `inc_existing_loans` | Existing Loan Payments (THB) | ภาระหนี้สิน | number | Yes | |
+| `inc_other_expenses` | Other Expenses (THB) | รายจ่ายอื่นๆ | number | No | |
+| `inc_total_expenses` | Total Monthly Expenses (THB) | รายจ่ายรวม | number | Yes | Auto-sum |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `reference_standard` — References: Standard
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `ref1_name` | Reference 1 Name | ชื่อบุคคลอ้างอิง 1 | text | Yes | |
+| `ref1_relationship` | Relationship | ความสัมพันธ์ | select | Yes | Parent / Sibling / Spouse / Friend / Colleague |
+| `ref1_phone` | Phone | เบอร์โทร | text | Yes | |
+| `ref2_name` | Reference 2 Name | ชื่อบุคคลอ้างอิง 2 | text | No | |
+| `ref2_relationship` | Relationship | ความสัมพันธ์ | select | No | |
+| `ref2_phone` | Phone | เบอร์โทร | text | No | |
+
+**Information Owner:** `borrower`
+
+---
+
+##### `reference_with_guarantor` — References: With Guarantor
+
+| `field_name` | Label (EN) | Label (TH) | Type | Required | Validation / Notes |
+|-------------|-----------|-----------|------|----------|--------------------|
+| `ref1_name` | Reference 1 Name | ชื่อบุคคลอ้างอิง 1 | text | Yes | |
+| `ref1_relationship` | Relationship | ความสัมพันธ์ | select | Yes | |
+| `ref1_phone` | Phone | เบอร์โทร | text | Yes | |
+| `ref2_name` | Reference 2 Name | ชื่อบุคคลอ้างอิง 2 | text | No | |
+| `ref2_relationship` | Relationship | ความสัมพันธ์ | select | No | |
+| `ref2_phone` | Phone | เบอร์โทร | text | No | |
+| `guar_prefix` | Guarantor Prefix | คำนำหน้าผู้ค้ำประกัน | select | Yes | |
+| `guar_first_name` | Guarantor First Name | ชื่อผู้ค้ำประกัน | text | Yes | |
+| `guar_last_name` | Guarantor Last Name | นามสกุลผู้ค้ำประกัน | text | Yes | |
+| `guar_national_id` | Guarantor National ID | เลขบัตรประชาชนผู้ค้ำประกัน | text | Yes | 13-digit |
+
+**Information Owner:** `borrower`
+
+---
+
+#### Collateral Section Variants
 
 #### `collateral_car` — Car (Vehicle Title)
 
@@ -314,7 +566,27 @@ The land collateral section is organized into five sub-sections. All sub-section
 
 ### Section Selection Rule
 
-A campaign selects exactly one Collateral Section from the registry above. Multiple collateral types under a single campaign are not supported — each collateral type must be its own campaign. Enforcement is via the campaign's eligibility rule (`collateral_type = <type>`), which gates entry before the form loads.
+A **product type** selects which sections to include and picks **one variant per section**. The Collateral section is always required; all other sections (Identity, Address, Occupation, Income & Expenses, References) are toggleable by the PO. A **campaign** references the product type — it does not select sections directly.
+
+| Rule | Detail |
+|------|--------|
+| Collateral section | Always required — cannot be toggled off |
+| Standard sections | PO toggles on/off per product type |
+| Variant per section | Exactly one variant selected per included section |
+| Multiple collateral types | Not supported within a single product type — each collateral type is a separate product type |
+| Enforcement | Product type defines the section/variant set; campaign's eligibility rule gates entry before the form loads |
+
+### Stage-to-Section Mapping
+
+Smart Form stages map to the sections selected in the product type:
+
+| Stage | Sections | Selection |
+|-------|----------|-----------|
+| **Borrower** | Identity, Address, Occupation, Income & Expenses, References | PO selects which to include + one variant per section |
+| **Guarantor** | Identity, Address | Fixed structure (uses same variant definitions) |
+| **Loan Setup** | Collateral | One variant per product type (always required) |
+| **Summary** | — | Auto-generated from filled sections |
+| **Document Upload** | — | Driven by product type's document configuration |
 
 ---
 

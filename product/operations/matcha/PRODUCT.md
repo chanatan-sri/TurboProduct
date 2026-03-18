@@ -4,7 +4,7 @@
 **Portfolio**: Operations → [PORTFOLIO](../../PORTFOLIO.md)
 **Status**: ✅ Active
 **Executive Owner**: COO / Head of Operations
-**Last Updated**: 2026-03-04
+**Last Updated**: 2026-03-17
 
 > *Matcha (抹茶) — The universal solvent of the tea world. Matcha dissolves into any blend and provides consistent quality. Similarly, Matcha dissolves into any business domain's workflow and provides consistent, auditable document verification — regardless of the originating product.*
 
@@ -40,12 +40,13 @@ A single, domain-agnostic document verification engine that any client system ca
 **This product IS NOT responsible for:**
 - LLM processing and AI report assembly (owned by **Wasabi**)
 - Loan workflow orchestration or application state management (owned by **Onigiri**)
+- Application field extraction or deciding which application fields map to verification data items (owned by **Onigiri** — Data Extraction Templates determine what values populate `documents[].data`)
 - Customer master data and Golden Record (owned by **DaVinci**)
 - Branch task tracking or field staff worklist (owned by **Sensei**)
 - QA worklist UX (owned by **Solomon** / Raijin/Hephaestus ecosystem)
 
 **This product RECEIVES from:**
-- Onigiri Worker → task creation payload (documents + Wasabi AI results) → via POST /task REST API
+- Onigiri Worker → task creation payload (documents + `data` key-value pairs where keys match Matcha's `check_name` + Wasabi AI results) → via POST /task REST API
 - Haibara → car check results callback → via POST /api/document-verification/car-check-result
 - Wasabi → (indirectly, via Onigiri) AI verification results attached to task creation payload
 

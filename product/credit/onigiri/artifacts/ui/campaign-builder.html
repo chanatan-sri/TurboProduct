@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campaigns — Onigiri Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:        #1A73E8;
+      --blue-light:  #E8F0FE;
+      --blue-dark:   #1558B0;
+      --green:       #1E8E3E;
+      --green-light: #E6F4EA;
+      --red:         #C5221F;
+      --red-light:   #FCE8E6;
+      --amber:       #E37400;
+      --amber-light: #FEF3E2;
+      --purple:      #7B1FA2;
+      --purple-light:#F3E5F5;
+      --teal:        #00796B;
+      --teal-light:  #E0F2F1;
+      --gray-50:     #F8F9FA;
+      --gray-100:    #F1F3F4;
+      --gray-200:    #E8EAED;
+      --gray-300:    #DADCE0;
+      --gray-400:    #BDC1C6;
+      --gray-500:    #9AA0A6;
+      --gray-600:    #80868B;
+      --gray-700:    #5F6368;
+      --gray-800:    #3C4043;
+      --gray-900:    #202124;
+      --white:       #FFFFFF;
+      --radius:      8px;
+      --shadow:      0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md:   0 4px 8px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP NAV ── */
+    .topnav {
+      height: 56px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topnav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--gray-900);
+      text-decoration: none;
+    }
+    .topnav-logo-icon {
+      width: 28px; height: 28px;
+      background: var(--blue);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 13px; font-weight: 800;
+    }
+    .topnav-divider { width: 1px; height: 24px; background: var(--gray-200); }
+    .topnav-nav {
+      display: flex;
+      gap: 2px;
+    }
+    .topnav-nav a {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-600);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .topnav-nav a:hover { background: var(--gray-100); color: var(--gray-900); }
+    .topnav-nav a.active { background: var(--blue-light); color: var(--blue); }
+    .topnav-spacer { flex: 1; }
+    .topnav-user {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--gray-700);
+    }
+    .topnav-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--blue); color: white;
+      font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── PAGE WRAPPER ── */
+    .page-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 28px;
+      width: 100%;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      gap: 16px;
+    }
+    .page-header-left h1 { font-size: 24px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+    .page-header-left p  { font-size: 14px; color: var(--gray-600); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 6px;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      border: none; transition: all 0.15s;
+      font-family: inherit; text-decoration: none; white-space: nowrap;
+    }
+    .btn-primary { background: var(--blue); color: white; }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-secondary { background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-300); }
+    .btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-400); }
+    .btn-danger { background: var(--white); color: var(--red); border: 1px solid var(--red); }
+    .btn-danger:hover { background: var(--red-light); }
+    .btn-ghost { background: transparent; color: var(--blue); padding: 6px 10px; }
+    .btn-ghost:hover { background: var(--blue-light); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    /* ── STAT CARDS ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: var(--shadow);
+    }
+    .stat-card:hover { border-color: var(--blue); box-shadow: var(--shadow-md); }
+    .stat-card.active-filter { border-color: var(--blue); background: var(--blue-light); }
+    .stat-label { font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; line-height: 1; }
+    .stat-sub { font-size: 12px; color: var(--gray-500); }
+    .stat-card.stat-all .stat-value { color: var(--gray-900); }
+    .stat-card.stat-active .stat-value { color: var(--green); }
+    .stat-card.stat-pending .stat-value { color: var(--amber); }
+    .stat-card.stat-draft .stat-value { color: var(--blue); }
+    .stat-card.stat-archived .stat-value { color: var(--gray-500); }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+    }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 14px; }
+    .search-input {
+      width: 100%; padding: 7px 12px 7px 32px;
+      border: 1px solid var(--gray-200); border-radius: 6px;
+      font-size: 13px; background: var(--gray-50); color: var(--gray-900);
+      outline: none; font-family: inherit; transition: all 0.15s;
+    }
+    .search-input:focus { border-color: var(--blue); background: var(--white); box-shadow: 0 0 0 3px rgba(26,115,232,0.1); }
+    .filter-divider { width: 1px; height: 24px; background: var(--gray-200); }
+    .filter-label { font-size: 12px; font-weight: 500; color: var(--gray-500); white-space: nowrap; }
+    .filter-select {
+      padding: 6px 10px; border: 1px solid var(--gray-200); border-radius: 6px;
+      font-size: 13px; background: var(--white); color: var(--gray-700);
+      outline: none; font-family: inherit; cursor: pointer;
+    }
+
+    /* ── TABLE VIEW ── */
+    .table-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: var(--gray-50);
+      font-size: 11px; font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 11px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+      white-space: nowrap;
+    }
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13px;
+      color: var(--gray-800);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--gray-50); }
+    .results-info {
+      font-size: 12px; color: var(--gray-500);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .badge-active    { background: var(--green-light);  color: var(--green); }
+    .badge-draft     { background: var(--blue-light);   color: var(--blue); }
+    .badge-pending1  { background: var(--amber-light);  color: var(--amber); }
+    .badge-pending2  { background: var(--purple-light); color: var(--purple); }
+    .badge-archived  { background: var(--gray-100);     color: var(--gray-500); }
+    .badge-section   { background: var(--teal-light);   color: var(--teal); font-size: 11px; }
+    .badge-app-type  { background: var(--blue-light);   color: var(--blue); font-size: 11px; border-radius: 4px; }
+
+    /* ── VERSION / PILLS ── */
+    .version-pill {
+      display: inline-flex; align-items: center;
+      padding: 2px 7px; background: var(--gray-100); color: var(--gray-600);
+      border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: 600;
+    }
+    .text-muted { color: var(--gray-500); font-size: 12px; }
+
+    /* ── ACTIONS ── */
+    .actions-cell { display: flex; align-items: center; gap: 4px; }
+    .action-btn {
+      padding: 5px 10px; border-radius: 5px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      border: 1px solid transparent; font-family: inherit;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .action-view { background: var(--blue-light); color: var(--blue); }
+    .action-view:hover { background: #d0e4fc; }
+    .action-edit { background: var(--white); color: var(--gray-700); border-color: var(--gray-200); }
+    .action-edit:hover { background: var(--gray-100); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { padding: 60px 20px; text-align: center; color: var(--gray-500); }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-title { font-size: 16px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; }
+    .empty-sub { font-size: 13px; color: var(--gray-500); margin-bottom: 20px; }
+
+    /* ── MODAL OVERLAY ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 300;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 820px;
+      animation: slideUp 0.25s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header {
+      padding: 24px 28px 16px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h2 { font-size: 20px; font-weight: 700; color: var(--gray-900); }
+    .modal-close {
+      background: none; border: none; font-size: 20px;
+      cursor: pointer; color: var(--gray-500); padding: 4px 8px; border-radius: 4px;
+    }
+    .modal-close:hover { background: var(--gray-100); color: var(--gray-900); }
+    .modal-body { padding: 24px 28px; max-height: 70vh; overflow-y: auto; }
+    .modal-footer {
+      padding: 16px 28px;
+      border-top: 1px solid var(--gray-200);
+      display: flex; justify-content: flex-end; gap: 10px;
+    }
+
+    /* ── FORM ELEMENTS ── */
+    .section-title {
+      font-size: 15px; font-weight: 600; color: var(--gray-900);
+      margin-bottom: 16px; padding-bottom: 8px;
+      border-bottom: 2px solid var(--gray-200);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block; font-size: 13px; font-weight: 500;
+      color: var(--gray-700); margin-bottom: 6px;
+    }
+    .form-label .req { color: var(--red); margin-left: 2px; }
+    .form-hint { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+    .form-input, .form-select {
+      width: 100%; padding: 8px 12px;
+      border: 1px solid var(--gray-300); border-radius: 6px;
+      font-size: 14px; color: var(--gray-900); background: var(--white);
+      transition: border-color 0.15s, box-shadow 0.15s; outline: none;
+      font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* ── ELIGIBILITY RULE ROWS ── */
+    .rule-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .rule-row {
+      display: grid; grid-template-columns: 1fr 100px 1fr 40px; gap: 8px;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+    }
+    .rule-row select, .rule-row input {
+      padding: 6px 8px; border: 1px solid var(--gray-300); border-radius: 4px;
+      font-size: 13px; font-family: inherit; background: var(--white); outline: none;
+    }
+    .rule-row select:focus, .rule-row input:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 2px rgba(26,115,232,0.12);
+    }
+    .rule-remove {
+      background: none; border: none; color: var(--red); cursor: pointer;
+      font-size: 16px; padding: 4px; border-radius: 4px;
+    }
+    .rule-remove:hover { background: var(--red-light); }
+
+    /* ── TENOR TAGS ── */
+    .tenor-tags {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+    }
+    .tenor-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; background: var(--blue-light); color: var(--blue);
+      border-radius: 16px; font-size: 12px; font-weight: 500;
+    }
+    .tenor-tag button {
+      background: none; border: none; color: var(--blue); cursor: pointer;
+      font-size: 14px; padding: 0; line-height: 1;
+    }
+    .tenor-tag button:hover { color: var(--red); }
+    .tenor-input-row {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .tenor-input-row input { width: 100px; }
+    .tenor-input-row .btn { padding: 6px 12px; }
+
+    /* ── CAMPAIGN NAME CELL ── */
+    .camp-name-cell { display: flex; align-items: center; gap: 10px; }
+    .camp-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .camp-name { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+    .camp-code { font-family: monospace; font-size: 11px; color: var(--gray-500); margin-top: 1px; }
+
+    /* ── PRODUCT TYPE SELECTOR ── */
+    .pt-selector {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px;
+      margin-top: 8px;
+    }
+    .pt-option {
+      padding: 12px 14px;
+      border: 2px solid var(--gray-200);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pt-option:hover { border-color: var(--blue); background: var(--blue-light); }
+    .pt-option.selected { border-color: var(--blue); background: var(--blue-light); }
+    .pt-option-icon { font-size: 24px; }
+    .pt-option-name { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+    .pt-option-meta { font-size: 11px; color: var(--gray-500); }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--gray-900); color: white;
+      padding: 10px 16px; border-radius: 6px; font-size: 13px;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: var(--shadow-md); z-index: 999;
+      opacity: 0; transform: translateY(8px); transition: all 0.25s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 900px) {
+      .stat-grid { grid-template-columns: repeat(3, 1fr); }
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+      .rule-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .page-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <a class="topnav-logo" href="index.html">
+    <div class="topnav-logo-icon">O</div>
+    Onigiri
+  </a>
+  <div class="topnav-divider"></div>
+  <nav class="topnav-nav">
+    <a href="#">Dashboard</a>
+    <a href="index.html">Product Types</a>
+    <a href="campaign-builder.html" class="active">Campaigns</a>
+    <a href="#">Applications</a>
+    <a href="#">Settings</a>
+  </nav>
+  <div class="topnav-spacer"></div>
+  <div class="topnav-user">
+    <div class="topnav-avatar">SK</div>
+    <span>Somwang K. · Product Manager</span>
+  </div>
+</nav>
+
+<!-- PAGE -->
+<div class="page-wrapper">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Campaigns</h1>
+      <p>Loan campaign configurations — pricing, eligibility, product type assignment, and risk strategy.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal()">＋ New Campaign</button>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stat-grid">
+    <div class="stat-card stat-all" onclick="filterByStatus('all', this)">
+      <div class="stat-label">All Campaigns</div>
+      <div class="stat-value" id="count-all">6</div>
+      <div class="stat-sub">Across all statuses</div>
+    </div>
+    <div class="stat-card stat-active" onclick="filterByStatus('active', this)">
+      <div class="stat-label">Active</div>
+      <div class="stat-value" id="count-active">3</div>
+      <div class="stat-sub">Accepting applications</div>
+    </div>
+    <div class="stat-card stat-pending" onclick="filterByStatus('pending', this)">
+      <div class="stat-label">In Review</div>
+      <div class="stat-value" id="count-pending">1</div>
+      <div class="stat-sub">Pending approval</div>
+    </div>
+    <div class="stat-card stat-draft" onclick="filterByStatus('draft', this)">
+      <div class="stat-label">Draft</div>
+      <div class="stat-value" id="count-draft">1</div>
+      <div class="stat-sub">Work in progress</div>
+    </div>
+    <div class="stat-card stat-archived" onclick="filterByStatus('archived', this)">
+      <div class="stat-label">Archived</div>
+      <div class="stat-value" id="count-archived">1</div>
+      <div class="stat-sub">Sunset campaigns</div>
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="search-input" placeholder="Search by name, codename, collateral type, or product type…" oninput="applyFilters()" />
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">App Type:</span>
+    <select class="filter-select" id="filter-app-type" onchange="applyFilters()">
+      <option value="all">All types</option>
+      <option value="new_booking">New Booking</option>
+      <option value="topup">Topup</option>
+      <option value="restructure">Restructure</option>
+    </select>
+    <span class="filter-label">Collateral:</span>
+    <select class="filter-select" id="filter-collateral" onchange="applyFilters()">
+      <option value="all">All collateral</option>
+      <option value="bike">Bike</option>
+      <option value="car">Car</option>
+      <option value="tractor">Tractor</option>
+      <option value="land">Land</option>
+    </select>
+  </div>
+
+  <!-- TABLE VIEW -->
+  <div class="table-card">
+    <div class="results-info">
+      <span id="results-text">Showing 6 campaigns</span>
+      <span class="text-muted">Sorted by last updated</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Campaign</th>
+            <th>App Type</th>
+            <th>Collateral</th>
+            <th>Product Type</th>
+            <th>Interest</th>
+            <th>LTV</th>
+            <th>Tenors</th>
+            <th>Status</th>
+            <th>Version</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- Rows injected by JS -->
+        </tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="empty-state" style="display:none;">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">No campaigns found</div>
+      <div class="empty-sub">Try adjusting your search or filter.</div>
+    </div>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+<!-- ── CAMPAIGN MODAL ── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">New Campaign</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- BASIC INFO -->
+      <div class="section-title">📋 Basic Information</div>
+      <div class="form-row" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label class="form-label">Campaign Name <span class="req">*</span></label>
+          <input class="form-input" id="f-name" placeholder="e.g., Bike Title Q2 2026" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Codename <span class="req">*</span></label>
+          <input class="form-input" id="f-codename" placeholder="e.g., bike_title_q2_2026" style="font-family:monospace;font-size:13px;" />
+        </div>
+      </div>
+
+      <!-- APPLICATION TEMPLATE (Product Type Selection) -->
+      <div class="section-title" style="margin-top:24px;">📦 Application Template (Product Type)</div>
+      <div class="form-group">
+        <label class="form-label">Select an ACTIVE Product Type <span class="req">*</span></label>
+        <div class="form-hint">Sections, variants, and document checklist are inherited from the selected product type (read-only).</div>
+        <div class="pt-selector" id="pt-selector">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+      <div id="pt-preview" style="display:none; margin-top:12px;">
+        <div style="padding:14px; background:var(--gray-50); border:1px solid var(--gray-200); border-radius:8px; font-size:12px;">
+          <div style="font-weight:600; color:var(--gray-700); margin-bottom:8px;">Inherited from Product Type:</div>
+          <div id="pt-preview-content" style="color:var(--gray-600); line-height:1.8;"></div>
+        </div>
+      </div>
+
+      <!-- PRICING -->
+      <div class="section-title" style="margin-top:28px;">💰 Pricing (Characteristics)</div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Interest Rate (%) <span class="req">*</span></label>
+          <input class="form-input" id="f-interest" type="number" step="0.01" placeholder="e.g., 24.00" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max LTV (%) <span class="req">*</span></label>
+          <input class="form-input" id="f-ltv" type="number" step="1" placeholder="e.g., 120" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Loan Amount Range</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="form-input" id="f-loan-min" type="number" placeholder="Min" style="width:50%;" />
+            <span style="color:var(--gray-400);">–</span>
+            <input class="form-input" id="f-loan-max" type="number" placeholder="Max" style="width:50%;" />
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Available Tenors (months)</label>
+        <div class="tenor-input-row">
+          <input class="form-input" id="f-tenor-input" type="number" placeholder="e.g., 12" style="width:100px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addTenor();}" />
+          <button class="btn btn-secondary btn-sm" onclick="addTenor()">＋ Add</button>
+        </div>
+        <div class="tenor-tags" id="tenor-tags">
+          <!-- Injected -->
+        </div>
+      </div>
+
+      <!-- ELIGIBILITY -->
+      <div class="section-title" style="margin-top:28px;">🎯 Eligibility Rules</div>
+      <div class="form-hint" style="margin-bottom:12px;">Define criteria that must be met before a customer can enter this campaign.</div>
+      <div class="rule-list" id="rule-list">
+        <!-- Default rules injected by JS -->
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="addRule()">＋ Add Rule</button>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCampaign()">Save as Draft</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── PRODUCT TYPES (for selection) ─────────────────────────────────────────
+  const activeProductTypes = [
+    { id: 'pt-001', name: 'Bike Title Loan', codename: 'bike_title', icon: '🏍️', section: 'collateral_bike', sectionFields: 17, docTypes: 3, version: 2 },
+    { id: 'pt-002', name: 'Car Title Loan',  codename: 'car_title',  icon: '🚗', section: 'collateral_car',  sectionFields: 28, docTypes: 5, version: 3 },
+    { id: 'pt-003', name: 'Pick-up Truck Title', codename: 'pickup_title', icon: '🛻', section: 'collateral_car', sectionFields: 28, docTypes: 4, version: 1 },
+  ];
+
+  // ── CAMPAIGN DATA ─────────────────────────────────────────────────────────
+  let campaigns = [
+    {
+      id: 'c-001', name: 'Bike Title Q1 2026', codename: 'bike_title_q1_2026',
+      icon: '🏍️', iconBg: '#E8F0FE',
+      appType: 'new_booking', collateralType: 'bike',
+      productType: 'pt-001', productTypeName: 'Bike Title Loan', ptVersion: 2,
+      interest: 24.00, ltv: 80, loanMin: 3000, loanMax: 150000,
+      tenors: [3, 6, 9, 12],
+      eligibility: [
+        { field: 'application_type', op: '=', value: 'new_booking' },
+        { field: 'collateral_type', op: '=', value: 'bike' },
+        { field: 'customer_age', op: '>=', value: '20' },
+        { field: 'customer_age', op: '<=', value: '70' },
+        { field: 'b_score', op: '>', value: '500' },
+      ],
+      status: 'active', version: 1, owner: 'Somwang K.', updated: '2026-02-15',
+    },
+    {
+      id: 'c-002', name: 'Car Title BKK 2026', codename: 'car_title_bkk_2026',
+      icon: '🚗', iconBg: '#E6F4EA',
+      appType: 'new_booking', collateralType: 'car',
+      productType: 'pt-002', productTypeName: 'Car Title Loan', ptVersion: 3,
+      interest: 18.00, ltv: 120, loanMin: 10000, loanMax: 500000,
+      tenors: [6, 12, 18, 24, 36],
+      eligibility: [
+        { field: 'application_type', op: '=', value: 'new_booking' },
+        { field: 'collateral_type', op: '=', value: 'car' },
+        { field: 'customer_age', op: '>=', value: '20' },
+        { field: 'customer_age', op: '<=', value: '70' },
+        { field: 'b_score', op: '>', value: '500' },
+      ],
+      status: 'active', version: 2, owner: 'Somwang K.', updated: '2026-03-01',
+    },
+    {
+      id: 'c-003', name: 'Bike Title Promo Summer', codename: 'bike_promo_summer_2026',
+      icon: '🏍️', iconBg: '#FEF3E2',
+      appType: 'new_booking', collateralType: 'bike',
+      productType: 'pt-001', productTypeName: 'Bike Title Loan', ptVersion: 2,
+      interest: 20.00, ltv: 80, loanMin: 3000, loanMax: 100000,
+      tenors: [3, 6, 9],
+      eligibility: [
+        { field: 'application_type', op: '=', value: 'new_booking' },
+        { field: 'collateral_type', op: '=', value: 'bike' },
+        { field: 'customer_age', op: '>=', value: '20' },
+        { field: 'customer_age', op: '<=', value: '60' },
+        { field: 'b_score', op: '>', value: '550' },
+        { field: 'occupation_group', op: 'in', value: 'civil_servant,salaried' },
+      ],
+      status: 'active', version: 1, owner: 'Somwang K.', updated: '2026-03-10',
+    },
+    {
+      id: 'c-004', name: 'Car Title Topup 2026', codename: 'car_topup_2026',
+      icon: '🚗', iconBg: '#F3E5F5',
+      appType: 'topup', collateralType: 'car',
+      productType: 'pt-002', productTypeName: 'Car Title Loan', ptVersion: 3,
+      interest: 15.00, ltv: 100, loanMin: 5000, loanMax: 300000,
+      tenors: [6, 12, 18],
+      eligibility: [
+        { field: 'application_type', op: '=', value: 'topup' },
+        { field: 'collateral_type', op: '=', value: 'car' },
+        { field: 'customer_type', op: '=', value: 'existing' },
+      ],
+      status: 'pending_t1', version: 1, owner: 'Somwang K.', updated: '2026-03-14',
+    },
+    {
+      id: 'c-005', name: 'Bike Restructure Pilot', codename: 'bike_restructure_pilot',
+      icon: '🏍️', iconBg: '#E8EAED',
+      appType: 'restructure', collateralType: 'bike',
+      productType: 'pt-001', productTypeName: 'Bike Title Loan', ptVersion: 2,
+      interest: 22.00, ltv: 70, loanMin: 3000, loanMax: 80000,
+      tenors: [6, 12],
+      eligibility: [
+        { field: 'application_type', op: '=', value: 'restructure' },
+        { field: 'collateral_type', op: '=', value: 'bike' },
+        { field: 'customer_type', op: '=', value: 'existing' },
+      ],
+      status: 'draft', version: 1, owner: 'Somwang K.', updated: '2026-03-16',
+    },
+    {
+      id: 'c-006', name: 'Bike Title 2025 Legacy', codename: 'bike_title_2025',
+      icon: '🏍️', iconBg: '#F1F3F4',
+      appType: 'new_booking', collateralType: 'bike',
+      productType: 'pt-001', productTypeName: 'Bike Title Loan', ptVersion: 1,
+      interest: 26.00, ltv: 80, loanMin: 3000, loanMax: 100000,
+      tenors: [3, 6, 12],
+      eligibility: [
+        { field: 'application_type', op: '=', value: 'new_booking' },
+        { field: 'collateral_type', op: '=', value: 'bike' },
+      ],
+      status: 'archived', version: 3, owner: 'Somwang K.', updated: '2025-12-31',
+    },
+  ];
+
+  // ── STATUS CONFIG ─────────────────────────────────────────────────────────
+  const statusConfig = {
+    active:     { label: 'Active',      class: 'badge-active' },
+    pending_t1: { label: 'Pending T1',  class: 'badge-pending1' },
+    pending_t2: { label: 'Pending T2',  class: 'badge-pending2' },
+    draft:      { label: 'Draft',       class: 'badge-draft' },
+    archived:   { label: 'Archived',    class: 'badge-archived' },
+  };
+
+  const appTypeLabels = {
+    new_booking: 'New Booking',
+    topup: 'Topup',
+    restructure: 'Restructure',
+  };
+
+  function badgeHTML(status) {
+    const c = statusConfig[status] || {};
+    return `<span class="badge ${c.class}">${c.label || status}</span>`;
+  }
+
+  // ── STATE ─────────────────────────────────────────────────────────────────
+  let currentFilter = 'all';
+  let currentData = [...campaigns];
+  let editingId = null;
+  let formTenors = [];
+  let formRules = [];
+  let selectedPT = null;
+
+  // ── RENDER TABLE ──────────────────────────────────────────────────────────
+  function renderTable(data) {
+    const tbody = document.getElementById('table-body');
+    const empty = document.getElementById('empty-state');
+    if (!data.length) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.map(c => {
+      const isEditable = c.status === 'draft';
+      return `
+        <tr style="cursor:pointer;">
+          <td>
+            <div class="camp-name-cell">
+              <div class="camp-icon" style="background:${c.iconBg};">${c.icon}</div>
+              <div>
+                <div class="camp-name">${c.name}</div>
+                <div class="camp-code">${c.codename}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="badge badge-app-type">${appTypeLabels[c.appType] || c.appType}</span></td>
+          <td><span class="badge badge-section">${c.collateralType}</span></td>
+          <td>
+            <span style="font-size:12px;font-weight:500;">${c.productTypeName}</span>
+            <div class="text-muted">v${c.ptVersion} pinned</div>
+          </td>
+          <td><span style="font-weight:600;">${c.interest}%</span></td>
+          <td>${c.ltv}%</td>
+          <td>
+            <span class="text-muted">${c.tenors.join(', ')} mo</span>
+          </td>
+          <td>${badgeHTML(c.status)}</td>
+          <td><span class="version-pill">v${c.version}</span></td>
+          <td onclick="event.stopPropagation()">
+            <div class="actions-cell">
+              ${isEditable
+                ? `<button class="action-btn action-edit" onclick="editCampaign('${c.id}')">Edit</button>`
+                : `<button class="action-btn action-view" onclick="editCampaign('${c.id}')">View</button>`}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+    document.getElementById('results-text').textContent = `Showing ${data.length} campaign${data.length !== 1 ? 's' : ''}`;
+  }
+
+  // ── FILTERS ───────────────────────────────────────────────────────────────
+  function filterByStatus(status, el) {
+    currentFilter = status;
+    document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-filter'));
+    el.classList.add('active-filter');
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const q   = document.getElementById('search-input').value.toLowerCase();
+    const at  = document.getElementById('filter-app-type').value;
+    const col = document.getElementById('filter-collateral').value;
+
+    currentData = campaigns.filter(c => {
+      const matchStatus = currentFilter === 'all' ||
+        (currentFilter === 'active'   && c.status === 'active') ||
+        (currentFilter === 'pending'  && (c.status === 'pending_t1' || c.status === 'pending_t2')) ||
+        (currentFilter === 'draft'    && c.status === 'draft') ||
+        (currentFilter === 'archived' && c.status === 'archived');
+      const matchSearch = !q || c.name.toLowerCase().includes(q) ||
+        c.codename.toLowerCase().includes(q) || c.collateralType.includes(q) ||
+        c.productTypeName.toLowerCase().includes(q);
+      const matchAt  = at  === 'all' || c.appType === at;
+      const matchCol = col === 'all' || c.collateralType === col;
+      return matchStatus && matchSearch && matchAt && matchCol;
+    });
+
+    renderTable(currentData);
+    updateCounts();
+  }
+
+  function updateCounts() {
+    const all = campaigns.length;
+    const active = campaigns.filter(c => c.status === 'active').length;
+    const pending = campaigns.filter(c => c.status === 'pending_t1' || c.status === 'pending_t2').length;
+    const draft = campaigns.filter(c => c.status === 'draft').length;
+    const archived = campaigns.filter(c => c.status === 'archived').length;
+    document.getElementById('count-all').textContent = all;
+    document.getElementById('count-active').textContent = active;
+    document.getElementById('count-pending').textContent = pending;
+    document.getElementById('count-draft').textContent = draft;
+    document.getElementById('count-archived').textContent = archived;
+  }
+
+  // ── MODAL ─────────────────────────────────────────────────────────────────
+  function openModal(campId) {
+    editingId = campId || null;
+    document.getElementById('modal-title').textContent = campId ? 'Edit Campaign' : 'New Campaign';
+
+    // Reset form
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-codename').value = '';
+    document.getElementById('f-interest').value = '';
+    document.getElementById('f-ltv').value = '';
+    document.getElementById('f-loan-min').value = '';
+    document.getElementById('f-loan-max').value = '';
+    formTenors = [];
+    selectedPT = null;
+    formRules = [
+      { field: 'application_type', op: '=', value: '' },
+      { field: 'collateral_type', op: '=', value: '' },
+      { field: 'customer_age', op: '>=', value: '20' },
+      { field: 'customer_age', op: '<=', value: '70' },
+    ];
+
+    // If editing, populate
+    if (campId) {
+      const c = campaigns.find(x => x.id === campId);
+      if (c) {
+        document.getElementById('f-name').value = c.name;
+        document.getElementById('f-codename').value = c.codename;
+        document.getElementById('f-interest').value = c.interest;
+        document.getElementById('f-ltv').value = c.ltv;
+        document.getElementById('f-loan-min').value = c.loanMin;
+        document.getElementById('f-loan-max').value = c.loanMax;
+        formTenors = [...c.tenors];
+        selectedPT = c.productType;
+        formRules = c.eligibility.map(r => ({...r}));
+      }
+    }
+
+    renderPTSelector();
+    renderTenors();
+    renderRules();
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    editingId = null;
+  }
+
+  function editCampaign(id) {
+    openModal(id);
+  }
+
+  // ── PRODUCT TYPE SELECTOR ─────────────────────────────────────────────────
+  function renderPTSelector() {
+    const container = document.getElementById('pt-selector');
+    container.innerHTML = activeProductTypes.map(pt => `
+      <div class="pt-option ${selectedPT === pt.id ? 'selected' : ''}" onclick="selectPT('${pt.id}')">
+        <span class="pt-option-icon">${pt.icon}</span>
+        <div>
+          <div class="pt-option-name">${pt.name}</div>
+          <div class="pt-option-meta">${pt.section} · ${pt.sectionFields} fields · v${pt.version}</div>
+        </div>
+      </div>
+    `).join('');
+    updatePTPreview();
+  }
+
+  function selectPT(ptId) {
+    selectedPT = ptId;
+    renderPTSelector();
+  }
+
+  function updatePTPreview() {
+    const preview = document.getElementById('pt-preview');
+    const content = document.getElementById('pt-preview-content');
+    if (!selectedPT) {
+      preview.style.display = 'none';
+      return;
+    }
+    const pt = activeProductTypes.find(p => p.id === selectedPT);
+    if (!pt) { preview.style.display = 'none'; return; }
+    preview.style.display = 'block';
+    content.innerHTML = `
+      <div><strong>Sections:</strong> Identity (Thai National), Address (Standard), Occupation (Employed), Collateral (${pt.section.replace('collateral_','').replace(/^\w/,c=>c.toUpperCase())})</div>
+      <div><strong>Document Types:</strong> ${pt.docTypes} registered · Conditional rules inherited</div>
+      <div><strong>Version:</strong> v${pt.version} (will be pinned at campaign activation)</div>
+    `;
+  }
+
+  // ── TENOR TAGS ────────────────────────────────────────────────────────────
+  function addTenor() {
+    const input = document.getElementById('f-tenor-input');
+    const val = parseInt(input.value);
+    if (!val || val <= 0) return;
+    if (formTenors.includes(val)) { showToast('Tenor already added'); return; }
+    formTenors.push(val);
+    formTenors.sort((a, b) => a - b);
+    input.value = '';
+    renderTenors();
+  }
+
+  function removeTenor(val) {
+    formTenors = formTenors.filter(t => t !== val);
+    renderTenors();
+  }
+
+  function renderTenors() {
+    const container = document.getElementById('tenor-tags');
+    container.innerHTML = formTenors.map(t =>
+      `<span class="tenor-tag">${t} mo <button onclick="removeTenor(${t})">✕</button></span>`
+    ).join('');
+  }
+
+  // ── ELIGIBILITY RULES ─────────────────────────────────────────────────────
+  const ruleFields = [
+    { key: 'application_type', label: 'Application Type' },
+    { key: 'collateral_type', label: 'Collateral Type' },
+    { key: 'customer_type', label: 'Customer Type' },
+    { key: 'customer_age', label: 'Customer Age' },
+    { key: 'b_score', label: 'B-Score' },
+    { key: 'occupation_group', label: 'Occupation Group' },
+    { key: 'vehicle_brand', label: 'Vehicle Brand' },
+    { key: 'land_deed_type', label: 'Land Deed Type' },
+  ];
+
+  const ruleOps = ['=', '!=', '>', '>=', '<', '<=', 'in', 'like'];
+
+  function addRule() {
+    formRules.push({ field: 'customer_type', op: '=', value: '' });
+    renderRules();
+  }
+
+  function removeRule(idx) {
+    formRules.splice(idx, 1);
+    renderRules();
+  }
+
+  function updateRule(idx, key, val) {
+    formRules[idx][key] = val;
+  }
+
+  function renderRules() {
+    const container = document.getElementById('rule-list');
+    container.innerHTML = formRules.map((r, i) => `
+      <div class="rule-row">
+        <select onchange="updateRule(${i},'field',this.value)">
+          ${ruleFields.map(f => `<option value="${f.key}" ${r.field === f.key ? 'selected' : ''}>${f.label}</option>`).join('')}
+        </select>
+        <select onchange="updateRule(${i},'op',this.value)">
+          ${ruleOps.map(op => `<option value="${op}" ${r.op === op ? 'selected' : ''}>${op}</option>`).join('')}
+        </select>
+        <input value="${r.value}" placeholder="value" onchange="updateRule(${i},'value',this.value)" />
+        <button class="rule-remove" onclick="removeRule(${i})" title="Remove rule">✕</button>
+      </div>
+    `).join('');
+  }
+
+  // ── SAVE ──────────────────────────────────────────────────────────────────
+  function saveCampaign() {
+    const name = document.getElementById('f-name').value.trim();
+    const codename = document.getElementById('f-codename').value.trim();
+    if (!name || !codename) { showToast('Name and codename are required'); return; }
+    if (!selectedPT) { showToast('Please select a product type'); return; }
+
+    const pt = activeProductTypes.find(p => p.id === selectedPT);
+    const appTypeRule = formRules.find(r => r.field === 'application_type');
+    const colRule = formRules.find(r => r.field === 'collateral_type');
+
+    const campaign = {
+      id: editingId || 'c-' + String(campaigns.length + 1).padStart(3, '0'),
+      name,
+      codename,
+      icon: pt.icon,
+      iconBg: '#E8F0FE',
+      appType: appTypeRule ? appTypeRule.value : 'new_booking',
+      collateralType: colRule ? colRule.value : pt.section.replace('collateral_', ''),
+      productType: pt.id,
+      productTypeName: pt.name,
+      ptVersion: pt.version,
+      interest: parseFloat(document.getElementById('f-interest').value) || 0,
+      ltv: parseInt(document.getElementById('f-ltv').value) || 0,
+      loanMin: parseInt(document.getElementById('f-loan-min').value) || 0,
+      loanMax: parseInt(document.getElementById('f-loan-max').value) || 0,
+      tenors: [...formTenors],
+      eligibility: formRules.map(r => ({...r})),
+      status: 'draft',
+      version: 1,
+      owner: 'Somwang K.',
+      updated: '2026-03-18',
+    };
+
+    if (editingId) {
+      const idx = campaigns.findIndex(c => c.id === editingId);
+      if (idx >= 0) {
+        campaign.status = campaigns[idx].status;
+        campaign.version = campaigns[idx].version;
+        campaigns[idx] = campaign;
+      }
+    } else {
+      campaigns.push(campaign);
+    }
+
+    closeModal();
+    applyFilters();
+    showToast(editingId ? 'Campaign updated' : 'Campaign saved as Draft');
+  }
+
+  // ── HELPERS ───────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── INIT ──────────────────────────────────────────────────────────────────
+  applyFilters();
+</script>
+</body>
+</html>

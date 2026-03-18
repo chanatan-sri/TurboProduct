@@ -4,7 +4,7 @@
 **Portfolio**: Credit
 **Product Owner**: TBD (Credit PO)
 **Status**: 📝 Draft — @FEATURE decomposition pending
-**Last Updated**: 2026-03-09
+**Last Updated**: 2026-03-18
 
 ---
 
@@ -26,8 +26,8 @@ Define and manage loan product configurations (campaigns) that house all configu
 |---------|--------|-------------|
 | Campaign Builder | Concept | Create and manage loan campaign with all 5 configuration dimensions in one place |
 | Pricing Configuration | Concept | Set loan amount range, interest rate, available tenors, max LTV, min/max credit line |
-| Eligibility Rules Builder | Concept | Rule-based gateway: configure criteria (customer type, age, collateral, B-score, occupation) evaluated before full application entry |
-| Application Template Assignment | Concept | Select which form pages/sections/fields appear; configure required documents; set conditional document logic |
+| Eligibility Rules Builder | Concept | Rule-based gateway: configure criteria (application type, customer type, age, collateral, B-score, occupation) evaluated before full application entry |
+| Application Template Assignment | Concept | Select an ACTIVE Product Type to inherit application form (sections + variants) and document checklist. Read-only in campaign context — [FEATURE](features/FEATURE_application-template-assignment.md) |
 | Risk Strategy Assignment | Concept | Assign which risk strategy (Strategy → Policy → Rule hierarchy) executes for applications under this campaign |
 | Workflow Execution Steps Configuration | Concept | Configure which pluggable steps run inside each workflow state for applications under this campaign |
 | Campaign Publication Approval Workflow | Spec | Two-tier approval workflow before a campaign transitions to ACTIVE — Tier 1 (parallel): CPO + Risk Officer; Tier 2: CRO. Runs on the Underwriting Workflow state machine engine. — [FEATURE](features/FEATURE_campaign-publication-authorization.md) |
@@ -41,8 +41,8 @@ Define and manage loan product configurations (campaigns) that house all configu
 | Dimension | What It Configures |
 |-----------|-------------------|
 | **Pricing** | Loan amount range, interest rate, available tenors, max LTV, min/max credit line |
-| **Eligibility Criteria** | Rule-based gateway (customer type, age, collateral, credit score, occupation) — evaluated before full application entry |
-| **Application Template** | Which pages/sections/fields appear; required documents; conditional document logic |
+| **Eligibility Criteria** | Rule-based gateway (application type, customer type, age, collateral, credit score, occupation) — evaluated before full application entry |
+| **Application Template** | Select an ACTIVE Product Type — auto-populates application form (sections + variants) and document checklist. Campaign inherits; does not independently configure. |
 | **Risk Strategy** | Which risk assessment strategy to execute (Strategy → Policy → Rule) |
 | **Workflow Execution Steps** | What pluggable steps run inside each workflow state |
 
@@ -96,6 +96,37 @@ A new campaign must be launchable by a product manager without any code deployme
 
 ---
 
+### Product Type Version Pinning
+
+When a campaign transitions to ACTIVE, the system captures the selected product type reference:
+
+| Field | Value | Mutability |
+|-------|-------|-----------|
+| `product_type_id` | FK to selected product type | Immutable after activation |
+| `product_type_version` | Version number at activation time | Immutable after activation |
+
+**Rules:**
+- In-flight applications use the pinned product type version — no retroactive migration
+- If PO publishes product type v2, existing ACTIVE campaigns continue with v1
+- PM can create a new campaign version selecting v2
+- Campaign version + product type version together define the complete application template
+
+### Application Type Eligibility
+
+Application Type is a **required** eligibility criterion that classifies the nature of the loan transaction:
+
+| Application Type | Key | Description |
+|-----------------|-----|-------------|
+| **New Booking** | `new_booking` | New loan with new collateral |
+| **Topup** | `topup` | Additional loan on existing collateral (retention) |
+| **Restructure** | `restructure` | Restructuring of an existing loan |
+
+Every campaign must specify which application type(s) it accepts. This is configured in the Eligibility Rules dimension alongside collateral type, age, and other criteria.
+
+**Relationship to Product Type:** Application Type may require different product types with different sections/fields (e.g., a Topup may skip certain collateral fields). This interaction is acknowledged but the design is deferred to a future @CAPABILITY session.
+
+---
+
 ### Collateral Type as a Configuration Driver
 
 Collateral Type is the primary axis that differentiates campaigns within Onigiri. A campaign is, in practice, a collateral type + credit policy combination. Every one of the five configuration dimensions is shaped by Collateral Type:
@@ -104,7 +135,7 @@ Collateral Type is the primary axis that differentiates campaigns within Onigiri
 |------------------------|-------------------------------|
 | **Pricing** | LTV ceiling and loan amount range differ by collateral type (e.g., land carries a lower LTV ceiling than vehicles) |
 | **Eligibility Criteria** | The `collateral_type =` rule gates which campaign a customer enters |
-| **Application Template** | Exactly one Collateral Section (from the Smart Form Collateral Section Registry) is selected per campaign; each section carries its own field list and document declarations |
+| **Application Template** | Campaign selects a Product Type, which determines the collateral section and all standard sections. Sections and document declarations are read-only in campaign context — owned by Product Type Configuration. |
 | **Risk Strategy** | A named strategy (e.g., `BikeTitleDefault`, `LandTitleDefault`) is assigned; each strategy contains policies specific to that collateral type's risk characteristics |
 | **Workflow Execution Steps** | Identical across all collateral types — the fixed underwriting topology does not change by collateral type |
 
@@ -131,7 +162,7 @@ Authoritative cross-reference for all four supported collateral types. Each row 
 | `proof_of_income` | Proof of Income (payslip / bank statement / business registration) |
 | `household_registration` | Household Registration (ทะเบียนบ้าน) |
 
-**How the document list reaches Matcha:** The Application Template for a campaign declares the required document type keys (shared base + collateral-type-specific). When the application transitions to `create_facility`, the Onigiri worker reads this list from the `document_verification_mapping` table and constructs the `documents[]` array in the POST /task payload to Matcha. Campaign configuration is therefore the upstream source of Matcha's document checklist — not a separate configuration maintained in Matcha.
+**How the document list reaches Matcha:** The document checklist comes from the **product type** selected by the campaign (via the Application Template Assignment feature). The product type's `document_verification_mapping` table declares required documents (shared base + type-specific), conditional inclusion rules, and data extraction template keys. When the application transitions to `create_facility`, the Onigiri Worker reads this mapping using the campaign's pinned `product_type_version` and constructs the `documents[]` array in the POST /task payload to Matcha. The product type is therefore the upstream source of Matcha's document checklist — campaign inherits it; it does not independently configure documents.
 
 ---
 
@@ -141,6 +172,7 @@ The table below shows representative eligibility rules per collateral type. A ca
 
 | Criteria | Operator | Car Campaign | Bike Campaign | Tractor Campaign | Land Campaign |
 |----------|----------|-------------|--------------|-----------------|--------------|
+| Application type | `=` | `"new_booking"` | `"new_booking"` | `"new_booking"` | `"new_booking"` |
 | Collateral type | `=` | `"car"` | `"bike"` | `"tractor"` | `"land"` |
 | Customer age | `>=` | 20 | 20 | 20 | 20 |
 | Customer age | `<=` | 70 | 70 | 70 | 70 |
@@ -175,7 +207,7 @@ Strategy design (which policies and rules to include) is a separate @CAPABILITY 
 flowchart TD
     A[Product Manager opens Campaign Builder] --> B[Configure Pricing\nloan amount, rate, tenors, LTV]
     B --> C[Configure Eligibility Rules\nage, collateral type, B-score, occupation]
-    C --> D[Assign Application Template\nselect form pages, sections, fields, required docs]
+    C --> D[Assign Application Template\nselect ACTIVE Product Type\nsections + docs inherited read-only]
     D --> E[Assign Risk Strategy\nselect Strategy from Risk Assessment Engine]
     E --> F[Configure Workflow Execution Steps\nper-state step assignments]
     F --> G[Preview + Validate Campaign\ncheck for conflicts or missing required config]
@@ -215,3 +247,4 @@ flowchart TD
 - Can a campaign be edited while applications are in-flight? Or must it be versioned + cloned?
 - ~~Is there a campaign approval workflow before publishing, or can product managers publish directly?~~ **Resolved**: Two-tier approval required (Tier 1: CPO, Tier 2: CRO). Product managers cannot publish directly. See Campaign Publication Authorization.
 - What is the campaign archive / sunset process for old campaigns?
+- How does Application Type interact with Product Type? Does each application type (New Booking / Topup / Restructure) require a different product type with different sections/fields? Design deferred to a future @CAPABILITY session.

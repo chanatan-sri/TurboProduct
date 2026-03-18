@@ -5,17 +5,17 @@
 **Product:** Onigiri
 **Owner:** TBD
 **Created:** 2026-03-10
-**Last Updated:** 2026-03-10
+**Last Updated:** 2026-03-17
 
 ---
 
 ## What & Why
-Admin UI that allows Product Owners to declare which documents are required for a collateral type, configure conditional inclusion/exclusion rules (e.g., exclude DLT photo when `bike_act_type = RY-17`), and set data extraction paths. At product type activation, these declarations auto-populate the `document_verification_mapping` table — replacing the current approach of engineering seeding rows via code migrations.
+Admin UI that allows Product Owners to declare which documents are required for a product type, configure conditional inclusion/exclusion rules (e.g., exclude DLT photo when `bike_act_type = RY-17`), and select Data Extraction Templates (engineering-created mappings from application fields to Matcha `check_name` keys). At product type activation, these declarations auto-populate the `document_verification_mapping` table — replacing the current approach of engineering seeding rows via code migrations.
 
 ## Acceptance Criteria
 - [ ] PO can add document requirements by selecting from Onigiri's document type registry
 - [ ] PO can configure conditional inclusion/exclusion rules (WHEN field = value THEN INCLUDE/EXCLUDE)
-- [ ] PO can configure JSONPath data extraction paths per document
+- [ ] PO can select a Data Extraction Template per document type (from engineering-provided templates)
 - [ ] Shared base documents (applicant_id_card, proof_of_income, household_registration) auto-included
 - [ ] Preview shows effective document checklist for given field values
 - [ ] Activation auto-populates `document_verification_mapping` rows
@@ -26,12 +26,13 @@ Admin UI that allows Product Owners to declare which documents are required for 
 ## Dependencies
 - Document Type Registration feature (types must exist in registry first)
 - Collateral Section Builder feature (conditional rules reference section fields)
-- `document_verification_mapping` table schema (must support `conditional_expr` column)
-- Onigiri Worker (reads mapping table at runtime)
+- Data Extraction Templates (Engineering must create templates before PO can configure)
+- `document_verification_mapping` table schema (must support `conditional_expr` + `extraction_template_key` columns)
+- Onigiri Worker (reads mapping table + extraction template at runtime)
 
 ## Notes / Open Questions
 - Should PO be able to modify the shared base document set, or is that a product-level decision?
-- Should JSONPath extraction support be deferred to a later phase?
+- ~~Should JSONPath extraction support be deferred to a later phase?~~ **Resolved:** Replaced with Data Extraction Template selection. Engineering creates templates; PO selects. Not deferred — it is part of the document requirement workflow.
 - How to handle backward compatibility when re-activating a product type with changed document requirements?
 
 ---

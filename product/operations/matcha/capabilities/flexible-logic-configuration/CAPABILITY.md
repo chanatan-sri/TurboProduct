@@ -4,7 +4,7 @@
 **Portfolio**: Operations
 **Product Owner**: TBD (Operations PO)
 **Status**: ✅ Active — @FEATURE decomposition pending
-**Last Updated**: 2026-03-04
+**Last Updated**: 2026-03-17
 
 ---
 
@@ -68,6 +68,20 @@ Allow Operations to define and change document verification rules without requir
 - Submission button is disabled until all documents have a decision recorded
 - A confirmation dialog appears on submission to prevent accidental misclicks
 - Dynamic rules are stored as database configuration — no code change needed for new document types
+
+### Cross-System Data Flow for Data Items
+
+Matcha is domain-agnostic — it does not know how the client system populates the `data` jsonb for each document. The contract is:
+
+| Responsibility | Owner | Description |
+|---------------|-------|-------------|
+| **Define what to verify** | Matcha / Operations | Configure `DocumentVerificationItem` records per document type: data items (`check_name` + display label) and policy items (`check_description` in natural language, e.g., "มีลายเซ็น", "ข้อมูลตรงกับในระบบ") |
+| **Populate verification data** | Client system (e.g., Onigiri) | Extract application field values and send them as `documents[].data` key-value pairs in the POST /task payload. Keys must match the `check_name` values configured in Matcha. |
+| **Compare and decide** | Matcha verifier (human or AI) | For data items: compare the system value (from `data` jsonb) against what is visible in the document image. For policy items: assess the instruction subjectively. |
+
+**Example:** Matcha has a data item with `check_name = "id_card_number"` for document type `THAI_ID_CARD`. Onigiri's Worker extracts the applicant's national ID from the application form and sends `{ "id_card_number": "1234567890123" }` in the task payload. The verifier sees this value on-screen and compares it against the physical ID card image.
+
+Matcha does not care *where* the value came from — only that the key matches `check_name`. This keeps Matcha reusable across any client system.
 
 ---
 

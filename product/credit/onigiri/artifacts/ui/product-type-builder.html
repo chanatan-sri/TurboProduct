@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Type Builder — Onigiri</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:       #1A73E8;
+      --blue-light: #E8F0FE;
+      --blue-dark:  #1558B0;
+      --green:      #1E8E3E;
+      --green-light:#E6F4EA;
+      --red:        #C5221F;
+      --red-light:  #FCE8E6;
+      --amber:      #E37400;
+      --amber-light:#FEF3E2;
+      --purple:     #7B1FA2;
+      --purple-light:#F3E5F5;
+      --teal:       #00796B;
+      --teal-light: #E0F2F1;
+      --orange:     #E65100;
+      --gray-50:    #F8F9FA;
+      --gray-100:   #F1F3F4;
+      --gray-200:   #E8EAED;
+      --gray-300:   #DADCE0;
+      --gray-400:   #BDC1C6;
+      --gray-500:   #9AA0A6;
+      --gray-600:   #80868B;
+      --gray-700:   #5F6368;
+      --gray-800:   #3C4043;
+      --gray-900:   #202124;
+      --white:      #FFFFFF;
+      --radius:     8px;
+      --shadow:     0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md:  0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP NAV ── */
+    .topnav {
+      height: 56px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    .topnav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--gray-900);
+      text-decoration: none;
+    }
+    .topnav-logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--blue);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .topnav-divider { width: 1px; height: 24px; background: var(--gray-200); }
+    .topnav-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--gray-600);
+      font-size: 13px;
+    }
+    .topnav-breadcrumb a { color: var(--blue); text-decoration: none; }
+    .topnav-breadcrumb span { color: var(--gray-400); }
+    .topnav-breadcrumb strong { color: var(--gray-900); font-weight: 500; }
+    .topnav-spacer { flex: 1; }
+    .topnav-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+    .topnav-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── BODY LAYOUT ── */
+    .body-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px;
+      background: var(--white);
+      border-right: 1px solid var(--gray-200);
+      padding: 24px 0;
+      flex-shrink: 0;
+      position: sticky;
+      top: 56px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+    }
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0 20px 12px;
+    }
+    .step-nav-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .step-nav-item:hover { background: var(--gray-50); }
+    .step-nav-item.active { background: var(--blue-light); }
+    .step-nav-item.active .step-label { color: var(--blue); font-weight: 600; }
+    .step-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--gray-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-500);
+      flex-shrink: 0;
+      margin-top: 1px;
+      background: var(--white);
+    }
+    .step-nav-item.active .step-circle {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: white;
+    }
+    .step-nav-item.completed .step-circle {
+      border-color: var(--green);
+      background: var(--green);
+      color: white;
+    }
+    .step-nav-item.completed .step-label { color: var(--gray-700); }
+    .step-info { flex: 1; }
+    .step-label { font-size: 13px; color: var(--gray-700); line-height: 1.3; }
+    .step-sublabel { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+
+    .sidebar-connector {
+      width: 2px;
+      height: 14px;
+      background: var(--gray-200);
+      margin-left: 31px;
+    }
+    .sidebar-connector.done { background: var(--green); }
+
+    /* ── MAIN CONTENT ── */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .page-body {
+      flex: 1;
+      padding: 32px 40px;
+      max-width: 1060px;
+    }
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-size: 22px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
+    .page-header p { font-size: 14px; color: var(--gray-600); max-width: 600px; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── FORM ELEMENTS ── */
+    .form-group { margin-bottom: 18px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    .form-label .required { color: var(--red); margin-left: 2px; }
+    .form-hint { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--gray-900);
+      background: var(--white);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+      font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+    }
+    .form-input.mono { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px; }
+    .form-input:disabled, .form-select:disabled, .form-textarea:disabled {
+      background: var(--gray-100);
+      color: var(--gray-500);
+      cursor: not-allowed;
+    }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      font-family: inherit;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--blue); color: white; }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-secondary { background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-300); }
+    .btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-400); }
+    .btn-danger { background: var(--white); color: var(--red); border: 1px solid var(--red); }
+    .btn-danger:hover { background: var(--red-light); }
+    .btn-success { background: var(--green); color: white; }
+    .btn-success:hover { background: #157a32; }
+    .btn-ghost { background: transparent; color: var(--blue); padding: 6px 10px; }
+    .btn-ghost:hover { background: var(--blue-light); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-lg { padding: 11px 22px; font-size: 15px; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-draft     { background: var(--gray-100); color: var(--gray-700); }
+    .badge-pending   { background: var(--amber-light); color: var(--amber); }
+    .badge-active    { background: var(--green-light); color: var(--green); }
+    .badge-returned  { background: var(--red-light); color: var(--red); }
+    .badge-archived  { background: var(--gray-100); color: var(--gray-500); }
+    .badge-synced    { background: var(--green-light); color: var(--green); }
+    .badge-unsynced  { background: var(--amber-light); color: var(--amber); }
+    .badge-fields    { background: var(--blue-light); color: var(--blue); }
+    .badge-always    { background: var(--blue-light); color: var(--blue); }
+    .badge-cond      { background: var(--amber-light); color: var(--amber); }
+    .badge-locked    { background: var(--gray-100); color: var(--gray-500); }
+    .badge-version   { background: var(--purple-light); color: var(--purple); }
+    .badge-system    { background: var(--teal-light); color: var(--teal); }
+
+    /* ── TOGGLE ── */
+    .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--gray-300);
+      border-radius: 20px;
+      transition: background 0.2s;
+    }
+    .toggle input:checked ~ .toggle-track { background: var(--blue); }
+    .toggle input:disabled ~ .toggle-track { opacity: 0.6; cursor: not-allowed; }
+    .toggle-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle input:checked ~ .toggle-thumb { transform: translateX(16px); }
+    .toggle.disabled { pointer-events: none; }
+
+    /* ── ACCORDION SECTIONS (Step 1) ── */
+    .accordion-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .accordion-card.active { border-color: var(--blue); }
+    .accordion-card.disabled-section { opacity: 0.55; }
+    .accordion-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .accordion-header:hover { background: var(--gray-50); }
+    .accordion-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-900);
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .accordion-title .variant-name {
+      font-weight: 400;
+      color: var(--gray-500);
+      font-size: 13px;
+    }
+    .accordion-summary {
+      font-size: 12px;
+      color: var(--gray-500);
+      white-space: nowrap;
+    }
+    .accordion-chevron {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-400);
+      font-size: 16px;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .accordion-card.expanded .accordion-chevron { transform: rotate(180deg); }
+    .accordion-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--gray-200);
+    }
+    .accordion-card.expanded .accordion-body { display: block; }
+
+    /* ── FIELD PREVIEW GRID ── */
+    .preview-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .preview-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gray-600);
+      margin-bottom: 3px;
+    }
+    .preview-field input, .preview-field select {
+      width: 100%;
+      padding: 5px 8px;
+      border: 1px solid var(--gray-300);
+      border-radius: 5px;
+      background: var(--gray-100);
+      color: var(--gray-500);
+      font-size: 12px;
+      cursor: not-allowed;
+      font-family: inherit;
+    }
+
+    /* ── EVIDENCE TABLE ── */
+    .evidence-section {
+      margin-top: 18px;
+      border-top: 1px solid var(--gray-200);
+      padding-top: 14px;
+    }
+    .evidence-section h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ev-table { width: 100%; border-collapse: collapse; }
+    .ev-table th {
+      background: var(--gray-50);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .ev-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13px;
+      color: var(--gray-800);
+      vertical-align: middle;
+    }
+    .ev-table tr:last-child td { border-bottom: none; }
+    .ev-table .mono { font-family: monospace; font-size: 12px; color: var(--gray-700); }
+    .ev-table .btn-icon {
+      background: none;
+      border: none;
+      color: var(--red);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .ev-table .btn-icon:hover { background: var(--red-light); }
+    .ev-table .btn-expand {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--blue);
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .ev-table .btn-expand:hover { background: var(--blue-light); }
+    .cond-row td { background: var(--amber-light); }
+
+    /* ── UPLOAD BOX TABLE ── */
+    .upload-box-area {
+      padding: 10px 10px 10px 30px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .upload-box-area h5 {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: 8px;
+    }
+    .ub-table { width: 100%; border-collapse: collapse; }
+    .ub-table th {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 5px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .ub-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 12px;
+      color: var(--gray-700);
+    }
+    .ub-table tr:last-child td { border-bottom: none; }
+
+    /* ── RULE BUILDER ── */
+    .rule-builder {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      padding: 8px 10px;
+      background: var(--amber-light);
+      border-radius: 6px;
+      border: 1px solid #F9D7A0;
+      flex-wrap: wrap;
+    }
+    .rule-builder .rule-label { font-size: 12px; font-weight: 600; color: var(--amber); white-space: nowrap; }
+    .rule-builder select, .rule-builder input[type="text"] {
+      padding: 4px 8px;
+      border: 1px solid var(--gray-300);
+      border-radius: 5px;
+      font-size: 12px;
+      background: var(--white);
+      font-family: inherit;
+    }
+
+    /* ── ADD EVIDENCE FORM ── */
+    .add-ev-form {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 12px;
+      background: var(--blue-light);
+      border-radius: 6px;
+      border: 1px solid var(--blue);
+      flex-wrap: wrap;
+    }
+    .add-ev-form .form-group { margin-bottom: 0; }
+    .add-ev-form label { font-size: 11px; font-weight: 500; color: var(--gray-600); display: block; margin-bottom: 3px; }
+    .add-ev-form input, .add-ev-form select {
+      padding: 5px 8px; border: 1px solid var(--gray-300);
+      border-radius: 5px; font-size: 12px; font-family: inherit;
+    }
+
+    /* ── ADD UPLOAD BOX ROW ── */
+    .add-ub-form {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .add-ub-form input, .add-ub-form select {
+      padding: 4px 6px; border: 1px solid var(--gray-300);
+      border-radius: 4px; font-size: 11px; font-family: inherit;
+    }
+    .add-ub-form label { font-size: 10px; font-weight: 500; color: var(--gray-500); display: block; margin-bottom: 2px; }
+
+    /* ── SUMMARY BAR ── */
+    .summary-bar {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-top: 20px;
+      box-shadow: var(--shadow);
+    }
+    .summary-bar-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+    .summary-bar-item .num { color: var(--blue); font-size: 18px; }
+    .summary-bar-item .lbl { font-weight: 400; color: var(--gray-600); font-size: 13px; }
+
+    /* ── TABS ── */
+    .tabs { display: flex; border-bottom: 1px solid var(--gray-200); margin-bottom: 20px; }
+    .tab-btn {
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: inherit;
+    }
+    .tab-btn:hover { color: var(--gray-900); }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── PREVIEW SECTION GROUP ── */
+    .preview-section-group { margin-bottom: 24px; }
+    .preview-section-group h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--blue);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── VALIDATION BAR ── */
+    .validation-bar {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-top: 20px;
+      background: var(--white);
+    }
+    .validation-bar.valid { border-color: var(--green); background: var(--green-light); }
+    .validation-bar.invalid { border-color: var(--red); background: var(--red-light); }
+    .validation-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .validation-item:last-child { margin-bottom: 0; }
+    .v-icon { font-size: 15px; }
+    .v-ready {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #A8D5B5;
+    }
+
+    /* ── SIMULATE ── */
+    .simulate-panel {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .simulate-controls {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .simulate-controls .form-group { margin-bottom: 0; }
+    .simulate-result { margin-top: 8px; }
+    .ev-result {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .ev-result.included { background: var(--green-light); color: var(--green); }
+    .ev-result.excluded { background: var(--red-light); color: var(--red); text-decoration: line-through; opacity: 0.7; }
+    .ev-result .ub-count { font-weight: 400; opacity: 0.7; margin-left: 4px; }
+
+    /* ── SUBMIT BOX ── */
+    .submit-box {
+      margin-top: 20px;
+      padding: 20px;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+    }
+    .checkbox-wrap { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+    .checkbox-wrap input[type="checkbox"] {
+      width: 16px; height: 16px; margin-top: 2px; cursor: pointer; accent-color: var(--blue);
+    }
+    .checkbox-wrap label { font-size: 13px; color: var(--gray-700); cursor: pointer; line-height: 1.5; }
+
+    /* ── APPROVAL STATUS ── */
+    .pt-info-bar {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .pt-info-bar .pt-name { font-size: 16px; font-weight: 700; color: var(--gray-900); }
+    .pt-info-bar .pt-code { font-family: monospace; font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+
+    .approval-timeline { display: flex; flex-direction: column; gap: 0; }
+    .approval-tier {
+      display: flex;
+      gap: 16px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .approval-tier:last-child { border-bottom: none; }
+    .tier-label {
+      width: 80px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 4px;
+    }
+    .tier-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: var(--gray-100);
+      padding: 3px 7px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .tier-line { flex: 1; width: 2px; background: var(--gray-200); }
+    .tier-line.done { background: var(--green); }
+    .tier-reviewers { display: flex; gap: 12px; flex: 1; flex-wrap: wrap; }
+    .reviewer-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 200px;
+      flex: 1;
+    }
+    .reviewer-card.approved { border-color: var(--green); }
+    .reviewer-card.pending  { border-color: var(--amber); }
+    .reviewer-card.waiting  { opacity: 0.5; }
+    .reviewer-card.rejected { border-color: var(--red); }
+    .reviewer-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+    .reviewer-name { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+    .reviewer-role { font-size: 11px; color: var(--gray-500); }
+    .reviewer-status {
+      margin-top: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── DEMO BUTTONS ── */
+    .demo-bar {
+      margin-top: 24px;
+      padding: 16px 20px;
+      background: var(--purple-light);
+      border: 1px solid var(--purple);
+      border-radius: var(--radius);
+    }
+    .demo-bar h4 { font-size: 12px; font-weight: 600; color: var(--purple); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+    .demo-bar .btn { margin-right: 8px; margin-bottom: 6px; }
+
+    /* ── FOOTER BAR ── */
+    .footer-bar {
+      background: var(--white);
+      border-top: 1px solid var(--gray-200);
+      padding: 14px 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      bottom: 0;
+      z-index: 50;
+    }
+    .footer-autosave {
+      font-size: 12px;
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .footer-autosave .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+    .footer-spacer { flex: 1; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      right: 24px;
+      background: var(--gray-900);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-md);
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.25s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── ALERT BANNERS ── */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .alert-warning { background: var(--amber-light); border: 1px solid #F9D7A0; color: var(--amber); }
+    .alert-error   { background: var(--red-light);   border: 1px solid #F5B7B5; color: var(--red); }
+    .alert-success { background: var(--green-light); border: 1px solid #A8D5B5; color: var(--green); }
+    .alert-icon { font-size: 16px; margin-top: 1px; }
+    .alert-content strong { display: block; font-weight: 600; margin-bottom: 2px; }
+
+    /* ── MISC ── */
+    .step-screen { display: none; }
+    .step-screen.active { display: block; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .form-row, .preview-fields, .tier-reviewers { grid-template-columns: 1fr; flex-direction: column; }
+      .page-body { padding: 20px; }
+      .footer-bar { padding: 14px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <a class="topnav-logo" href="index.html">
+    <div class="topnav-logo-icon">O</div>
+    Onigiri
+  </a>
+  <div class="topnav-divider"></div>
+  <div class="topnav-breadcrumb">
+    <a href="index.html">Product Types</a>
+    <span>&#8250;</span>
+    <strong id="breadcrumb-name">New Product Type</strong>
+  </div>
+  <div class="topnav-spacer"></div>
+  <div class="topnav-user">
+    <div class="topnav-avatar">PK</div>
+    <span>PK &middot; Product Owner</span>
+  </div>
+</nav>
+
+<!-- BODY -->
+<div class="body-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Build Steps</div>
+
+    <div class="step-nav-item active" id="nav-0" onclick="goToStep(0)">
+      <div class="step-circle">0</div>
+      <div class="step-info">
+        <div class="step-label">Create Product Type</div>
+        <div class="step-sublabel">Name &amp; codename</div>
+      </div>
+    </div>
+    <div class="sidebar-connector" id="conn-0"></div>
+
+    <div class="step-nav-item" id="nav-1" onclick="goToStep(1)">
+      <div class="step-circle">1</div>
+      <div class="step-info">
+        <div class="step-label">Configure Sections</div>
+        <div class="step-sublabel">Variants, evidence, upload boxes</div>
+      </div>
+    </div>
+    <div class="sidebar-connector" id="conn-1"></div>
+
+    <div class="step-nav-item" id="nav-2" onclick="goToStep(2)">
+      <div class="step-circle">2</div>
+      <div class="step-info">
+        <div class="step-label">Preview &amp; Submit</div>
+        <div class="step-sublabel">Review and send</div>
+      </div>
+    </div>
+    <div class="sidebar-connector" id="conn-2"></div>
+
+    <div class="step-nav-item" id="nav-3" onclick="goToStep(3)">
+      <div class="step-circle">3</div>
+      <div class="step-info">
+        <div class="step-label">Approval Status</div>
+        <div class="step-sublabel">T1 / T2 / Matcha</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div class="page-body">
+
+      <!-- ============================== -->
+      <!-- STEP 0: CREATE PRODUCT TYPE    -->
+      <!-- ============================== -->
+      <div class="step-screen active" id="step-0">
+        <div class="page-header">
+          <h1>Create Product Type</h1>
+          <p>Define the basic identity for this product type. Once saved, the codename becomes immutable.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            Product Type Identity
+            <span class="badge badge-draft">DRAFT</span>
+            <span class="badge badge-version">v1</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Product Type Name <span class="required">*</span></label>
+            <input class="form-input" type="text" id="pt-name" placeholder="e.g. Bike Title Loan" value="Bike Title Loan" oninput="onNameInput(this.value)" />
+            <div class="form-hint">Human-readable display name shown to applicants and internal users.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Codename <span class="required">*</span></label>
+            <input class="form-input mono" type="text" id="pt-codename" value="bike_title_loan" readonly />
+            <div class="form-hint">Auto-generated from name. Used as the system key (snake_case, immutable after creation).</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-textarea" id="pt-description" placeholder="Briefly describe this product type...">Title-based loan product for motorbike owners. Borrower pledges motorbike registration book as collateral. Typical tenure: 12-48 months.</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- STEP 1: CONFIGURE SECTIONS     -->
+      <!-- ============================== -->
+      <div class="step-screen" id="step-1">
+        <div class="page-header">
+          <h1>Configure Sections</h1>
+          <p>Toggle sections on/off, choose variants, and configure evidence requirements + upload boxes for each section.</p>
+        </div>
+
+        <div id="sections-container"></div>
+
+        <!-- System-generated documents info -->
+        <div class="card" style="background:var(--teal-light);border-color:var(--teal);margin-top:16px;">
+          <div class="card-title" style="color:var(--teal);">System-Generated Documents (auto-included)</div>
+          <p style="font-size:13px;color:var(--gray-700);margin-bottom:12px;">These documents are always the same across all product types and are auto-included in every product type's document checklist. PO cannot configure them.</p>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr>
+              <th style="padding:6px 10px;font-size:11px;color:var(--teal);">Evidence</th>
+              <th style="padding:6px 10px;font-size:11px;color:var(--teal);">Upload Boxes</th>
+            </tr></thead>
+            <tbody>
+              <tr><td style="padding:6px 10px;font-size:13px;">Contract</td><td style="padding:6px 10px;font-size:12px;color:var(--gray-600);">1 box</td></tr>
+              <tr><td style="padding:6px 10px;font-size:13px;">PDPA Consent Form</td><td style="padding:6px 10px;font-size:12px;color:var(--gray-600);">1 box</td></tr>
+              <tr><td style="padding:6px 10px;font-size:13px;">Insurance Application Form</td><td style="padding:6px 10px;font-size:12px;color:var(--gray-600);">1 box</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="summary-bar" id="summary-bar"></div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- STEP 2: PREVIEW & SUBMIT       -->
+      <!-- ============================== -->
+      <div class="step-screen" id="step-2">
+        <div class="page-header">
+          <h1>Preview &amp; Submit</h1>
+          <p>Review the complete product type configuration before submitting for approval.</p>
+        </div>
+
+        <div class="card" style="padding: 0;">
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('preview', this)">Form Preview</button>
+            <button class="tab-btn" onclick="switchTab('evidence', this)">Evidence Checklist</button>
+            <button class="tab-btn" onclick="switchTab('simulate', this)">Simulate Rules</button>
+          </div>
+
+          <div class="tab-panel active" id="tab-preview" style="padding: 20px;"></div>
+          <div class="tab-panel" id="tab-evidence" style="padding: 20px;"></div>
+          <div class="tab-panel" id="tab-simulate" style="padding: 20px;"></div>
+        </div>
+
+        <div class="validation-bar valid" id="validation-bar"></div>
+
+        <div class="submit-box" id="submit-box">
+          <div class="checkbox-wrap">
+            <input type="checkbox" id="submit-confirm" onchange="updateSubmitBtn()" />
+            <label for="submit-confirm">I confirm this product type is complete and ready for review. Once submitted, the configuration becomes <strong>read-only</strong> until approved or returned.</label>
+          </div>
+          <button class="btn btn-primary btn-lg" id="submit-btn" disabled onclick="submitForApproval()">Submit for Approval</button>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- STEP 3: APPROVAL STATUS        -->
+      <!-- ============================== -->
+      <div class="step-screen" id="step-3">
+        <div class="page-header">
+          <h1>Approval Status</h1>
+          <p>Track the approval workflow for this product type through T1 and T2 review gates.</p>
+        </div>
+
+        <div id="alert-area"></div>
+
+        <div class="pt-info-bar">
+          <div>
+            <div class="pt-name" id="approval-pt-name">Bike Title Loan</div>
+            <div class="pt-code" id="approval-pt-code">bike_title_loan</div>
+          </div>
+          <div style="flex:1;"></div>
+          <span class="badge badge-pending" id="approval-status-badge">PENDING T1</span>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Approval Timeline</div>
+          <div class="approval-timeline" id="approval-timeline"></div>
+        </div>
+
+        <div class="demo-bar">
+          <h4>Demo Controls</h4>
+          <button class="btn btn-sm btn-success" onclick="demoApproveT1A()">Approve: CPO</button>
+          <button class="btn btn-sm btn-success" onclick="demoApproveT1B()">Approve: Risk Officer</button>
+          <button class="btn btn-sm btn-success" onclick="demoApproveT2()">Approve: CRO (T2)</button>
+          <button class="btn btn-sm btn-primary" onclick="demoMatchaSync()">Matcha Sync</button>
+          <button class="btn btn-sm btn-danger" onclick="demoReject()">Reject (Return)</button>
+          <button class="btn btn-sm" onclick="demoSyncFail()" style="background:var(--amber);color:white;">Sync Failed</button>
+          <button class="btn btn-sm btn-secondary" onclick="demoReset()">Reset</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER BAR -->
+    <div class="footer-bar" id="footer-bar">
+      <div class="footer-autosave">
+        <div class="dot"></div>
+        Auto-saved just now
+      </div>
+      <div class="footer-spacer"></div>
+      <button class="btn btn-secondary" id="btn-back" onclick="goPrev()" style="display:none;">Back</button>
+      <button class="btn btn-primary" id="btn-next" onclick="goNext()">Next: Configure Sections</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────
+
+// Document types — Engineering-owned AI classification categories
+const DOC_TYPE_REGISTRY = [
+  { key: 'copy_of_id_card', name: 'Copy of ID Card', category: 'identity' },
+  { key: 'house_registration', name: 'House Registration', category: 'identity' },
+  { key: 'passport_copy', name: 'Passport Copy', category: 'identity' },
+  { key: 'salary_slip', name: 'Salary Slip', category: 'income' },
+  { key: 'bank_statement', name: 'Bank Statement', category: 'income' },
+  { key: 'vehicle_registration_book', name: 'Vehicle Registration Book', category: 'vehicle' },
+  { key: 'insurance_policy', name: 'Insurance Policy', category: 'insurance' },
+  { key: 'dlt_web_page', name: 'DLT Registration Web Page', category: 'vehicle' },
+  { key: 'company_certificate', name: 'Company Certificate', category: 'other' },
+  { key: 'income_certificate', name: 'Income Certificate', category: 'income' },
+];
+
+// System-generated documents (always same across all product types)
+const SYSTEM_EVIDENCE = [
+  { name: 'Contract', docTypeKey: 'contract', boxes: [{ name: 'Contract Document', order: 1, allowMultiple: false, min: 1, max: 1 }] },
+  { name: 'PDPA Consent Form', docTypeKey: 'pdpa_consent', boxes: [{ name: 'PDPA Form', order: 1, allowMultiple: false, min: 1, max: 1 }] },
+  { name: 'Insurance Application Form', docTypeKey: 'insurance_application', boxes: [{ name: 'Insurance Form', order: 1, allowMultiple: false, min: 1, max: 1 }] },
+];
+
+const SECTIONS_DATA = [
+  {
+    id: 'identity',
+    name: 'Identity',
+    enabled: true,
+    required: false,
+    selectedVariant: 'thai_national',
+    variants: {
+      thai_national: {
+        name: 'Thai National',
+        fields: ['prefix_th','first_name_th','last_name_th','prefix_en','first_name_en','last_name_en','id_card_number','date_of_birth','gender','marital_status','nationality','phone_number'],
+      },
+      foreigner: {
+        name: 'Foreigner',
+        fields: ['prefix_en','first_name_en','last_name_en','passport_number','passport_expiry','date_of_birth','gender','marital_status','nationality','visa_type','phone_number','email'],
+      }
+    },
+    evidence: [
+      {
+        name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e1a\u0e31\u0e15\u0e23 \u0e1b\u0e0a\u0e0a.\u0e1c\u0e39\u0e49\u0e01\u0e39\u0e49',
+        nameEn: 'Customer ID Card Copy',
+        docTypeKey: 'copy_of_id_card',
+        condition: null,
+        uploadBoxes: [
+          { name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e2b\u0e19\u0e49\u0e32-\u0e2b\u0e25\u0e31\u0e07', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '', tooltipImage: '' }
+        ]
+      },
+      {
+        name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e1a\u0e31\u0e15\u0e23 \u0e1b\u0e0a\u0e0a.\u0e1c\u0e39\u0e49\u0e04\u0e49\u0e33\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19',
+        nameEn: 'Guarantor ID Card Copy',
+        docTypeKey: 'copy_of_id_card',
+        condition: null,
+        uploadBoxes: [
+          { name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e2b\u0e19\u0e49\u0e32-\u0e2b\u0e25\u0e31\u0e07', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '', tooltipImage: '' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'address',
+    name: 'Address',
+    enabled: true,
+    required: false,
+    selectedVariant: 'standard',
+    variants: {
+      standard: {
+        name: 'Standard',
+        fields: ['address_type','house_number','moo','soi','road','sub_district','district','province','postal_code','country','years_at_address','ownership_status','phone_home','phone_mobile','email'],
+      },
+      simplified: {
+        name: 'Simplified',
+        fields: ['full_address','sub_district','district','province','postal_code','phone_mobile'],
+      }
+    },
+    evidence: []
+  },
+  {
+    id: 'occupation',
+    name: 'Occupation',
+    enabled: true,
+    required: false,
+    selectedVariant: 'employed',
+    variants: {
+      employed: {
+        name: 'Employed',
+        fields: ['occupation_type','company_name','company_address','position','department','years_employed','monthly_salary','employer_phone','business_type','employee_id'],
+      },
+      self_employed: {
+        name: 'Self-Employed',
+        fields: ['business_name','business_type','business_registration','business_address','years_in_business','monthly_revenue','monthly_expenses','business_phone','num_employees','business_website'],
+      }
+    },
+    evidence: []
+  },
+  {
+    id: 'collateral',
+    name: 'Collateral',
+    enabled: true,
+    required: true,
+    selectedVariant: 'bike',
+    variants: {
+      bike: {
+        name: 'Bike',
+        fields: ['bike_brand','bike_model','bike_year','bike_color','bike_cc','bike_chassis_number','bike_engine_number','bike_registration_number','bike_province','bike_act_type','bike_act_number','bike_owner_name','bike_appraised_value','bike_outstanding_finance','bike_condition','bike_mileage','bike_insurance_expiry'],
+      },
+      car: {
+        name: 'Car',
+        fields: ['car_brand','car_model','car_year','car_color','car_cc','car_chassis_number','car_engine_number','car_registration_number','car_province','car_type','car_owner_name','car_appraised_value','car_outstanding_finance','car_condition','car_mileage'],
+      }
+    },
+    evidence: [
+      {
+        name: '\u0e2a\u0e21\u0e38\u0e14\u0e17\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e19\u0e23\u0e16\u0e08\u0e31\u0e01\u0e23\u0e22\u0e32\u0e19\u0e22\u0e19\u0e15\u0e4c',
+        nameEn: 'Motorbike Registration Book',
+        docTypeKey: 'vehicle_registration_book',
+        condition: null,
+        uploadBoxes: [
+          { name: '\u0e23\u0e39\u0e1b\u0e16\u0e48\u0e32\u0e22\u0e2b\u0e25\u0e31\u0e01\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e01\u0e31\u0e1a\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '\u0e16\u0e48\u0e32\u0e22\u0e23\u0e39\u0e1b\u0e2b\u0e25\u0e31\u0e01\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e04\u0e39\u0e48\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32', tooltipImage: '' },
+          { name: '\u0e2b\u0e19\u0e49\u0e32\u0e1b\u0e01', order: 2, allowMultiple: false, min: 1, max: 1, tooltip: '', tooltipImage: '' },
+          { name: '\u0e2b\u0e19\u0e49\u0e32\u0e01\u0e23\u0e23\u0e21\u0e2a\u0e34\u0e17\u0e18\u0e34\u0e4c\u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14', order: 3, allowMultiple: false, min: 1, max: 1, tooltip: '', tooltipImage: '' },
+          { name: '\u0e2b\u0e19\u0e49\u0e32\u0e01\u0e23\u0e23\u0e21\u0e2a\u0e34\u0e17\u0e18\u0e34\u0e4c\u0e01\u0e48\u0e2d\u0e19\u0e2b\u0e19\u0e49\u0e32', order: 4, allowMultiple: false, min: 1, max: 1, tooltip: '', tooltipImage: '' },
+          { name: '\u0e2b\u0e19\u0e49\u0e32\u0e20\u0e32\u0e29\u0e35', order: 5, allowMultiple: false, min: 1, max: 1, tooltip: '', tooltipImage: '' },
+          { name: '\u0e2b\u0e19\u0e49\u0e32\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 \u0e08\u0e19\u0e17.18 \u0e40\u0e1b\u0e47\u0e19\u0e15\u0e49\u0e19\u0e44\u0e1b', order: 6, allowMultiple: true, min: 1, max: 5, tooltip: '', tooltipImage: '' },
+        ]
+      },
+      {
+        name: '\u0e01\u0e23\u0e21\u0e18\u0e23\u0e23\u0e21\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e20\u0e31\u0e22',
+        nameEn: 'Insurance Policy',
+        docTypeKey: 'insurance_policy',
+        condition: null,
+        uploadBoxes: [
+          { name: '\u0e01\u0e23\u0e21\u0e18\u0e23\u0e23\u0e21\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e20\u0e31\u0e22', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '', tooltipImage: '' }
+        ]
+      },
+      {
+        name: '\u0e43\u0e1a\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e08\u0e32\u0e01 DLT',
+        nameEn: 'DLT Registration Web Page',
+        docTypeKey: 'dlt_web_page',
+        condition: { field: 'bike_act_type', operator: '!=', value: 'RY-17', action: 'Include' },
+        uploadBoxes: [
+          { name: '\u0e2b\u0e19\u0e49\u0e32\u0e40\u0e27\u0e47\u0e1a DLT', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '', tooltipImage: '' }
+        ]
+      },
+    ]
+  },
+  {
+    id: 'income_expenses',
+    name: 'Income & Expenses',
+    enabled: false,
+    required: false,
+    selectedVariant: 'standard',
+    variants: {
+      standard: {
+        name: 'Standard',
+        fields: ['monthly_income','monthly_expenses','other_income','other_expenses','total_debt','debt_service_ratio','income_source','verification_method'],
+      }
+    },
+    evidence: []
+  },
+  {
+    id: 'references',
+    name: 'References',
+    enabled: false,
+    required: false,
+    selectedVariant: 'standard',
+    variants: {
+      standard: {
+        name: 'Standard',
+        fields: ['ref1_name','ref1_relation','ref1_phone','ref1_address','ref2_name','ref2_relation','ref2_phone','ref2_address'],
+      }
+    },
+    evidence: []
+  }
+];
+
+// Deep clone for working copy
+let sections = JSON.parse(JSON.stringify(SECTIONS_DATA));
+
+let currentStep = 0;
+
+// ── APPROVAL STATE ──
+let approvalState = {
+  status: 'PENDING_T1',
+  t1a: 'pending',
+  t1b: 'pending',
+  t2:  'waiting',
+  matcha: 'waiting'
+};
+
+// ── NAVIGATION ──────────────────────────────────
+
+function goToStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.step-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+
+  for (let i = 0; i <= 3; i++) {
+    const nav = document.getElementById('nav-' + i);
+    nav.classList.remove('active', 'completed');
+    if (i < n) nav.classList.add('completed');
+    if (i === n) nav.classList.add('active');
+    const conn = document.getElementById('conn-' + i);
+    if (conn) conn.classList.toggle('done', i < n);
+  }
+
+  const btnBack = document.getElementById('btn-back');
+  const btnNext = document.getElementById('btn-next');
+  const footer = document.getElementById('footer-bar');
+
+  if (n === 0) {
+    btnBack.style.display = 'none';
+    btnNext.style.display = '';
+    btnNext.textContent = 'Next: Configure Sections';
+    btnNext.className = 'btn btn-primary';
+    btnNext.disabled = false;
+    footer.style.display = '';
+  } else if (n === 1) {
+    btnBack.style.display = '';
+    btnNext.style.display = '';
+    btnNext.textContent = 'Next: Preview & Submit';
+    btnNext.className = 'btn btn-primary';
+    btnNext.disabled = false;
+    footer.style.display = '';
+  } else if (n === 2) {
+    btnBack.style.display = '';
+    btnNext.style.display = 'none';
+    footer.style.display = '';
+  } else {
+    footer.style.display = 'none';
+  }
+
+  if (n === 1) renderSections();
+  if (n === 2) renderPreview();
+  if (n === 3) renderApproval();
+
+  const name = document.getElementById('pt-name').value || 'New Product Type';
+  document.getElementById('breadcrumb-name').textContent = name;
+}
+
+function goNext() { if (currentStep < 3) goToStep(currentStep + 1); }
+function goPrev() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+// ── STEP 0 ──
+function onNameInput(val) {
+  const code = val.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  document.getElementById('pt-codename').value = code;
+  document.getElementById('breadcrumb-name').textContent = val || 'New Product Type';
+}
+
+// ── STEP 1: SECTIONS ────────────────────────────
+
+function countUploadBoxes(sec) {
+  let count = 0;
+  sec.evidence.forEach(ev => { count += ev.uploadBoxes.length; });
+  return count;
+}
+
+function renderSections() {
+  const container = document.getElementById('sections-container');
+  container.innerHTML = '';
+  sections.forEach((sec, idx) => {
+    container.innerHTML += buildAccordionCard(sec, idx);
+  });
+  updateSummaryBar();
+}
+
+function buildAccordionCard(sec, idx) {
+  const variant = sec.variants[sec.selectedVariant];
+  const fieldCount = variant ? variant.fields.length : 0;
+  const evCount = sec.evidence.length;
+  const ubCount = countUploadBoxes(sec);
+  const isExpanded = sec.enabled && sec._expanded;
+  const disabledClass = sec.enabled ? '' : 'disabled-section';
+  const expandedClass = isExpanded ? 'expanded' : '';
+  const activeClass = sec.enabled ? 'active' : '';
+
+  let html = `<div class="accordion-card ${expandedClass} ${disabledClass} ${activeClass}" id="acc-${idx}">`;
+  html += `<div class="accordion-header" onclick="toggleAccordion(${idx})">`;
+
+  // Toggle
+  if (sec.required) {
+    html += `<label class="toggle disabled" title="Required section"><input type="checkbox" checked disabled /><span class="toggle-track"></span><span class="toggle-thumb"></span></label>`;
+  } else {
+    html += `<label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" ${sec.enabled ? 'checked' : ''} onchange="toggleSection(${idx}, this.checked)" /><span class="toggle-track"></span><span class="toggle-thumb"></span></label>`;
+  }
+
+  // Title
+  html += `<div class="accordion-title">${sec.name} <span class="variant-name">\u2014 ${variant ? variant.name : ''}</span>`;
+  if (sec.required) html += ` <span class="badge badge-locked">Required</span>`;
+  html += `</div>`;
+
+  // Summary
+  html += `<div class="accordion-summary">${fieldCount} fields &middot; ${evCount} evidence &middot; ${ubCount} boxes</div>`;
+  html += `<div class="accordion-chevron">&#9662;</div>`;
+  html += `</div>`; // header
+
+  // Body
+  html += `<div class="accordion-body">`;
+
+  // Variant dropdown
+  const variantKeys = Object.keys(sec.variants);
+  if (variantKeys.length > 1) {
+    html += `<div style="margin-top:14px;margin-bottom:4px;"><label class="form-label">Variant</label>`;
+    html += `<select class="form-select" style="max-width:280px;" onchange="changeVariant(${idx}, this.value)">`;
+    variantKeys.forEach(vk => {
+      html += `<option value="${vk}" ${vk === sec.selectedVariant ? 'selected' : ''}>${sec.variants[vk].name}</option>`;
+    });
+    html += `</select></div>`;
+  }
+
+  // Field preview
+  if (variant) {
+    html += `<div style="margin-top:12px;"><label class="form-label" style="margin-bottom:8px;">Fields (${variant.fields.length})</label>`;
+    html += `<div class="preview-fields">`;
+    variant.fields.forEach(f => {
+      const label = f.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      html += `<div class="preview-field"><label>${label}</label><input disabled value="" placeholder="${f}" /></div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  // Evidence Requirements
+  html += `<div class="evidence-section">`;
+  html += `<h4>\u{1F4C4} Evidence Requirements (${evCount} evidence, ${ubCount} upload boxes)</h4>`;
+
+  if (evCount > 0) {
+    html += `<div style="overflow-x:auto;">`;
+    html += `<table class="ev-table"><thead><tr>`;
+    html += `<th style="width:30px;"></th><th>Evidence Name</th><th>Doc Type</th><th>Required</th><th>Boxes</th><th style="width:60px;">Actions</th>`;
+    html += `</tr></thead><tbody>`;
+
+    sec.evidence.forEach((ev, ei) => {
+      const condClass = ev.condition ? 'cond-row' : '';
+      const dtName = DOC_TYPE_REGISTRY.find(d => d.key === ev.docTypeKey);
+
+      // Evidence row
+      html += `<tr class="${condClass}">`;
+      html += `<td><button class="btn-expand" onclick="toggleEvExpand(${idx},${ei})" title="Show upload boxes">${ev._expanded ? '&#9660;' : '&#9654;'}</button></td>`;
+      html += `<td><strong>${ev.name}</strong>${ev.nameEn ? `<br><span style="font-size:11px;color:var(--gray-500);">${ev.nameEn}</span>` : ''}</td>`;
+      html += `<td class="mono">${ev.docTypeKey}</td>`;
+      html += `<td>`;
+      if (ev.condition) {
+        html += `<span class="badge badge-cond">WHEN ${ev.condition.field} ${ev.condition.operator} ${ev.condition.value} THEN ${ev.condition.action}</span>`;
+        html += `<br><button class="btn btn-ghost btn-sm" onclick="removeCondition(${idx},${ei})" style="margin-top:4px;">Remove rule</button>`;
+      } else {
+        html += `<span class="badge badge-always">Always</span>`;
+        html += ` <button class="btn btn-ghost btn-sm" onclick="showConditionBuilder(${idx},${ei})">+ Rule</button>`;
+      }
+      html += `</td>`;
+      html += `<td><span class="badge badge-fields">${ev.uploadBoxes.length}</span></td>`;
+      html += `<td><button class="btn-icon" onclick="removeEvidence(${idx},${ei})" title="Remove">&#10005;</button></td>`;
+      html += `</tr>`;
+
+      // Condition builder row (hidden)
+      html += `<tr id="cond-builder-${idx}-${ei}" style="display:none;"><td colspan="6">`;
+      html += buildConditionBuilderRow(idx, ei, sec);
+      html += `</td></tr>`;
+
+      // Upload boxes (expandable)
+      if (ev._expanded) {
+        html += `<tr><td colspan="6" style="padding:0;">`;
+        html += `<div class="upload-box-area">`;
+        html += `<h5>Upload Boxes for "${ev.name}"</h5>`;
+        html += `<table class="ub-table"><thead><tr>`;
+        html += `<th>Order</th><th>Upload Box Name</th><th>Multiple?</th><th>Min</th><th>Max</th><th>Tooltip</th><th style="width:40px;"></th>`;
+        html += `</tr></thead><tbody>`;
+        ev.uploadBoxes.forEach((ub, bi) => {
+          html += `<tr>`;
+          html += `<td>${ub.order}</td>`;
+          html += `<td>${ub.name}</td>`;
+          html += `<td>${ub.allowMultiple ? '<span style="color:var(--green);">Yes</span>' : 'No'}</td>`;
+          html += `<td>${ub.min}</td>`;
+          html += `<td>${ub.max}</td>`;
+          html += `<td style="font-size:11px;color:var(--gray-500);">${ub.tooltip || '\u2014'}</td>`;
+          html += `<td><button class="btn-icon" onclick="removeUploadBox(${idx},${ei},${bi})" title="Remove" style="font-size:12px;">&#10005;</button></td>`;
+          html += `</tr>`;
+        });
+        html += `</tbody></table>`;
+
+        // Add upload box form
+        html += `<div class="add-ub-form">`;
+        html += `<div><label>Name</label><input id="ub-name-${idx}-${ei}" placeholder="Upload box name" style="width:180px;" /></div>`;
+        html += `<div><label>Multiple?</label><select id="ub-multi-${idx}-${ei}"><option value="false">No</option><option value="true">Yes</option></select></div>`;
+        html += `<div><label>Min</label><input id="ub-min-${idx}-${ei}" type="number" value="1" style="width:50px;" /></div>`;
+        html += `<div><label>Max</label><input id="ub-max-${idx}-${ei}" type="number" value="1" style="width:50px;" /></div>`;
+        html += `<div><label>Tooltip</label><input id="ub-tip-${idx}-${ei}" placeholder="Optional" style="width:140px;" /></div>`;
+        html += `<button class="btn btn-sm btn-primary" onclick="addUploadBox(${idx},${ei})">+ Add Box</button>`;
+        html += `</div>`;
+
+        html += `</div></td></tr>`;
+      }
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  // Add evidence button + form
+  html += `<div style="margin-top:10px;">`;
+  html += `<button class="btn btn-ghost btn-sm" onclick="showAddEvForm(${idx})">+ Add Evidence</button>`;
+  html += `</div>`;
+
+  // Add evidence form (hidden)
+  html += `<div id="add-ev-form-${idx}" style="display:none;" class="add-ev-form">`;
+  html += `<div class="form-group"><label>Evidence Name (Thai)</label><input id="ev-name-${idx}" placeholder="e.g. \u0e2a\u0e33\u0e40\u0e19\u0e32\u0e1a\u0e31\u0e15\u0e23..." style="width:200px;" /></div>`;
+  html += `<div class="form-group"><label>Evidence Name (EN)</label><input id="ev-name-en-${idx}" placeholder="e.g. Customer ID Card" style="width:180px;" /></div>`;
+  html += `<div class="form-group"><label>Document Type</label><select id="ev-doctype-${idx}" style="width:200px;"><option value="">Select...</option>`;
+  DOC_TYPE_REGISTRY.forEach(dt => {
+    html += `<option value="${dt.key}">${dt.name} (${dt.key})</option>`;
+  });
+  html += `</select></div>`;
+  html += `<button class="btn btn-sm btn-primary" onclick="addEvidence(${idx})">Add</button>`;
+  html += `<button class="btn btn-sm btn-secondary" onclick="hideAddEvForm(${idx})">Cancel</button>`;
+  html += `</div>`;
+
+  html += `</div>`; // evidence-section
+  html += `</div>`; // accordion-body
+  html += `</div>`; // accordion-card
+
+  return html;
+}
+
+function buildConditionBuilderRow(secIdx, evIdx, sec) {
+  const variant = sec.variants[sec.selectedVariant];
+  const fields = variant ? variant.fields : [];
+  let html = `<div class="rule-builder">`;
+  html += `<span class="rule-label">WHEN</span>`;
+  html += `<select id="cond-field-${secIdx}-${evIdx}">`;
+  fields.forEach(f => { html += `<option value="${f}">${f}</option>`; });
+  html += `</select>`;
+  html += `<select id="cond-op-${secIdx}-${evIdx}">`;
+  html += `<option value="=">=</option><option value="!=" selected>!=</option>`;
+  html += `</select>`;
+  html += `<input type="text" id="cond-val-${secIdx}-${evIdx}" placeholder="value" style="width:100px;" />`;
+  html += `<span class="rule-label">THEN</span>`;
+  html += `<select id="cond-action-${secIdx}-${evIdx}"><option value="Include">Include</option><option value="Exclude">Exclude</option></select>`;
+  html += `<button class="btn btn-sm btn-primary" onclick="saveCondition(${secIdx},${evIdx})">Save</button>`;
+  html += `<button class="btn btn-sm btn-secondary" onclick="hideConditionBuilder(${secIdx},${evIdx})">Cancel</button>`;
+  html += `</div>`;
+  return html;
+}
+
+// ── Section interactions ──
+
+function toggleAccordion(idx) {
+  if (!sections[idx].enabled) return;
+  sections[idx]._expanded = !sections[idx]._expanded;
+  renderSections();
+}
+
+function toggleSection(idx, checked) {
+  sections[idx].enabled = checked;
+  if (!checked) sections[idx]._expanded = false;
+  renderSections();
+  toast(checked ? `${sections[idx].name} section enabled` : `${sections[idx].name} section disabled`);
+}
+
+function changeVariant(idx, variantKey) {
+  sections[idx].selectedVariant = variantKey;
+  renderSections();
+  toast(`Variant changed to ${sections[idx].variants[variantKey].name}`);
+}
+
+// ── Evidence interactions ──
+
+function toggleEvExpand(secIdx, evIdx) {
+  sections[secIdx].evidence[evIdx]._expanded = !sections[secIdx].evidence[evIdx]._expanded;
+  renderSections();
+}
+
+function removeEvidence(secIdx, evIdx) {
+  const name = sections[secIdx].evidence[evIdx].name;
+  sections[secIdx].evidence.splice(evIdx, 1);
+  renderSections();
+  toast(`Removed evidence: ${name}`);
+}
+
+function showAddEvForm(idx) {
+  document.getElementById('add-ev-form-' + idx).style.display = '';
+}
+function hideAddEvForm(idx) {
+  document.getElementById('add-ev-form-' + idx).style.display = 'none';
+}
+
+function addEvidence(idx) {
+  const name = document.getElementById('ev-name-' + idx).value.trim();
+  const nameEn = document.getElementById('ev-name-en-' + idx).value.trim();
+  const docTypeKey = document.getElementById('ev-doctype-' + idx).value;
+  if (!name || !docTypeKey) { toast('Evidence name and document type are required'); return; }
+  sections[idx].evidence.push({
+    name, nameEn, docTypeKey, condition: null, _expanded: true,
+    uploadBoxes: []
+  });
+  renderSections();
+  toast(`Added evidence: ${name}`);
+}
+
+// ── Upload box interactions ──
+
+function addUploadBox(secIdx, evIdx) {
+  const name = document.getElementById(`ub-name-${secIdx}-${evIdx}`).value.trim();
+  if (!name) { toast('Upload box name is required'); return; }
+  const multi = document.getElementById(`ub-multi-${secIdx}-${evIdx}`).value === 'true';
+  const min = parseInt(document.getElementById(`ub-min-${secIdx}-${evIdx}`).value) || 1;
+  const max = parseInt(document.getElementById(`ub-max-${secIdx}-${evIdx}`).value) || 1;
+  const tooltip = document.getElementById(`ub-tip-${secIdx}-${evIdx}`).value.trim();
+  const boxes = sections[secIdx].evidence[evIdx].uploadBoxes;
+  boxes.push({ name, order: boxes.length + 1, allowMultiple: multi, min, max, tooltip, tooltipImage: '' });
+  renderSections();
+  toast(`Added upload box: ${name}`);
+}
+
+function removeUploadBox(secIdx, evIdx, boxIdx) {
+  sections[secIdx].evidence[evIdx].uploadBoxes.splice(boxIdx, 1);
+  // Re-order
+  sections[secIdx].evidence[evIdx].uploadBoxes.forEach((b, i) => { b.order = i + 1; });
+  renderSections();
+  toast('Upload box removed');
+}
+
+// ── Condition interactions ──
+
+function showConditionBuilder(secIdx, evIdx) {
+  const row = document.getElementById(`cond-builder-${secIdx}-${evIdx}`);
+  if (row) row.style.display = '';
+}
+function hideConditionBuilder(secIdx, evIdx) {
+  const row = document.getElementById(`cond-builder-${secIdx}-${evIdx}`);
+  if (row) row.style.display = 'none';
+}
+
+function saveCondition(secIdx, evIdx) {
+  const field = document.getElementById(`cond-field-${secIdx}-${evIdx}`).value;
+  const op = document.getElementById(`cond-op-${secIdx}-${evIdx}`).value;
+  const val = document.getElementById(`cond-val-${secIdx}-${evIdx}`).value;
+  const action = document.getElementById(`cond-action-${secIdx}-${evIdx}`).value;
+  if (!val) { toast('Please enter a value'); return; }
+  sections[secIdx].evidence[evIdx].condition = { field, operator: op, value: val, action };
+  renderSections();
+  toast('Conditional rule saved');
+}
+
+function removeCondition(secIdx, evIdx) {
+  sections[secIdx].evidence[evIdx].condition = null;
+  renderSections();
+  toast('Condition removed');
+}
+
+function updateSummaryBar() {
+  const enabled = sections.filter(s => s.enabled);
+  let totalFields = 0, totalEv = 0, totalBoxes = 0;
+  enabled.forEach(s => {
+    const v = s.variants[s.selectedVariant];
+    totalFields += v ? v.fields.length : 0;
+    totalEv += s.evidence.length;
+    totalBoxes += countUploadBoxes(s);
+  });
+  // Add system-generated
+  const sysEv = SYSTEM_EVIDENCE.length;
+  const sysBoxes = SYSTEM_EVIDENCE.reduce((a, e) => a + e.boxes.length, 0);
+
+  document.getElementById('summary-bar').innerHTML =
+    `<div class="summary-bar-item"><span class="num">${enabled.length}</span> <span class="lbl">sections</span></div>` +
+    `<div class="summary-bar-item"><span class="num">${totalFields}</span> <span class="lbl">fields</span></div>` +
+    `<div class="summary-bar-item"><span class="num">${totalEv + sysEv}</span> <span class="lbl">evidence</span></div>` +
+    `<div class="summary-bar-item"><span class="num">${totalBoxes + sysBoxes}</span> <span class="lbl">upload boxes</span></div>`;
+}
+
+// ── STEP 2: PREVIEW ─────────────────────────────
+
+function renderPreview() {
+  renderFormPreview();
+  renderEvidenceChecklist();
+  renderSimulateTab();
+  renderValidation();
+}
+
+function renderFormPreview() {
+  const panel = document.getElementById('tab-preview');
+  let html = '';
+  sections.filter(s => s.enabled).forEach(sec => {
+    const variant = sec.variants[sec.selectedVariant];
+    if (!variant) return;
+    html += `<div class="preview-section-group">`;
+    html += `<h3>${sec.name} <span class="badge badge-fields">${variant.name}</span></h3>`;
+    html += `<div class="preview-fields">`;
+    variant.fields.forEach(f => {
+      const label = f.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      html += `<div class="preview-field"><label>${label}</label><input disabled placeholder="${f}" /></div>`;
+    });
+    html += `</div></div>`;
+  });
+  panel.innerHTML = html || '<p style="color:var(--gray-500);">No sections enabled.</p>';
+}
+
+function renderEvidenceChecklist() {
+  const panel = document.getElementById('tab-evidence');
+  const enabled = sections.filter(s => s.enabled);
+  let html = '';
+
+  // Section-specific evidence
+  let hasAny = false;
+  enabled.forEach(sec => {
+    if (sec.evidence.length === 0) return;
+    hasAny = true;
+    html += `<div class="preview-section-group">`;
+    html += `<h3>${sec.name} <span class="badge badge-fields">${sec.variants[sec.selectedVariant].name}</span></h3>`;
+    html += `<table style="width:100%;border-collapse:collapse;">`;
+    html += `<thead><tr><th style="padding:8px 10px;">Evidence</th><th style="padding:8px 10px;">Doc Type</th><th style="padding:8px 10px;">Condition</th><th style="padding:8px 10px;">Upload Boxes</th></tr></thead><tbody>`;
+    sec.evidence.forEach(ev => {
+      const condClass = ev.condition ? 'style="background:var(--amber-light);"' : '';
+      html += `<tr ${condClass}>`;
+      html += `<td style="padding:8px 10px;"><strong>${ev.name}</strong>${ev.nameEn ? `<br><span style="font-size:11px;color:var(--gray-500);">${ev.nameEn}</span>` : ''}</td>`;
+      html += `<td style="padding:8px 10px;font-family:monospace;font-size:12px;">${ev.docTypeKey}</td>`;
+      html += `<td style="padding:8px 10px;">`;
+      if (ev.condition) {
+        html += `<span class="badge badge-cond">WHEN ${ev.condition.field} ${ev.condition.operator} ${ev.condition.value} THEN ${ev.condition.action}</span>`;
+      } else {
+        html += `<span class="badge badge-always">Always</span>`;
+      }
+      html += `</td>`;
+      html += `<td style="padding:8px 10px;">`;
+      ev.uploadBoxes.forEach(ub => {
+        html += `<div style="font-size:12px;color:var(--gray-700);margin-bottom:2px;">${ub.order}. ${ub.name} ${ub.allowMultiple ? '<span style="color:var(--blue);">(multi: ' + ub.min + '-' + ub.max + ')</span>' : ''}</div>`;
+      });
+      html += `</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+
+  // System-generated
+  html += `<div class="preview-section-group">`;
+  html += `<h3>System-Generated <span class="badge badge-system">Auto-included</span></h3>`;
+  html += `<table style="width:100%;border-collapse:collapse;">`;
+  html += `<thead><tr><th style="padding:8px 10px;">Evidence</th><th style="padding:8px 10px;">Upload Boxes</th></tr></thead><tbody>`;
+  SYSTEM_EVIDENCE.forEach(ev => {
+    html += `<tr><td style="padding:8px 10px;">${ev.name}</td><td style="padding:8px 10px;">${ev.boxes.length} box</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  if (!hasAny) {
+    html = '<p style="color:var(--gray-500);margin-bottom:20px;">No section-specific evidence configured.</p>' + html;
+  }
+
+  panel.innerHTML = html;
+}
+
+function renderSimulateTab() {
+  const panel = document.getElementById('tab-simulate');
+  const condEvs = [];
+  const condFields = new Set();
+  sections.filter(s => s.enabled).forEach(sec => {
+    sec.evidence.forEach(ev => {
+      if (ev.condition) {
+        condEvs.push({ ...ev, section: sec.name });
+        condFields.add(ev.condition.field);
+      }
+    });
+  });
+
+  if (condEvs.length === 0) {
+    panel.innerHTML = '<div class="simulate-panel"><p style="color:var(--gray-500);">No conditional rules to simulate. All evidence is always included.</p></div>';
+    return;
+  }
+
+  let html = '<div class="simulate-panel">';
+  html += '<h4 style="font-size:14px;font-weight:600;margin-bottom:12px;">Simulate Conditional Rules</h4>';
+  html += '<p style="font-size:13px;color:var(--gray-600);margin-bottom:16px;">Set field values to see which evidence would be included or excluded (along with all its upload boxes).</p>';
+  html += '<div class="simulate-controls">';
+  condFields.forEach(f => {
+    const label = f.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    html += `<div class="form-group"><label class="form-label">${label}</label>`;
+    if (f === 'bike_act_type') {
+      html += `<select class="form-select" id="sim-${f}" onchange="runSimulation()" style="min-width:160px;">`;
+      html += `<option value="RY-12">RY-12</option><option value="RY-17">RY-17</option><option value="RY-01">RY-01</option>`;
+      html += `</select>`;
+    } else {
+      html += `<input class="form-input" id="sim-${f}" oninput="runSimulation()" style="min-width:160px;" placeholder="Enter value..." />`;
+    }
+    html += `</div>`;
+  });
+  html += '</div>';
+  html += '<div class="simulate-result" id="sim-results"></div>';
+  html += '</div>';
+  panel.innerHTML = html;
+  runSimulation();
+}
+
+function runSimulation() {
+  const allEvs = [];
+  sections.filter(s => s.enabled).forEach(sec => {
+    sec.evidence.forEach(ev => {
+      allEvs.push({ ...ev, section: sec.name });
+    });
+  });
+
+  const resultsEl = document.getElementById('sim-results');
+  if (!resultsEl) return;
+
+  let html = '';
+  allEvs.forEach(ev => {
+    let included = true;
+    if (ev.condition) {
+      const simEl = document.getElementById('sim-' + ev.condition.field);
+      const simVal = simEl ? simEl.value : '';
+      let match = false;
+      switch (ev.condition.operator) {
+        case '=': match = simVal === ev.condition.value; break;
+        case '!=': match = simVal !== ev.condition.value; break;
+      }
+      if (ev.condition.action === 'Include') {
+        included = match;
+      } else {
+        included = !match;
+      }
+    }
+    const cls = included ? 'included' : 'excluded';
+    const icon = included ? '&#10003;' : '&#10005;';
+    html += `<div class="ev-result ${cls}">${icon} ${ev.name} <span class="ub-count">(${ev.uploadBoxes.length} upload box${ev.uploadBoxes.length !== 1 ? 'es' : ''})</span> <span style="font-weight:400;opacity:0.6;">\u2014 ${ev.section}</span></div>`;
+  });
+  resultsEl.innerHTML = html;
+}
+
+function renderValidation() {
+  const bar = document.getElementById('validation-bar');
+  const enabled = sections.filter(s => s.enabled);
+  const hasName = document.getElementById('pt-name').value.trim().length > 0;
+  const hasSections = enabled.length > 0;
+  const hasCollateral = sections.find(s => s.id === 'collateral' && s.enabled);
+  const allEvHaveBoxes = enabled.every(s => s.evidence.every(ev => ev.uploadBoxes.length > 0));
+  const hasEvidence = enabled.some(s => s.evidence.length > 0);
+
+  const checks = [
+    { ok: hasName, text: 'Product type name is set' },
+    { ok: hasSections, text: 'At least one section enabled' },
+    { ok: !!hasCollateral, text: 'Collateral section is included' },
+    { ok: hasEvidence, text: 'At least one evidence entry declared' },
+    { ok: allEvHaveBoxes, text: 'All evidence entries have at least one upload box' },
+    { ok: true, text: 'All conditional rule fields exist in selected variants' },
+  ];
+
+  const allOk = checks.every(c => c.ok);
+  bar.className = 'validation-bar ' + (allOk ? 'valid' : 'invalid');
+
+  let html = '';
+  checks.forEach(c => {
+    html += `<div class="validation-item"><span class="v-icon" style="color:${c.ok ? 'var(--green)' : 'var(--red)'};">${c.ok ? '&#10003;' : '&#10005;'}</span> ${c.text}</div>`;
+  });
+  if (allOk) {
+    html += `<div class="v-ready">&#10003; Ready to submit for approval</div>`;
+  }
+  bar.innerHTML = html;
+}
+
+function switchTab(tabId, btn) {
+  document.querySelectorAll('#step-2 .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#step-2 .tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+function updateSubmitBtn() {
+  document.getElementById('submit-btn').disabled = !document.getElementById('submit-confirm').checked;
+}
+
+function submitForApproval() {
+  approvalState = { status: 'PENDING_T1', t1a: 'pending', t1b: 'pending', t2: 'waiting', matcha: 'waiting' };
+  goToStep(3);
+  toast('Submitted for approval');
+}
+
+// ── STEP 3: APPROVAL ────────────────────────────
+
+const REVIEWERS = {
+  t1a: { initials: 'SP', name: 'Somsak P.', role: 'Chief Product Officer', color: 'var(--blue)' },
+  t1b: { initials: 'NR', name: 'Nattaya R.', role: 'Risk Officer', color: 'var(--teal)' },
+  t2:  { initials: 'WK', name: 'Wichai K.', role: 'Chief Risk Officer', color: 'var(--purple)' },
+  matcha: { initials: 'M', name: 'Matcha Service', role: 'Document Sync', color: 'var(--green)' },
+};
+
+function renderApproval() {
+  const name = document.getElementById('pt-name').value || 'Bike Title Loan';
+  const code = document.getElementById('pt-codename').value || 'bike_title_loan';
+  document.getElementById('approval-pt-name').textContent = name;
+  document.getElementById('approval-pt-code').textContent = code;
+
+  const badgeEl = document.getElementById('approval-status-badge');
+  const st = approvalState.status;
+  if (st === 'PENDING_T1') { badgeEl.className = 'badge badge-pending'; badgeEl.textContent = 'PENDING T1'; }
+  else if (st === 'PENDING_T2') { badgeEl.className = 'badge badge-pending'; badgeEl.textContent = 'PENDING T2'; }
+  else if (st === 'MATCHA_SYNC') { badgeEl.className = 'badge badge-unsynced'; badgeEl.textContent = 'MATCHA SYNC'; }
+  else if (st === 'ACTIVE') { badgeEl.className = 'badge badge-active'; badgeEl.textContent = 'ACTIVE'; }
+  else if (st === 'RETURNED') { badgeEl.className = 'badge badge-returned'; badgeEl.textContent = 'RETURNED'; }
+  else if (st === 'SYNC_FAILED') { badgeEl.className = 'badge badge-returned'; badgeEl.textContent = 'SYNC FAILED'; }
+
+  const alertArea = document.getElementById('alert-area');
+  alertArea.innerHTML = '';
+  if (st === 'RETURNED') {
+    alertArea.innerHTML = `<div class="alert alert-error"><span class="alert-icon">&#9888;</span><div class="alert-content"><strong>Product Type Returned</strong>A reviewer has requested changes. Please revise the configuration and resubmit.</div></div>`;
+  } else if (st === 'SYNC_FAILED') {
+    alertArea.innerHTML = `<div class="alert alert-warning"><span class="alert-icon">&#9888;</span><div class="alert-content"><strong>Matcha Sync Failed</strong>The document configuration could not be synced to Matcha. Please retry or contact the platform team.</div></div>`;
+  } else if (st === 'ACTIVE') {
+    alertArea.innerHTML = `<div class="alert alert-success"><span class="alert-icon">&#10003;</span><div class="alert-content"><strong>Product Type Active</strong>All approvals complete and documents synced to Matcha. This product type is now live.</div></div>`;
+  }
+
+  const timeline = document.getElementById('approval-timeline');
+  let html = '';
+
+  const t1Done = approvalState.t1a === 'approved' && approvalState.t1b === 'approved';
+  html += `<div class="approval-tier">`;
+  html += `<div class="tier-label"><span class="tier-badge" style="${t1Done ? 'background:var(--green-light);color:var(--green);' : ''}">T1</span><div class="tier-line ${t1Done ? 'done' : ''}"></div></div>`;
+  html += `<div class="tier-reviewers">${buildReviewerCard('t1a', approvalState.t1a)}${buildReviewerCard('t1b', approvalState.t1b)}</div></div>`;
+
+  const t2Done = approvalState.t2 === 'approved';
+  html += `<div class="approval-tier">`;
+  html += `<div class="tier-label"><span class="tier-badge" style="${t2Done ? 'background:var(--green-light);color:var(--green);' : ''}">T2</span><div class="tier-line ${t2Done ? 'done' : ''}"></div></div>`;
+  html += `<div class="tier-reviewers">${buildReviewerCard('t2', approvalState.t2)}</div></div>`;
+
+  const matchaDone = approvalState.matcha === 'synced';
+  html += `<div class="approval-tier">`;
+  html += `<div class="tier-label"><span class="tier-badge" style="${matchaDone ? 'background:var(--green-light);color:var(--green);' : ''}">SYNC</span></div>`;
+  html += `<div class="tier-reviewers">${buildReviewerCard('matcha', approvalState.matcha)}</div></div>`;
+
+  timeline.innerHTML = html;
+}
+
+function buildReviewerCard(key, status) {
+  const r = REVIEWERS[key];
+  let cardClass = '', statusHtml = '';
+  if (status === 'approved' || status === 'synced') {
+    cardClass = 'approved';
+    statusHtml = `<span style="color:var(--green);">&#10003; ${status === 'synced' ? 'Synced' : 'Approved'}</span>`;
+  } else if (status === 'pending') {
+    cardClass = 'pending';
+    statusHtml = `<span style="color:var(--amber);">&#9679; Pending review</span>`;
+  } else if (status === 'rejected') {
+    cardClass = 'rejected';
+    statusHtml = `<span style="color:var(--red);">&#10005; Returned</span>`;
+  } else if (status === 'waiting') {
+    cardClass = 'waiting';
+    statusHtml = `<span style="color:var(--gray-500);">&#8212; Waiting</span>`;
+  } else if (status === 'failed') {
+    cardClass = 'rejected';
+    statusHtml = `<span style="color:var(--red);">&#10005; Sync Failed</span>`;
+  }
+  return `<div class="reviewer-card ${cardClass}">
+    <div class="reviewer-avatar" style="background:${r.color};">${r.initials}</div>
+    <div>
+      <div class="reviewer-name">${r.name}</div>
+      <div class="reviewer-role">${r.role}</div>
+      <div class="reviewer-status">${statusHtml}</div>
+    </div>
+  </div>`;
+}
+
+// Demo actions
+function demoApproveT1A() { approvalState.t1a = 'approved'; checkT1(); renderApproval(); toast('CPO approved'); }
+function demoApproveT1B() { approvalState.t1b = 'approved'; checkT1(); renderApproval(); toast('Risk Officer approved'); }
+function checkT1() {
+  if (approvalState.t1a === 'approved' && approvalState.t1b === 'approved') {
+    approvalState.status = 'PENDING_T2';
+    approvalState.t2 = 'pending';
+  }
+}
+function demoApproveT2() { approvalState.t2 = 'approved'; approvalState.status = 'MATCHA_SYNC'; approvalState.matcha = 'pending'; renderApproval(); toast('CRO approved \u2014 awaiting Matcha sync'); }
+function demoMatchaSync() { approvalState.matcha = 'synced'; approvalState.status = 'ACTIVE'; renderApproval(); toast('Matcha sync complete \u2014 product type is ACTIVE'); }
+function demoReject() {
+  approvalState.status = 'RETURNED';
+  if (approvalState.t1a === 'pending') approvalState.t1a = 'rejected';
+  else if (approvalState.t1b === 'pending') approvalState.t1b = 'rejected';
+  else if (approvalState.t2 === 'pending') approvalState.t2 = 'rejected';
+  renderApproval(); toast('Product type returned for changes');
+}
+function demoSyncFail() { approvalState.matcha = 'failed'; approvalState.status = 'SYNC_FAILED'; renderApproval(); toast('Matcha sync failed'); }
+function demoReset() { approvalState = { status: 'PENDING_T1', t1a: 'pending', t1b: 'pending', t2: 'waiting', matcha: 'waiting' }; renderApproval(); toast('Approval state reset'); }
+
+// ── TOAST ──
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timeout);
+  el._timeout = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── INIT ──
+sections.find(s => s.id === 'collateral')._expanded = true;
+sections.find(s => s.id === 'collateral').evidence[0]._expanded = true;
+goToStep(0);
+</script>
+</body>
+</html>
