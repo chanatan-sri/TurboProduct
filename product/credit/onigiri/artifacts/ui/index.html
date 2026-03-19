@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Types — Onigiri Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:        #1A73E8;
+      --blue-light:  #E8F0FE;
+      --blue-dark:   #1558B0;
+      --green:       #1E8E3E;
+      --green-light: #E6F4EA;
+      --red:         #C5221F;
+      --red-light:   #FCE8E6;
+      --amber:       #E37400;
+      --amber-light: #FEF3E2;
+      --purple:      #7B1FA2;
+      --purple-light:#F3E5F5;
+      --teal:        #00796B;
+      --teal-light:  #E0F2F1;
+      --gray-50:     #F8F9FA;
+      --gray-100:    #F1F3F4;
+      --gray-200:    #E8EAED;
+      --gray-300:    #DADCE0;
+      --gray-400:    #BDC1C6;
+      --gray-500:    #9AA0A6;
+      --gray-600:    #80868B;
+      --gray-700:    #5F6368;
+      --gray-800:    #3C4043;
+      --gray-900:    #202124;
+      --white:       #FFFFFF;
+      --radius:      8px;
+      --shadow:      0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md:   0 4px 8px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP NAV ── */
+    .topnav {
+      height: 56px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topnav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--gray-900);
+      text-decoration: none;
+    }
+    .topnav-logo-icon {
+      width: 28px; height: 28px;
+      background: var(--blue);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 13px; font-weight: 800;
+    }
+    .topnav-divider { width: 1px; height: 24px; background: var(--gray-200); }
+    .topnav-nav {
+      display: flex;
+      gap: 2px;
+    }
+    .topnav-nav a {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-600);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .topnav-nav a:hover { background: var(--gray-100); color: var(--gray-900); }
+    .topnav-nav a.active { background: var(--blue-light); color: var(--blue); }
+    .topnav-spacer { flex: 1; }
+    .topnav-user {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--gray-700);
+    }
+    .topnav-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--blue); color: white;
+      font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── PAGE WRAPPER ── */
+    .page-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 28px;
+      width: 100%;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      gap: 16px;
+    }
+    .page-header-left h1 { font-size: 24px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+    .page-header-left p  { font-size: 14px; color: var(--gray-600); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 6px;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      border: none; transition: all 0.15s;
+      font-family: inherit; text-decoration: none; white-space: nowrap;
+    }
+    .btn-primary { background: var(--blue); color: white; }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-secondary { background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-300); }
+    .btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-400); }
+    .btn-ghost { background: transparent; color: var(--blue); padding: 6px 10px; }
+    .btn-ghost:hover { background: var(--blue-light); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-icon { padding: 6px 8px; }
+
+    /* ── STAT CARDS ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: var(--shadow);
+    }
+    .stat-card:hover { border-color: var(--blue); box-shadow: var(--shadow-md); }
+    .stat-card.active-filter { border-color: var(--blue); background: var(--blue-light); }
+    .stat-label { font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; line-height: 1; }
+    .stat-sub { font-size: 12px; color: var(--gray-500); }
+    .stat-card.stat-all .stat-value { color: var(--gray-900); }
+    .stat-card.stat-active .stat-value { color: var(--green); }
+    .stat-card.stat-pending .stat-value { color: var(--amber); }
+    .stat-card.stat-draft .stat-value { color: var(--blue); }
+    .stat-card.stat-returned .stat-value { color: var(--red); }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+    }
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      font-size: 14px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 7px 12px 7px 32px;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      outline: none;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .search-input:focus { border-color: var(--blue); background: var(--white); box-shadow: 0 0 0 3px rgba(26,115,232,0.1); }
+    .filter-divider { width: 1px; height: 24px; background: var(--gray-200); }
+    .filter-label { font-size: 12px; font-weight: 500; color: var(--gray-500); white-space: nowrap; }
+    .filter-select {
+      padding: 6px 10px;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--white);
+      color: var(--gray-700);
+      outline: none;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .view-toggle { display: flex; gap: 4px; }
+    .view-btn {
+      padding: 6px 10px;
+      border-radius: 5px;
+      border: 1px solid var(--gray-200);
+      background: var(--white);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--gray-500);
+      transition: all 0.15s;
+    }
+    .view-btn.active { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+
+    /* ── TABLE VIEW ── */
+    .table-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: var(--gray-50);
+      font-size: 11px; font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 11px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+      white-space: nowrap;
+    }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { color: var(--gray-900); }
+    th.sorted { color: var(--blue); }
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13px;
+      color: var(--gray-800);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--gray-50); }
+    .pt-name-cell { display: flex; align-items: center; gap: 10px; }
+    .pt-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .pt-name { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+    .pt-code { font-family: monospace; font-size: 11px; color: var(--gray-500); margin-top: 1px; }
+    td.mono { font-family: monospace; font-size: 12px; color: var(--gray-600); }
+    .actions-cell { display: flex; align-items: center; gap: 4px; }
+    .action-btn {
+      padding: 5px 10px; border-radius: 5px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      border: 1px solid transparent; font-family: inherit;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .action-view { background: var(--blue-light); color: var(--blue); border-color: transparent; }
+    .action-view:hover { background: #d0e4fc; }
+    .action-edit { background: var(--white); color: var(--gray-700); border-color: var(--gray-200); }
+    .action-edit:hover { background: var(--gray-100); }
+    .action-more { background: var(--white); color: var(--gray-600); border-color: var(--gray-200); padding: 5px 7px; }
+    .action-more:hover { background: var(--gray-100); }
+
+    /* ── CARD GRID VIEW ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .pt-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      cursor: pointer;
+    }
+    .pt-card:hover { border-color: var(--blue); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .pt-card-header { display: flex; align-items: flex-start; gap: 12px; }
+    .pt-card-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .pt-card-title { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 2px; }
+    .pt-card-code { font-family: monospace; font-size: 11px; color: var(--gray-500); }
+    .pt-card-body { display: flex; flex-direction: column; gap: 8px; }
+    .pt-card-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray-600); }
+    .pt-card-meta .meta-icon { font-size: 14px; }
+    .pt-card-divider { height: 1px; background: var(--gray-100); }
+    .pt-card-footer { display: flex; align-items: center; justify-content: space-between; }
+    .pt-card-actions { display: flex; gap: 6px; }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .badge-active    { background: var(--green-light);  color: var(--green); }
+    .badge-draft     { background: var(--blue-light);   color: var(--blue); }
+    .badge-pending1  { background: var(--amber-light);  color: var(--amber); }
+    .badge-pending2  { background: var(--purple-light); color: var(--purple); }
+    .badge-returned  { background: var(--red-light);    color: var(--red); }
+    .badge-archived  { background: var(--gray-100);     color: var(--gray-500); }
+    .badge-section   { background: var(--teal-light);   color: var(--teal); font-size: 11px; }
+
+    /* ── VERSION PILL ── */
+    .version-pill {
+      display: inline-flex; align-items: center;
+      padding: 2px 7px;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      border-radius: 4px;
+      font-family: monospace; font-size: 11px; font-weight: 600;
+    }
+
+    /* ── CAMPAIGN CHIPS ── */
+    .campaign-count {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 7px;
+      background: var(--blue-light);
+      color: var(--blue);
+      border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--gray-500);
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-title { font-size: 16px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; }
+    .empty-sub { font-size: 13px; color: var(--gray-500); margin-bottom: 20px; }
+
+    /* ── TABLE RESULT INFO ── */
+    .results-info {
+      font-size: 12px;
+      color: var(--gray-500);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ── PAGINATION ── */
+    .pagination {
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 4px; padding: 12px 16px;
+      border-top: 1px solid var(--gray-100);
+    }
+    .page-btn {
+      padding: 5px 10px; border-radius: 5px;
+      border: 1px solid var(--gray-200);
+      background: var(--white); font-size: 12px;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.15s; color: var(--gray-700);
+    }
+    .page-btn:hover { background: var(--gray-100); }
+    .page-btn.current { background: var(--blue); color: white; border-color: var(--blue); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── DETAIL DRAWER (right panel) ── */
+    .drawer-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.25);
+      z-index: 200;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .drawer-overlay.open { opacity: 1; pointer-events: all; }
+    .drawer {
+      position: fixed; right: 0; top: 0; bottom: 0;
+      width: 440px;
+      background: var(--white);
+      box-shadow: -4px 0 20px rgba(0,0,0,0.12);
+      z-index: 201;
+      transform: translateX(100%);
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .drawer-title { font-size: 17px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+    .drawer-code { font-family: monospace; font-size: 12px; color: var(--gray-500); }
+    .drawer-close {
+      margin-left: auto; padding: 4px 8px;
+      border: none; background: none; font-size: 18px; cursor: pointer;
+      color: var(--gray-500); border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .drawer-close:hover { background: var(--gray-100); color: var(--gray-900); }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+    .drawer-section { margin-bottom: 22px; }
+    .drawer-section-title {
+      font-size: 11px; font-weight: 600; color: var(--gray-500);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .drawer-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 8px 0; border-bottom: 1px solid var(--gray-100);
+      font-size: 13px; gap: 12px;
+    }
+    .drawer-row:last-child { border-bottom: none; }
+    .drawer-row-key { color: var(--gray-600); flex-shrink: 0; }
+    .drawer-row-val { color: var(--gray-900); font-weight: 500; text-align: right; }
+    .drawer-row-val .mono { font-family: monospace; font-size: 12px; }
+    .campaign-list { display: flex; flex-direction: column; gap: 6px; }
+    .campaign-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px;
+      background: var(--gray-50); border-radius: 6px;
+      font-size: 12px; border: 1px solid var(--gray-200);
+    }
+    .campaign-item .ci-name { font-weight: 500; color: var(--gray-800); flex: 1; }
+    .drawer-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+      display: flex; gap: 8px;
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--gray-900); color: white;
+      padding: 10px 16px; border-radius: 6px; font-size: 13px;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: var(--shadow-md); z-index: 999;
+      opacity: 0; transform: translateY(8px); transition: all 0.25s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── MISC ── */
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-active   { background: var(--green); }
+    .dot-draft    { background: var(--blue); }
+    .dot-pending  { background: var(--amber); }
+    .dot-returned { background: var(--red); }
+    .dot-archived { background: var(--gray-400); }
+    .text-muted { color: var(--gray-500); font-size: 12px; }
+
+    @media (max-width: 900px) {
+      .stat-grid { grid-template-columns: repeat(3, 1fr); }
+      .drawer { width: 100%; }
+    }
+    @media (max-width: 600px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .page-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <a class="topnav-logo" href="#">
+    <div class="topnav-logo-icon">O</div>
+    Onigiri
+  </a>
+  <div class="topnav-divider"></div>
+  <nav class="topnav-nav">
+    <a href="#">Dashboard</a>
+    <a href="index.html" class="active">Product Types</a>
+    <a href="campaign-builder.html">Campaigns</a>
+    <a href="#">Applications</a>
+    <a href="#">Settings</a>
+  </nav>
+  <div class="topnav-spacer"></div>
+  <div class="topnav-user">
+    <div class="topnav-avatar">AP</div>
+    <span>Araya P. · Product Owner</span>
+  </div>
+</nav>
+
+<!-- PAGE -->
+<div class="page-wrapper">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Product Types</h1>
+      <p>Collateral-backed product type templates available for campaign configuration.</p>
+    </div>
+    <a class="btn btn-primary" href="product-type-builder.html">＋ New Product Type</a>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stat-grid">
+    <div class="stat-card stat-all" onclick="filterByStatus('all', this)">
+      <div class="stat-label">All Types</div>
+      <div class="stat-value" id="count-all">8</div>
+      <div class="stat-sub">Across all statuses</div>
+    </div>
+    <div class="stat-card stat-active" onclick="filterByStatus('active', this)">
+      <div class="stat-label">Active</div>
+      <div class="stat-value" id="count-active">3</div>
+      <div class="stat-sub">Available for campaigns</div>
+    </div>
+    <div class="stat-card stat-pending" onclick="filterByStatus('pending', this)">
+      <div class="stat-label">In Review</div>
+      <div class="stat-value" id="count-pending">2</div>
+      <div class="stat-sub">Pending T1 or T2</div>
+    </div>
+    <div class="stat-card stat-draft" onclick="filterByStatus('draft', this)">
+      <div class="stat-label">Draft</div>
+      <div class="stat-value" id="count-draft">2</div>
+      <div class="stat-sub">Work in progress</div>
+    </div>
+    <div class="stat-card stat-returned" onclick="filterByStatus('returned', this)">
+      <div class="stat-label">Returned</div>
+      <div class="stat-value" id="count-returned">1</div>
+      <div class="stat-sub">Needs revision</div>
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="search-input" placeholder="Search by name, codename, or collateral section…" oninput="applyFilters()" />
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Section:</span>
+    <select class="filter-select" id="filter-section" onchange="applyFilters()">
+      <option value="all">All sections</option>
+      <option value="collateral_bike">collateral_bike</option>
+      <option value="collateral_car">collateral_car</option>
+      <option value="collateral_tractor">collateral_tractor</option>
+      <option value="collateral_land">collateral_land</option>
+    </select>
+    <span class="filter-label">Owner:</span>
+    <select class="filter-select" id="filter-owner" onchange="applyFilters()">
+      <option value="all">All owners</option>
+      <option value="Araya P.">Araya P.</option>
+      <option value="Somwang K.">Somwang K.</option>
+      <option value="Niran B.">Niran B.</option>
+    </select>
+    <div class="filter-divider"></div>
+    <div class="view-toggle">
+      <button class="view-btn active" id="view-table" onclick="switchView('table')">☰ Table</button>
+      <button class="view-btn" id="view-cards" onclick="switchView('cards')">⊞ Cards</button>
+    </div>
+  </div>
+
+  <!-- TABLE VIEW -->
+  <div id="table-view">
+    <div class="table-card">
+      <div class="results-info">
+        <span id="results-text">Showing 8 product types</span>
+        <span class="text-muted">Sorted by last updated</span>
+      </div>
+      <div class="table-wrap">
+        <table id="product-table">
+          <thead>
+            <tr>
+              <th class="sortable sorted" onclick="sortTable('name')">Product Type ↕</th>
+              <th class="sortable" onclick="sortTable('section')">Collateral Section</th>
+              <th>Version</th>
+              <th class="sortable" onclick="sortTable('status')">Status</th>
+              <th>Doc Types</th>
+              <th>Active Campaigns</th>
+              <th class="sortable" onclick="sortTable('updated')">Last Updated</th>
+              <th>Owner</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <!-- Rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="empty-state" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No product types found</div>
+        <div class="empty-sub">Try adjusting your search or filter.</div>
+      </div>
+      <div class="pagination">
+        <button class="page-btn" disabled>← Prev</button>
+        <button class="page-btn current">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">→ Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD GRID VIEW -->
+  <div id="cards-view" style="display:none;">
+    <div class="card-grid" id="card-grid">
+      <!-- Cards injected by JS -->
+    </div>
+    <div class="empty-state" id="empty-state-cards" style="display:none;">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">No product types found</div>
+      <div class="empty-sub">Try adjusting your search or filter.</div>
+    </div>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+<!-- DETAIL DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="detail-drawer">
+  <div class="drawer-header">
+    <div id="drawer-icon" style="font-size:32px;"></div>
+    <div>
+      <div class="drawer-title" id="drawer-title"></div>
+      <div class="drawer-code" id="drawer-code"></div>
+      <div style="margin-top:6px;" id="drawer-badge"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+  <div class="drawer-footer" id="drawer-footer"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── DATA ──────────────────────────────────────────────────────────────────
+  const productTypes = [
+    {
+      id: 'pt-001',
+      name: 'Bike Title Loan',
+      codename: 'bike_title',
+      version: 2,
+      status: 'active',
+      section: 'collateral_bike',
+      sectionFields: 17,
+      docTypes: 3,
+      docReqs: 3,
+      conditionalRules: 1,
+      campaigns: ['Bike Title Q1 2026', 'Bike Title Promo Summer 2026'],
+      owner: 'Araya P.',
+      created: '2026-01-05',
+      updated: '2026-03-10',
+      icon: '🏍️',
+      iconBg: '#E8F0FE',
+      approvedBy: 'CPO, Risk Officer, CRO',
+      activatedAt: '2026-01-18',
+      notes: 'First product type to complete full approval workflow. Used as reference implementation.',
+    },
+    {
+      id: 'pt-002',
+      name: 'Car Title Loan',
+      codename: 'car_title',
+      version: 3,
+      status: 'active',
+      section: 'collateral_car',
+      sectionFields: 28,
+      docTypes: 5,
+      docReqs: 5,
+      conditionalRules: 2,
+      campaigns: ['Car Title BKK 2026', 'Car Title Regional Q1', 'Car Title Promo March'],
+      owner: 'Somwang K.',
+      created: '2025-09-12',
+      updated: '2026-02-28',
+      icon: '🚗',
+      iconBg: '#E6F4EA',
+      approvedBy: 'CPO, Risk Officer, CRO',
+      activatedAt: '2025-10-01',
+      notes: 'Highest-volume product type. v3 added conditional income verification rule.',
+    },
+    {
+      id: 'pt-003',
+      name: 'Pick-up Truck Title',
+      codename: 'pickup_title',
+      version: 1,
+      status: 'active',
+      section: 'collateral_car',
+      sectionFields: 28,
+      docTypes: 4,
+      docReqs: 4,
+      conditionalRules: 0,
+      campaigns: ['Pick-up Truck North 2026'],
+      owner: 'Somwang K.',
+      created: '2025-11-20',
+      updated: '2026-01-14',
+      icon: '🛻',
+      iconBg: '#E0F2F1',
+      approvedBy: 'CPO, Risk Officer, CRO',
+      activatedAt: '2025-12-05',
+      notes: 'Reuses collateral_car section. Zero conditional rules — all docs always required.',
+    },
+    {
+      id: 'pt-004',
+      name: 'Agricultural Tractor Loan',
+      codename: 'tractor_title',
+      version: 1,
+      status: 'pending_t1',
+      section: 'collateral_tractor',
+      sectionFields: 21,
+      docTypes: 4,
+      docReqs: 4,
+      conditionalRules: 1,
+      campaigns: [],
+      owner: 'Araya P.',
+      created: '2026-02-18',
+      updated: '2026-03-11',
+      icon: '🚜',
+      iconBg: '#FEF3E2',
+      approvedBy: '—',
+      activatedAt: null,
+      notes: 'Awaiting CPO and Risk Officer review. Submitted 2026-03-11.',
+    },
+    {
+      id: 'pt-005',
+      name: 'Land Title Loan (Urban)',
+      codename: 'land_title_urban',
+      version: 1,
+      status: 'pending_t2',
+      section: 'collateral_land',
+      sectionFields: 59,
+      docTypes: 8,
+      docReqs: 7,
+      conditionalRules: 3,
+      campaigns: [],
+      owner: 'Niran B.',
+      created: '2026-01-30',
+      updated: '2026-03-08',
+      icon: '🏘️',
+      iconBg: '#F3E5F5',
+      approvedBy: 'CPO, Risk Officer',
+      activatedAt: null,
+      notes: 'T1 approved 2026-03-08. Awaiting CRO final authorization.',
+    },
+    {
+      id: 'pt-006',
+      name: 'Bike Title Loan v2 (Draft)',
+      codename: 'bike_title',
+      version: 3,
+      status: 'draft',
+      section: 'collateral_bike',
+      sectionFields: 17,
+      docTypes: 4,
+      docReqs: 4,
+      conditionalRules: 2,
+      campaigns: [],
+      owner: 'Araya P.',
+      created: '2026-03-01',
+      updated: '2026-03-13',
+      icon: '🏍️',
+      iconBg: '#E8EAED',
+      approvedBy: '—',
+      activatedAt: null,
+      notes: 'New draft version adding DLT web page rule for RY-18 alongside existing RY-17 exclusion.',
+    },
+    {
+      id: 'pt-007',
+      name: 'Commercial Truck Loan',
+      codename: 'truck_commercial',
+      version: 1,
+      status: 'draft',
+      section: 'collateral_car',
+      sectionFields: 28,
+      docTypes: 2,
+      docReqs: 0,
+      conditionalRules: 0,
+      campaigns: [],
+      owner: 'Niran B.',
+      created: '2026-03-09',
+      updated: '2026-03-09',
+      icon: '🚛',
+      iconBg: '#E8EAED',
+      approvedBy: '—',
+      activatedAt: null,
+      notes: 'Early draft. Document requirements not yet declared.',
+    },
+    {
+      id: 'pt-008',
+      name: 'Motorbike w/ Sidecar',
+      codename: 'bike_sidecar',
+      version: 1,
+      status: 'returned',
+      section: 'collateral_bike',
+      sectionFields: 17,
+      docTypes: 3,
+      docReqs: 3,
+      conditionalRules: 1,
+      campaigns: [],
+      owner: 'Araya P.',
+      created: '2026-02-05',
+      updated: '2026-03-06',
+      icon: '🛵',
+      iconBg: '#FCE8E6',
+      approvedBy: '—',
+      activatedAt: null,
+      returnedReason: 'Risk Officer (Tanawat K.): "Insurance doc requirement must be unconditional for sidecars regardless of act type. Please revise the conditional rule."',
+      notes: 'Returned by Risk Officer. Needs conditional rule revision.',
+    },
+  ];
+
+  // ── STATE ────────────────────────────────────────────────────────────────
+  let currentFilter = 'all';
+  let currentView = 'table';
+  let currentData = [...productTypes];
+
+  // ── STATUS CONFIG ─────────────────────────────────────────────────────────
+  const statusConfig = {
+    active:     { label: 'Active',      class: 'badge-active',   dot: 'dot-active' },
+    pending_t1: { label: 'Pending T1',  class: 'badge-pending1', dot: 'dot-pending' },
+    pending_t2: { label: 'Pending T2',  class: 'badge-pending2', dot: 'dot-pending' },
+    draft:      { label: 'Draft',       class: 'badge-draft',    dot: 'dot-draft' },
+    returned:   { label: 'Returned',    class: 'badge-returned', dot: 'dot-returned' },
+    archived:   { label: 'Archived',    class: 'badge-archived', dot: 'dot-archived' },
+  };
+
+  function badgeHTML(status) {
+    const c = statusConfig[status] || {};
+    return `<span class="badge ${c.class}">${c.label || status}</span>`;
+  }
+
+  // ── RENDER TABLE ──────────────────────────────────────────────────────────
+  function renderTable(data) {
+    const tbody = document.getElementById('table-body');
+    const empty = document.getElementById('empty-state');
+    if (!data.length) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.map(pt => {
+      const s = statusConfig[pt.status] || {};
+      const campCount = pt.campaigns.length;
+      const actionEdit = pt.status === 'draft' || pt.status === 'returned'
+        ? `<button class="action-btn action-edit" onclick="openBuilder('${pt.id}')">Edit</button>`
+        : `<button class="action-btn action-edit" onclick="showToast('Read-only — create a new draft version')">View Config</button>`;
+      return `
+        <tr onclick="openDrawer('${pt.id}')" style="cursor:pointer;">
+          <td>
+            <div class="pt-name-cell">
+              <div class="pt-icon" style="background:${pt.iconBg};">${pt.icon}</div>
+              <div>
+                <div class="pt-name">${pt.name}</div>
+                <div class="pt-code">${pt.codename}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="badge badge-section">${pt.section}</span>
+            <div class="text-muted" style="margin-top:3px;">${pt.sectionFields} fields</div>
+          </td>
+          <td><span class="version-pill">v${pt.version}</span></td>
+          <td>${badgeHTML(pt.status)}</td>
+          <td><span style="font-size:13px;">${pt.docTypes}</span><span class="text-muted"> types</span></td>
+          <td>
+            ${campCount > 0
+              ? `<span class="campaign-count">🏷 ${campCount} campaign${campCount > 1 ? 's' : ''}</span>`
+              : '<span class="text-muted">—</span>'}
+          </td>
+          <td class="text-muted">${pt.updated}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div class="topnav-avatar" style="width:24px;height:24px;font-size:10px;background:${ownerColor(pt.owner)};">
+                ${pt.owner.split(' ').map(w=>w[0]).join('').slice(0,2)}
+              </div>
+              <span style="font-size:12px;">${pt.owner}</span>
+            </div>
+          </td>
+          <td onclick="event.stopPropagation()">
+            <div class="actions-cell">
+              <button class="action-btn action-view" onclick="openDrawer('${pt.id}')">Details</button>
+              ${actionEdit}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+    document.getElementById('results-text').textContent = `Showing ${data.length} product type${data.length !== 1 ? 's' : ''}`;
+  }
+
+  // ── RENDER CARDS ──────────────────────────────────────────────────────────
+  function renderCards(data) {
+    const grid = document.getElementById('card-grid');
+    const empty = document.getElementById('empty-state-cards');
+    if (!data.length) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    grid.innerHTML = data.map(pt => {
+      const campCount = pt.campaigns.length;
+      return `
+        <div class="pt-card" onclick="openDrawer('${pt.id}')">
+          <div class="pt-card-header">
+            <div class="pt-card-icon" style="background:${pt.iconBg};">${pt.icon}</div>
+            <div>
+              <div class="pt-card-title">${pt.name}</div>
+              <div class="pt-card-code">${pt.codename}</div>
+            </div>
+            <div style="margin-left:auto;">${badgeHTML(pt.status)}</div>
+          </div>
+          <div class="pt-card-divider"></div>
+          <div class="pt-card-body">
+            <div class="pt-card-meta">
+              <span class="meta-icon">📋</span>
+              <span class="badge badge-section">${pt.section}</span>
+              <span class="text-muted">${pt.sectionFields} fields</span>
+            </div>
+            <div class="pt-card-meta">
+              <span class="meta-icon">📄</span>
+              <span>${pt.docTypes} doc types · ${pt.docReqs} requirements</span>
+              ${pt.conditionalRules > 0 ? `<span class="text-muted">· ${pt.conditionalRules} conditional</span>` : ''}
+            </div>
+            <div class="pt-card-meta">
+              <span class="meta-icon">🏷</span>
+              ${campCount > 0
+                ? `<span class="campaign-count">${campCount} active campaign${campCount !== 1 ? 's' : ''}</span>`
+                : `<span class="text-muted">No active campaigns</span>`}
+              <span class="version-pill" style="margin-left:auto;">v${pt.version}</span>
+            </div>
+          </div>
+          <div class="pt-card-divider"></div>
+          <div class="pt-card-footer">
+            <span class="text-muted">Updated ${pt.updated} · ${pt.owner}</span>
+            <div class="pt-card-actions" onclick="event.stopPropagation()">
+              ${pt.status === 'draft' || pt.status === 'returned'
+                ? `<button class="btn btn-secondary btn-sm" onclick="openBuilder('${pt.id}')">Edit</button>`
+                : `<button class="btn btn-ghost btn-sm" onclick="openDrawer('${pt.id}')">View</button>`}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ── FILTERS ───────────────────────────────────────────────────────────────
+  function filterByStatus(status, el) {
+    currentFilter = status;
+    document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-filter'));
+    el.classList.add('active-filter');
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const q      = document.getElementById('search-input').value.toLowerCase();
+    const sec    = document.getElementById('filter-section').value;
+    const owner  = document.getElementById('filter-owner').value;
+
+    currentData = productTypes.filter(pt => {
+      const matchStatus = currentFilter === 'all' ||
+        (currentFilter === 'active'   && pt.status === 'active') ||
+        (currentFilter === 'pending'  && (pt.status === 'pending_t1' || pt.status === 'pending_t2')) ||
+        (currentFilter === 'draft'    && pt.status === 'draft') ||
+        (currentFilter === 'returned' && pt.status === 'returned');
+      const matchSearch = !q || pt.name.toLowerCase().includes(q) ||
+        pt.codename.toLowerCase().includes(q) || pt.section.toLowerCase().includes(q);
+      const matchSec   = sec === 'all'   || pt.section === sec;
+      const matchOwner = owner === 'all' || pt.owner === owner;
+      return matchStatus && matchSearch && matchSec && matchOwner;
+    });
+
+    renderTable(currentData);
+    renderCards(currentData);
+  }
+
+  // ── VIEW TOGGLE ───────────────────────────────────────────────────────────
+  function switchView(view) {
+    currentView = view;
+    document.getElementById('table-view').style.display = view === 'table' ? 'block' : 'none';
+    document.getElementById('cards-view').style.display = view === 'cards' ? 'block' : 'none';
+    document.getElementById('view-table').classList.toggle('active', view === 'table');
+    document.getElementById('view-cards').classList.toggle('active', view === 'cards');
+  }
+
+  // ── DRAWER ────────────────────────────────────────────────────────────────
+  function openDrawer(id) {
+    const pt = productTypes.find(p => p.id === id);
+    if (!pt) return;
+
+    document.getElementById('drawer-icon').textContent = pt.icon;
+    document.getElementById('drawer-title').textContent = pt.name;
+    document.getElementById('drawer-code').textContent = `${pt.codename} · v${pt.version}`;
+    document.getElementById('drawer-badge').innerHTML = badgeHTML(pt.status);
+
+    const campList = pt.campaigns.length
+      ? pt.campaigns.map(c => `
+          <div class="campaign-item">
+            <span>🏷</span>
+            <span class="ci-name">${c}</span>
+            <span class="badge badge-active" style="font-size:10px;">Active</span>
+          </div>`).join('')
+      : '<p class="text-muted" style="font-size:12px;">No active campaigns for this product type.</p>';
+
+    const returnedBlock = pt.status === 'returned' ? `
+      <div class="drawer-section">
+        <div class="drawer-section-title">🔴 Return Reason</div>
+        <div style="background:var(--red-light);border:1px solid var(--red);border-radius:6px;padding:12px 14px;font-size:12px;color:var(--red);">
+          ${pt.returnedReason}
+        </div>
+      </div>` : '';
+
+    document.getElementById('drawer-body').innerHTML = `
+      ${returnedBlock}
+      <div class="drawer-section">
+        <div class="drawer-section-title">Configuration</div>
+        <div class="drawer-row"><span class="drawer-row-key">Collateral Section</span><span class="drawer-row-val"><span class="badge badge-section">${pt.section}</span></span></div>
+        <div class="drawer-row"><span class="drawer-row-key">Section Fields</span><span class="drawer-row-val">${pt.sectionFields} fields</span></div>
+        <div class="drawer-row"><span class="drawer-row-key">Document Types</span><span class="drawer-row-val">${pt.docTypes} registered</span></div>
+        <div class="drawer-row"><span class="drawer-row-key">Requirements</span><span class="drawer-row-val">${pt.docReqs} declared</span></div>
+        <div class="drawer-row"><span class="drawer-row-key">Conditional Rules</span><span class="drawer-row-val">${pt.conditionalRules}</span></div>
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">Lifecycle</div>
+        <div class="drawer-row"><span class="drawer-row-key">Status</span><span class="drawer-row-val">${badgeHTML(pt.status)}</span></div>
+        <div class="drawer-row"><span class="drawer-row-key">Version</span><span class="drawer-row-val"><span class="version-pill">v${pt.version}</span></span></div>
+        <div class="drawer-row"><span class="drawer-row-key">Approved By</span><span class="drawer-row-val">${pt.approvedBy}</span></div>
+        <div class="drawer-row"><span class="drawer-row-key">Activated</span><span class="drawer-row-val">${pt.activatedAt || '—'}</span></div>
+        <div class="drawer-row"><span class="drawer-row-key">Owner</span><span class="drawer-row-val">${pt.owner}</span></div>
+        <div class="drawer-row"><span class="drawer-row-key">Created</span><span class="drawer-row-val">${pt.created}</span></div>
+        <div class="drawer-row"><span class="drawer-row-key">Last Updated</span><span class="drawer-row-val">${pt.updated}</span></div>
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">Active Campaigns (${pt.campaigns.length})</div>
+        <div class="campaign-list">${campList}</div>
+      </div>
+      ${pt.notes ? `
+      <div class="drawer-section">
+        <div class="drawer-section-title">Notes</div>
+        <p style="font-size:12px;color:var(--gray-700);line-height:1.6;">${pt.notes}</p>
+      </div>` : ''}
+    `;
+
+    const isEditable = pt.status === 'draft' || pt.status === 'returned';
+    const isActive   = pt.status === 'active';
+    document.getElementById('drawer-footer').innerHTML = `
+      ${isEditable
+        ? `<button class="btn btn-primary" onclick="openBuilder('${pt.id}')">✏️ Continue Editing</button>`
+        : `<button class="btn btn-secondary" onclick="openBuilder('${pt.id}')">👁 View Config</button>`}
+      ${isActive
+        ? `<button class="btn btn-secondary" onclick="showToast('New draft v${pt.version + 1} created');closeDrawer();">＋ Create New Version</button>`
+        : ''}
+      <button class="btn btn-secondary" style="margin-left:auto;" onclick="showToast('Copied!');closeDrawer();">
+        📋 Copy Codename
+      </button>
+    `;
+
+    document.getElementById('drawer-overlay').classList.add('open');
+    document.getElementById('detail-drawer').classList.add('open');
+  }
+
+  function closeDrawer() {
+    document.getElementById('drawer-overlay').classList.remove('open');
+    document.getElementById('detail-drawer').classList.remove('open');
+  }
+
+  function openBuilder(id) {
+    window.location.href = 'product-type-builder.html';
+  }
+
+  // ── SORT ──────────────────────────────────────────────────────────────────
+  let sortKey = 'updated';
+  let sortDir = -1;
+  function sortTable(key) {
+    if (sortKey === key) sortDir *= -1;
+    else { sortKey = key; sortDir = -1; }
+    currentData.sort((a, b) => {
+      const va = a[key] || '';
+      const vb = b[key] || '';
+      return va < vb ? sortDir : va > vb ? -sortDir : 0;
+    });
+    renderTable(currentData);
+  }
+
+  // ── HELPERS ───────────────────────────────────────────────────────────────
+  function ownerColor(name) {
+    const map = { 'Araya P.': '#1A73E8', 'Somwang K.': '#1E8E3E', 'Niran B.': '#7B1FA2' };
+    return map[name] || '#9AA0A6';
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── INIT ──────────────────────────────────────────────────────────────────
+  applyFilters();
+</script>
+</body>
+</html>
