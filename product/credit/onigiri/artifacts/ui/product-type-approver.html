@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Type Approval — Onigiri</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:       #1A73E8;
+      --blue-light: #E8F0FE;
+      --blue-dark:  #1558B0;
+      --green:      #1E8E3E;
+      --green-light:#E6F4EA;
+      --red:        #C5221F;
+      --red-light:  #FCE8E6;
+      --amber:      #E37400;
+      --amber-light:#FEF3E2;
+      --purple:     #7B1FA2;
+      --purple-light:#F3E5F5;
+      --teal:       #00796B;
+      --teal-light: #E0F2F1;
+      --orange:     #E65100;
+      --gray-50:    #F8F9FA;
+      --gray-100:   #F1F3F4;
+      --gray-200:   #E8EAED;
+      --gray-300:   #DADCE0;
+      --gray-400:   #BDC1C6;
+      --gray-500:   #9AA0A6;
+      --gray-600:   #80868B;
+      --gray-700:   #5F6368;
+      --gray-800:   #3C4043;
+      --gray-900:   #202124;
+      --white:      #FFFFFF;
+      --radius:     8px;
+      --shadow:     0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md:  0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP NAV ── */
+    .topnav {
+      height: 56px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    .topnav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--gray-900);
+      text-decoration: none;
+    }
+    .topnav-logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--blue);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .topnav-divider { width: 1px; height: 24px; background: var(--gray-200); }
+    .topnav-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--gray-600);
+      font-size: 13px;
+    }
+    .topnav-breadcrumb a { color: var(--blue); text-decoration: none; }
+    .topnav-breadcrumb span { color: var(--gray-400); }
+    .topnav-breadcrumb strong { color: var(--gray-900); font-weight: 500; }
+    .topnav-spacer { flex: 1; }
+    .topnav-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+    .topnav-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--purple);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .role-selector {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 12px;
+      background: var(--white);
+      cursor: pointer;
+    }
+    .role-selector select {
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--gray-800);
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* ── BODY LAYOUT ── */
+    .body-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 300px;
+      background: var(--white);
+      border-right: 1px solid var(--gray-200);
+      flex-shrink: 0;
+      position: sticky;
+      top: 56px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-header {
+      padding: 20px 18px 14px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .sidebar-header h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+    .sidebar-header p {
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+    .sidebar-filters {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      gap: 6px;
+    }
+    .filter-chip {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--gray-300);
+      background: var(--white);
+      color: var(--gray-600);
+      transition: all 0.15s;
+    }
+    .filter-chip.active {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+    }
+    .filter-chip:hover:not(.active) {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+    .queue-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+    .queue-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 14px 18px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--gray-100);
+      transition: background 0.15s;
+    }
+    .queue-item:hover { background: var(--gray-50); }
+    .queue-item.selected { background: var(--blue-light); border-left: 3px solid var(--blue); }
+    .queue-item-row1 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .queue-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-900);
+      flex: 1;
+    }
+    .queue-item-row2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--gray-500);
+    }
+    .queue-item-meta { display: flex; gap: 12px; }
+    .queue-empty {
+      padding: 40px 18px;
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 13px;
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .page-body {
+      flex: 1;
+      padding: 28px 36px;
+      max-width: 1000px;
+    }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-draft     { background: var(--gray-100); color: var(--gray-700); }
+    .badge-pending   { background: var(--amber-light); color: var(--amber); }
+    .badge-pending-t1 { background: var(--amber-light); color: var(--amber); }
+    .badge-pending-t2 { background: var(--purple-light); color: var(--purple); }
+    .badge-active    { background: var(--green-light); color: var(--green); }
+    .badge-returned  { background: var(--red-light); color: var(--red); }
+    .badge-archived  { background: var(--gray-100); color: var(--gray-500); }
+    .badge-syncing   { background: var(--teal-light); color: var(--teal); }
+    .badge-sync-fail { background: var(--red-light); color: var(--red); }
+    .badge-system    { background: var(--teal-light); color: var(--teal); }
+    .badge-version   { background: var(--purple-light); color: var(--purple); }
+    .badge-fields    { background: var(--blue-light); color: var(--blue); }
+    .badge-cond      { background: var(--amber-light); color: var(--amber); }
+    .badge-role      { background: var(--blue-light); color: var(--blue); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      font-family: inherit;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--blue); color: white; }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-success { background: var(--green); color: white; }
+    .btn-success:hover { background: #157a32; }
+    .btn-danger { background: var(--white); color: var(--red); border: 1px solid var(--red); }
+    .btn-danger:hover { background: var(--red-light); }
+    .btn-secondary { background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-300); }
+    .btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-400); }
+    .btn-ghost { background: transparent; color: var(--blue); padding: 6px 10px; }
+    .btn-ghost:hover { background: var(--blue-light); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-lg { padding: 11px 22px; font-size: 15px; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── APPROVAL HEADER ── */
+    .approval-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .approval-header-info { flex: 1; }
+    .approval-header-info h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .approval-header-info .meta {
+      font-size: 13px;
+      color: var(--gray-600);
+      display: flex;
+      gap: 16px;
+      margin-top: 6px;
+    }
+    .approval-header-info .meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── APPROVAL PIPELINE ── */
+    .pipeline {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .pipeline-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .pipeline-steps {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+    }
+    .pipeline-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+    }
+    .pipeline-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: calc(50% + 20px);
+      right: calc(-50% + 20px);
+      height: 2px;
+      background: var(--gray-200);
+    }
+    .pipeline-step.done:not(:last-child)::after { background: var(--green); }
+    .pipeline-step.current:not(:last-child)::after { background: var(--gray-200); }
+
+    .pipeline-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .pipeline-step.waiting .pipeline-icon {
+      background: var(--gray-100);
+      color: var(--gray-400);
+      border: 2px solid var(--gray-300);
+    }
+    .pipeline-step.current .pipeline-icon {
+      background: var(--amber-light);
+      color: var(--amber);
+      border: 2px solid var(--amber);
+      animation: pulse-ring 2s infinite;
+    }
+    .pipeline-step.done .pipeline-icon {
+      background: var(--green);
+      color: white;
+      border: 2px solid var(--green);
+    }
+    .pipeline-step.rejected .pipeline-icon {
+      background: var(--red);
+      color: white;
+      border: 2px solid var(--red);
+    }
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(227,116,0,0.3); }
+      70% { box-shadow: 0 0 0 8px rgba(227,116,0,0); }
+      100% { box-shadow: 0 0 0 0 rgba(227,116,0,0); }
+    }
+    .pipeline-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+    .pipeline-sublabel {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+    .pipeline-step.done .pipeline-label { color: var(--green); }
+    .pipeline-step.rejected .pipeline-label { color: var(--red); }
+
+    /* ── TIER CARDS ── */
+    .tier-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .tier-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    .tier-card.highlight {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 2px rgba(227,116,0,0.15);
+    }
+    .tier-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .tier-card-header h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-900);
+      flex: 1;
+    }
+    .tier-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .tier-status-dot.pending { background: var(--amber); }
+    .tier-status-dot.approved { background: var(--green); }
+    .tier-status-dot.rejected { background: var(--red); }
+    .tier-status-dot.waiting { background: var(--gray-400); }
+
+    .tier-card .checklist { list-style: none; margin-bottom: 14px; }
+    .tier-card .checklist li {
+      font-size: 12px;
+      color: var(--gray-700);
+      padding: 4px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .tier-card .checklist li::before {
+      content: '';
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid var(--gray-300);
+      border-radius: 3px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .tier-card .checklist li.checked::before {
+      background: var(--green);
+      border-color: var(--green);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 7l3 3 5-5' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+    .tier-card .tier-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .tier-card .tier-result {
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    .tier-result.approved { background: var(--green-light); color: var(--green); }
+    .tier-result.rejected { background: var(--red-light); color: var(--red); }
+    .tier-result .actor { font-weight: 600; }
+    .tier-result .ts { color: var(--gray-500); font-size: 11px; margin-left: 8px; }
+
+    /* ── REVIEW SECTION: CONFIG READ-ONLY ── */
+    .review-section {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .review-section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .review-section-header:hover { background: var(--gray-50); }
+    .review-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-900);
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .review-section-summary {
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+    .review-section-chevron {
+      font-size: 16px;
+      color: var(--gray-400);
+      transition: transform 0.2s;
+    }
+    .review-section.expanded .review-section-chevron { transform: rotate(180deg); }
+    .review-section-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--gray-200);
+    }
+    .review-section.expanded .review-section-body { display: block; }
+
+    /* ── DATA TABLE ── */
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .data-table th {
+      background: var(--gray-50);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .data-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13px;
+      color: var(--gray-800);
+      vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table .mono { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 12px; color: var(--gray-600); }
+
+    /* ── FIELD GRID (read-only preview) ── */
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .field-chip {
+      padding: 6px 10px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 5px;
+      font-size: 12px;
+      color: var(--gray-600);
+    }
+
+    /* ── UB DETAIL ── */
+    .ub-detail {
+      margin-top: 6px;
+      margin-left: 20px;
+      background: var(--gray-50);
+      border-radius: 6px;
+      padding: 10px 14px;
+    }
+    .ub-detail-row {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--gray-700);
+      padding: 3px 0;
+    }
+    .ub-detail-row .label {
+      font-weight: 500;
+      color: var(--gray-500);
+      min-width: 80px;
+    }
+
+    /* ── FEEDBACK MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      width: 480px;
+      max-width: 90vw;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gray-900);
+      flex: 1;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: var(--gray-500);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+    }
+    .modal-close:hover { background: var(--gray-100); }
+    .modal-body { padding: 20px 24px; }
+    .modal-body textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 10px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+      color: var(--gray-900);
+    }
+    .modal-body textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+    }
+    .modal-body label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    .modal-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* ── AUDIT LOG ── */
+    .audit-timeline { margin-top: 12px; }
+    .audit-entry {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      position: relative;
+    }
+    .audit-entry:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 13px;
+      top: 36px;
+      bottom: -4px;
+      width: 2px;
+      background: var(--gray-200);
+    }
+    .audit-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .audit-dot.submit { background: var(--blue-light); color: var(--blue); }
+    .audit-dot.approve { background: var(--green-light); color: var(--green); }
+    .audit-dot.reject { background: var(--red-light); color: var(--red); }
+    .audit-dot.system { background: var(--teal-light); color: var(--teal); }
+    .audit-dot.create { background: var(--gray-100); color: var(--gray-600); }
+
+    .audit-info { flex: 1; }
+    .audit-action {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+    .audit-action .actor { font-weight: 600; }
+    .audit-meta {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+    .audit-feedback {
+      margin-top: 6px;
+      padding: 8px 12px;
+      background: var(--gray-50);
+      border-radius: 6px;
+      border-left: 3px solid var(--gray-300);
+      font-size: 12px;
+      color: var(--gray-700);
+      font-style: italic;
+    }
+
+    /* ── SUMMARY STATS ── */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      flex: 1;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-top: 2px;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-detail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 400px;
+      color: var(--gray-400);
+    }
+    .empty-detail-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .empty-detail p {
+      font-size: 14px;
+      color: var(--gray-500);
+    }
+
+    /* ── SYSTEM EVIDENCE INFO ── */
+    .system-ev-card {
+      background: var(--teal-light);
+      border: 1px solid rgba(0,121,107,0.2);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-top: 16px;
+    }
+    .system-ev-card h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--teal);
+      margin-bottom: 8px;
+    }
+    .system-ev-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      padding: 12px 24px;
+      background: var(--gray-900);
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 300;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP NAV ── -->
+<div class="topnav">
+  <a class="topnav-logo" href="index.html">
+    <div class="topnav-logo-icon">O</div>
+    Onigiri
+  </a>
+  <div class="topnav-divider"></div>
+  <div class="topnav-breadcrumb">
+    <a href="index.html">Product Types</a>
+    <span>/</span>
+    <strong>Approval Queue</strong>
+  </div>
+  <div class="topnav-spacer"></div>
+  <div class="role-selector">
+    <span>Role:</span>
+    <select id="role-select" onchange="switchRole(this.value)">
+      <option value="cpo">CPO (Tier 1)</option>
+      <option value="risk_officer">Risk Officer (Tier 1)</option>
+      <option value="cro">CRO (Tier 2)</option>
+    </select>
+  </div>
+  <div class="topnav-user">
+    <div class="topnav-avatar" id="user-avatar">CP</div>
+    <span id="user-name">Somchai P.</span>
+  </div>
+</div>
+
+<!-- ── BODY ── -->
+<div class="body-layout">
+
+  <!-- ── SIDEBAR: Queue ── -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Approval Queue</h2>
+      <p id="queue-count">3 items pending your review</p>
+    </div>
+    <div class="sidebar-filters">
+      <div class="filter-chip active" onclick="setFilter('all')">All</div>
+      <div class="filter-chip" onclick="setFilter('PENDING_T1')">Tier 1</div>
+      <div class="filter-chip" onclick="setFilter('PENDING_T2')">Tier 2</div>
+      <div class="filter-chip" onclick="setFilter('RETURNED')">Returned</div>
+    </div>
+    <div class="queue-list" id="queue-list">
+      <!-- rendered by JS -->
+    </div>
+  </div>
+
+  <!-- ── MAIN: Detail ── -->
+  <div class="main-content">
+    <div class="page-body" id="detail-area">
+      <div class="empty-detail" id="empty-state">
+        <div class="empty-detail-icon">&#128203;</div>
+        <p>Select a product type from the queue to review</p>
+      </div>
+      <div id="detail-content" style="display:none;"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── REJECT MODAL ── -->
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="reject-modal-title">Return for Revision</h3>
+      <button class="modal-close" onclick="closeRejectModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <label for="reject-reason">Reason for return <span style="color:var(--red)">*</span></label>
+      <textarea id="reject-reason" placeholder="Describe what needs to be revised..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeRejectModal()">Cancel</button>
+      <button class="btn btn-danger" id="reject-confirm-btn" onclick="confirmReject()">Return to Submitter</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────
+
+const DOC_TYPE_REGISTRY = [
+  { key: 'copy_of_id_card', name: 'Copy of ID Card', category: 'identity' },
+  { key: 'house_registration', name: 'House Registration', category: 'identity' },
+  { key: 'passport_copy', name: 'Passport Copy', category: 'identity' },
+  { key: 'salary_slip', name: 'Salary Slip', category: 'income' },
+  { key: 'bank_statement', name: 'Bank Statement', category: 'income' },
+  { key: 'vehicle_registration_book', name: 'Vehicle Registration Book', category: 'vehicle' },
+  { key: 'insurance_policy', name: 'Insurance Policy', category: 'insurance' },
+  { key: 'dlt_web_page', name: 'DLT Registration Web Page', category: 'vehicle' },
+  { key: 'company_certificate', name: 'Company Certificate', category: 'other' },
+  { key: 'income_certificate', name: 'Income Certificate', category: 'income' },
+];
+
+const SYSTEM_EVIDENCE = [
+  { name: 'Contract', docTypeKey: 'contract', boxes: [{ name: 'Contract Document', order: 1, allowMultiple: false, min: 1, max: 1 }] },
+  { name: 'PDPA Consent Form', docTypeKey: 'pdpa_consent', boxes: [{ name: 'PDPA Form', order: 1, allowMultiple: false, min: 1, max: 1 }] },
+  { name: 'Insurance Application Form', docTypeKey: 'insurance_application', boxes: [{ name: 'Insurance Form', order: 1, allowMultiple: false, min: 1, max: 1 }] },
+];
+
+// Simulated product types awaiting approval
+const APPROVAL_QUEUE = [
+  {
+    id: 'pt-001',
+    name: 'Bike Title',
+    codename: 'bike_title',
+    version: 3,
+    status: 'PENDING_T1',
+    submitter: { name: 'Nattaporn K.', initials: 'NK', role: 'Product Owner' },
+    submittedAt: '2026-03-17T14:30:00',
+    description: 'Collateral-backed loan product for motorbike title transfers. Includes identity, address, occupation, and collateral sections.',
+    t1a: { status: 'pending', actor: null, timestamp: null, feedback: null },
+    t1b: { status: 'pending', actor: null, timestamp: null, feedback: null },
+    t2:  { status: 'waiting', actor: null, timestamp: null, feedback: null },
+    matcha: { status: 'waiting' },
+    sections: [
+      {
+        name: 'Identity', variant: 'Thai National', enabled: true,
+        fields: ['prefix_th','first_name_th','last_name_th','prefix_en','first_name_en','last_name_en','id_card_number','date_of_birth','gender','marital_status','nationality','phone_number'],
+        evidence: [
+          {
+            name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e1a\u0e31\u0e15\u0e23 \u0e1b\u0e0a\u0e0a.\u0e1c\u0e39\u0e49\u0e01\u0e39\u0e49',
+            nameEn: 'Customer ID Card Copy',
+            docTypeKey: 'copy_of_id_card',
+            condition: null,
+            uploadBoxes: [
+              { name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e2b\u0e19\u0e49\u0e32-\u0e2b\u0e25\u0e31\u0e07', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '' }
+            ]
+          },
+          {
+            name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e1a\u0e31\u0e15\u0e23 \u0e1b\u0e0a\u0e0a.\u0e1c\u0e39\u0e49\u0e04\u0e49\u0e33\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19',
+            nameEn: 'Guarantor ID Card Copy',
+            docTypeKey: 'copy_of_id_card',
+            condition: null,
+            uploadBoxes: [
+              { name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e2b\u0e19\u0e49\u0e32-\u0e2b\u0e25\u0e31\u0e07', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '' }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Address', variant: 'Standard', enabled: true,
+        fields: ['address_type','house_number','moo','soi','road','sub_district','district','province','postal_code','country','years_at_address','ownership_status','phone_home','phone_mobile','email'],
+        evidence: []
+      },
+      {
+        name: 'Occupation', variant: 'Employed', enabled: true,
+        fields: ['occupation_type','company_name','company_address','position','department','years_employed','monthly_salary','employer_phone','business_type','employee_id'],
+        evidence: []
+      },
+      {
+        name: 'Collateral', variant: 'Bike', enabled: true, required: true,
+        fields: ['bike_brand','bike_model','bike_year','bike_color','bike_cc','bike_chassis_number','bike_engine_number','bike_registration_number','bike_province','bike_act_type','bike_act_number','bike_owner_name','bike_appraised_value','bike_outstanding_finance','bike_condition','bike_mileage','bike_insurance_expiry'],
+        evidence: [
+          {
+            name: '\u0e2a\u0e21\u0e38\u0e14\u0e17\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e19\u0e23\u0e16\u0e08\u0e31\u0e01\u0e23\u0e22\u0e32\u0e19\u0e22\u0e19\u0e15\u0e4c',
+            nameEn: 'Motorbike Registration Book',
+            docTypeKey: 'vehicle_registration_book',
+            condition: null,
+            uploadBoxes: [
+              { name: '\u0e23\u0e39\u0e1b\u0e16\u0e48\u0e32\u0e22\u0e2b\u0e25\u0e31\u0e01\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e01\u0e31\u0e1a\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '\u0e16\u0e48\u0e32\u0e22\u0e23\u0e39\u0e1b\u0e2b\u0e25\u0e31\u0e01\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e04\u0e39\u0e48\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32' },
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e1b\u0e01', order: 2, allowMultiple: false, min: 1, max: 1, tooltip: '' },
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e01\u0e23\u0e23\u0e21\u0e2a\u0e34\u0e17\u0e18\u0e34\u0e4c\u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14', order: 3, allowMultiple: false, min: 1, max: 1, tooltip: '' },
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e01\u0e23\u0e23\u0e21\u0e2a\u0e34\u0e17\u0e18\u0e34\u0e4c\u0e01\u0e48\u0e2d\u0e19\u0e2b\u0e19\u0e49\u0e32', order: 4, allowMultiple: false, min: 1, max: 1, tooltip: '' },
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e20\u0e32\u0e29\u0e35', order: 5, allowMultiple: false, min: 1, max: 1, tooltip: '' },
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 \u0e08\u0e19\u0e17.18 \u0e40\u0e1b\u0e47\u0e19\u0e15\u0e49\u0e19\u0e44\u0e1b', order: 6, allowMultiple: true, min: 1, max: 5, tooltip: '' }
+            ]
+          },
+          {
+            name: '\u0e01\u0e23\u0e21\u0e18\u0e23\u0e23\u0e21\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e20\u0e31\u0e22',
+            nameEn: 'Insurance Policy',
+            docTypeKey: 'insurance_policy',
+            condition: null,
+            uploadBoxes: [
+              { name: '\u0e01\u0e23\u0e21\u0e18\u0e23\u0e23\u0e21\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e20\u0e31\u0e22', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '' }
+            ]
+          },
+          {
+            name: '\u0e43\u0e1a\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e08\u0e32\u0e01 DLT',
+            nameEn: 'DLT Registration Web Page',
+            docTypeKey: 'dlt_web_page',
+            condition: { field: 'bike_act_type', operator: '!=', value: 'RY-17', action: 'Include' },
+            uploadBoxes: [
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e40\u0e27\u0e47\u0e1a DLT', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '' }
+            ]
+          }
+        ]
+      }
+    ],
+    auditLog: [
+      { action: 'created', actor: 'Nattaporn K.', role: 'Product Owner', timestamp: '2026-03-15T09:00:00', detail: 'Product type created as DRAFT' },
+      { action: 'edited', actor: 'Nattaporn K.', role: 'Product Owner', timestamp: '2026-03-16T11:30:00', detail: 'Added collateral section evidence (6 upload boxes for registration book)' },
+      { action: 'edited', actor: 'Nattaporn K.', role: 'Product Owner', timestamp: '2026-03-17T10:15:00', detail: 'Added DLT conditional evidence (bike_act_type != RY-17)' },
+      { action: 'submitted', actor: 'Nattaporn K.', role: 'Product Owner', timestamp: '2026-03-17T14:30:00', detail: 'Submitted for approval (version 3)' },
+    ]
+  },
+  {
+    id: 'pt-002',
+    name: 'Car Title',
+    codename: 'car_title',
+    version: 1,
+    status: 'PENDING_T1',
+    submitter: { name: 'Wipada S.', initials: 'WS', role: 'Product Owner' },
+    submittedAt: '2026-03-18T09:15:00',
+    description: 'Collateral-backed loan product for car title transfers. Standard 4-section template.',
+    t1a: { status: 'approved', actor: 'Somchai P.', timestamp: '2026-03-18T10:30:00', feedback: null },
+    t1b: { status: 'pending', actor: null, timestamp: null, feedback: null },
+    t2:  { status: 'waiting', actor: null, timestamp: null, feedback: null },
+    matcha: { status: 'waiting' },
+    sections: [
+      {
+        name: 'Identity', variant: 'Thai National', enabled: true,
+        fields: ['prefix_th','first_name_th','last_name_th','prefix_en','first_name_en','last_name_en','id_card_number','date_of_birth','gender','marital_status','nationality','phone_number'],
+        evidence: [
+          {
+            name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e1a\u0e31\u0e15\u0e23 \u0e1b\u0e0a\u0e0a.\u0e1c\u0e39\u0e49\u0e01\u0e39\u0e49',
+            nameEn: 'Customer ID Card Copy',
+            docTypeKey: 'copy_of_id_card',
+            condition: null,
+            uploadBoxes: [
+              { name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e2b\u0e19\u0e49\u0e32-\u0e2b\u0e25\u0e31\u0e07', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '' }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Collateral', variant: 'Car', enabled: true, required: true,
+        fields: ['car_brand','car_model','car_year','car_color','car_cc','car_chassis_number','car_engine_number','car_registration_number','car_province','car_type','car_owner_name','car_appraised_value','car_outstanding_finance','car_condition','car_mileage'],
+        evidence: [
+          {
+            name: '\u0e2a\u0e21\u0e38\u0e14\u0e17\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e19\u0e23\u0e16\u0e22\u0e19\u0e15\u0e4c',
+            nameEn: 'Car Registration Book',
+            docTypeKey: 'vehicle_registration_book',
+            condition: null,
+            uploadBoxes: [
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e1b\u0e01', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '' },
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e01\u0e23\u0e23\u0e21\u0e2a\u0e34\u0e17\u0e18\u0e34\u0e4c\u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14', order: 2, allowMultiple: false, min: 1, max: 1, tooltip: '' },
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e20\u0e32\u0e29\u0e35', order: 3, allowMultiple: false, min: 1, max: 1, tooltip: '' },
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01', order: 4, allowMultiple: true, min: 1, max: 5, tooltip: '' }
+            ]
+          },
+          {
+            name: '\u0e01\u0e23\u0e21\u0e18\u0e23\u0e23\u0e21\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e20\u0e31\u0e22',
+            nameEn: 'Insurance Policy',
+            docTypeKey: 'insurance_policy',
+            condition: null,
+            uploadBoxes: [
+              { name: '\u0e01\u0e23\u0e21\u0e18\u0e23\u0e23\u0e21\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e20\u0e31\u0e22', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '' }
+            ]
+          }
+        ]
+      }
+    ],
+    auditLog: [
+      { action: 'created', actor: 'Wipada S.', role: 'Product Owner', timestamp: '2026-03-17T16:00:00', detail: 'Product type created as DRAFT' },
+      { action: 'submitted', actor: 'Wipada S.', role: 'Product Owner', timestamp: '2026-03-18T09:15:00', detail: 'Submitted for approval (version 1)' },
+      { action: 'approved_t1a', actor: 'Somchai P.', role: 'CPO', timestamp: '2026-03-18T10:30:00', detail: 'CPO approved — section structure and document declarations verified' },
+    ]
+  },
+  {
+    id: 'pt-003',
+    name: 'Tractor Title',
+    codename: 'tractor_title',
+    version: 2,
+    status: 'PENDING_T2',
+    submitter: { name: 'Nattaporn K.', initials: 'NK', role: 'Product Owner' },
+    submittedAt: '2026-03-16T11:00:00',
+    description: 'Agricultural equipment collateral product. Heavy machinery variant with extended field set.',
+    t1a: { status: 'approved', actor: 'Somchai P.', timestamp: '2026-03-16T14:00:00', feedback: null },
+    t1b: { status: 'approved', actor: 'Arun W.', timestamp: '2026-03-16T15:30:00', feedback: null },
+    t2:  { status: 'pending', actor: null, timestamp: null, feedback: null },
+    matcha: { status: 'waiting' },
+    sections: [
+      {
+        name: 'Identity', variant: 'Thai National', enabled: true,
+        fields: ['prefix_th','first_name_th','last_name_th','prefix_en','first_name_en','last_name_en','id_card_number','date_of_birth','gender','marital_status','nationality','phone_number'],
+        evidence: [
+          {
+            name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e1a\u0e31\u0e15\u0e23 \u0e1b\u0e0a\u0e0a.\u0e1c\u0e39\u0e49\u0e01\u0e39\u0e49',
+            nameEn: 'Customer ID Card Copy',
+            docTypeKey: 'copy_of_id_card',
+            condition: null,
+            uploadBoxes: [
+              { name: '\u0e2a\u0e33\u0e40\u0e19\u0e32\u0e2b\u0e19\u0e49\u0e32-\u0e2b\u0e25\u0e31\u0e07', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '' }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Collateral', variant: 'Tractor', enabled: true, required: true,
+        fields: ['tractor_brand','tractor_model','tractor_year','tractor_engine_number','tractor_chassis_number','tractor_registration','tractor_province','tractor_horsepower','tractor_type','tractor_appraised_value','tractor_owner_name','tractor_condition','tractor_hours','tractor_warranty','tractor_attachments','tractor_financing_status','tractor_insurance_expiry','tractor_dealer','tractor_purchase_date','tractor_color','tractor_weight'],
+        evidence: [
+          {
+            name: '\u0e2a\u0e21\u0e38\u0e14\u0e17\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e19\u0e23\u0e16\u0e41\u0e17\u0e23\u0e01\u0e40\u0e15\u0e2d\u0e23\u0e4c',
+            nameEn: 'Tractor Registration Book',
+            docTypeKey: 'vehicle_registration_book',
+            condition: null,
+            uploadBoxes: [
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e1b\u0e01', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '' },
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e01\u0e23\u0e23\u0e21\u0e2a\u0e34\u0e17\u0e18\u0e34\u0e4c', order: 2, allowMultiple: false, min: 1, max: 1, tooltip: '' },
+              { name: '\u0e2b\u0e19\u0e49\u0e32\u0e20\u0e32\u0e29\u0e35', order: 3, allowMultiple: false, min: 1, max: 1, tooltip: '' }
+            ]
+          },
+          {
+            name: '\u0e01\u0e23\u0e21\u0e18\u0e23\u0e23\u0e21\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e20\u0e31\u0e22',
+            nameEn: 'Insurance Policy',
+            docTypeKey: 'insurance_policy',
+            condition: null,
+            uploadBoxes: [
+              { name: '\u0e01\u0e23\u0e21\u0e18\u0e23\u0e23\u0e21\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e20\u0e31\u0e22', order: 1, allowMultiple: false, min: 1, max: 1, tooltip: '' }
+            ]
+          }
+        ]
+      }
+    ],
+    auditLog: [
+      { action: 'created', actor: 'Nattaporn K.', role: 'Product Owner', timestamp: '2026-03-14T10:00:00', detail: 'Product type created as DRAFT' },
+      { action: 'submitted', actor: 'Nattaporn K.', role: 'Product Owner', timestamp: '2026-03-16T11:00:00', detail: 'Submitted for approval (version 2)' },
+      { action: 'approved_t1a', actor: 'Somchai P.', role: 'CPO', timestamp: '2026-03-16T14:00:00', detail: 'CPO approved — section + document structure reviewed' },
+      { action: 'approved_t1b', actor: 'Arun W.', role: 'Risk Officer', timestamp: '2026-03-16T15:30:00', detail: 'Risk Officer approved — document-to-risk alignment confirmed' },
+    ]
+  }
+];
+
+// ── STATE ──
+let currentRole = 'cpo';
+let currentFilter = 'all';
+let selectedPtId = null;
+let rejectTarget = null; // { ptId, tier }
+
+const ROLE_CONFIG = {
+  cpo:           { label: 'CPO', name: 'Somchai P.', initials: 'CP', tier: 'T1', field: 't1a' },
+  risk_officer:  { label: 'Risk Officer', name: 'Arun W.', initials: 'AW', tier: 'T1', field: 't1b' },
+  cro:           { label: 'CRO', name: 'Piyapong C.', initials: 'PC', tier: 'T2', field: 't2' },
+};
+
+// ── HELPERS ──
+function docTypeName(key) {
+  const dt = DOC_TYPE_REGISTRY.find(d => d.key === key);
+  return dt ? dt.name : key;
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatDateTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+         d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+function statusBadge(status) {
+  const map = {
+    'PENDING_T1': '<span class="badge badge-pending-t1">Pending T1</span>',
+    'PENDING_T2': '<span class="badge badge-pending-t2">Pending T2</span>',
+    'ACTIVE':     '<span class="badge badge-active">Active</span>',
+    'RETURNED':   '<span class="badge badge-returned">Returned</span>',
+    'SYNCING':    '<span class="badge badge-syncing">Syncing</span>',
+    'SYNC_FAILED':'<span class="badge badge-sync-fail">Sync Failed</span>',
+  };
+  return map[status] || `<span class="badge badge-draft">${status}</span>`;
+}
+
+function tierStatusBadge(status) {
+  const map = {
+    'pending':  '<span class="badge badge-pending">Pending</span>',
+    'approved': '<span class="badge badge-active">Approved</span>',
+    'rejected': '<span class="badge badge-returned">Rejected</span>',
+    'waiting':  '<span class="badge badge-draft">Waiting</span>',
+  };
+  return map[status] || status;
+}
+
+function countAllEvidence(pt) {
+  let count = 0;
+  pt.sections.forEach(s => { count += s.evidence.length; });
+  return count + SYSTEM_EVIDENCE.length;
+}
+
+function countAllUploadBoxes(pt) {
+  let count = 0;
+  pt.sections.forEach(s => {
+    s.evidence.forEach(ev => { count += ev.uploadBoxes.length; });
+  });
+  SYSTEM_EVIDENCE.forEach(se => { count += se.boxes.length; });
+  return count;
+}
+
+function countAllFields(pt) {
+  let count = 0;
+  pt.sections.forEach(s => { if (s.enabled) count += s.fields.length; });
+  return count;
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── ROLE SWITCHING ──
+function switchRole(role) {
+  currentRole = role;
+  const rc = ROLE_CONFIG[role];
+  document.getElementById('user-avatar').textContent = rc.initials;
+  document.getElementById('user-name').textContent = rc.name;
+  document.getElementById('user-avatar').style.background =
+    role === 'cpo' ? 'var(--purple)' : role === 'risk_officer' ? 'var(--teal)' : 'var(--orange)';
+  renderQueue();
+  if (selectedPtId) renderDetail(selectedPtId);
+}
+
+// ── FILTER ──
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  renderQueue();
+}
+
+// ── QUEUE RENDERING ──
+function renderQueue() {
+  const list = document.getElementById('queue-list');
+  const rc = ROLE_CONFIG[currentRole];
+
+  let items = APPROVAL_QUEUE.filter(pt => {
+    if (currentFilter !== 'all' && pt.status !== currentFilter) return false;
+    return true;
+  });
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="queue-empty">No items match this filter</div>';
+    document.getElementById('queue-count').textContent = '0 items';
+    return;
+  }
+
+  // Count actionable items for current role
+  const actionable = items.filter(pt => canAct(pt)).length;
+  document.getElementById('queue-count').textContent =
+    `${items.length} item${items.length !== 1 ? 's' : ''} (${actionable} actionable)`;
+
+  list.innerHTML = items.map(pt => {
+    const isSelected = pt.id === selectedPtId;
+    const canAction = canAct(pt);
+    return `
+      <div class="queue-item ${isSelected ? 'selected' : ''}" onclick="selectItem('${pt.id}')">
+        <div class="queue-item-row1">
+          <span class="queue-item-name">${pt.name}</span>
+          ${statusBadge(pt.status)}
+        </div>
+        <div class="queue-item-row2">
+          <span>v${pt.version}</span>
+          <span>by ${pt.submitter.name}</span>
+          <span>${formatDate(pt.submittedAt)}</span>
+          ${canAction ? '<span class="badge badge-role">Action needed</span>' : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function canAct(pt) {
+  const rc = ROLE_CONFIG[currentRole];
+  if (rc.tier === 'T1' && pt.status === 'PENDING_T1') {
+    return pt[rc.field].status === 'pending';
+  }
+  if (rc.tier === 'T2' && pt.status === 'PENDING_T2') {
+    return pt.t2.status === 'pending';
+  }
+  return false;
+}
+
+// ── SELECT ITEM ──
+function selectItem(id) {
+  selectedPtId = id;
+  renderQueue();
+  renderDetail(id);
+}
+
+// ── DETAIL RENDERING ──
+function renderDetail(id) {
+  const pt = APPROVAL_QUEUE.find(p => p.id === id);
+  if (!pt) return;
+
+  document.getElementById('empty-state').style.display = 'none';
+  const area = document.getElementById('detail-content');
+  area.style.display = 'block';
+
+  const rc = ROLE_CONFIG[currentRole];
+  const actionable = canAct(pt);
+  const enabledSections = pt.sections.filter(s => s.enabled);
+  const totalFields = countAllFields(pt);
+  const totalEvidence = countAllEvidence(pt);
+  const totalBoxes = countAllUploadBoxes(pt);
+
+  let html = '';
+
+  // Header
+  html += `
+    <div class="approval-header">
+      <div class="approval-header-info">
+        <h1>
+          ${pt.name}
+          ${statusBadge(pt.status)}
+          <span class="badge badge-version">v${pt.version}</span>
+        </h1>
+        <div class="meta">
+          <span>Codename: <code>${pt.codename}</code></span>
+          <span>Submitted by: ${pt.submitter.name} (${pt.submitter.role})</span>
+          <span>${formatDateTime(pt.submittedAt)}</span>
+        </div>
+        <p style="margin-top:8px;font-size:13px;color:var(--gray-600);">${pt.description}</p>
+      </div>
+    </div>`;
+
+  // Stats
+  html += `
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-value">${enabledSections.length}</div>
+        <div class="stat-label">Sections</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">${totalFields}</div>
+        <div class="stat-label">Fields</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">${totalEvidence}</div>
+        <div class="stat-label">Evidence</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">${totalBoxes}</div>
+        <div class="stat-label">Upload Boxes</div>
+      </div>
+    </div>`;
+
+  // Pipeline
+  html += renderPipeline(pt);
+
+  // Tier cards (only show if relevant)
+  if (pt.status === 'PENDING_T1' || pt.status === 'PENDING_T2') {
+    html += renderTierCards(pt, actionable);
+  }
+
+  // Configuration Review
+  html += '<h2 style="font-size:16px;font-weight:700;color:var(--gray-900);margin:24px 0 14px;">Configuration Review</h2>';
+
+  // Section cards (read-only)
+  enabledSections.forEach((sec, idx) => {
+    html += renderReviewSection(sec, idx);
+  });
+
+  // System evidence
+  html += `
+    <div class="system-ev-card">
+      <h4>System-Generated Documents (auto-included)</h4>
+      <div class="system-ev-list">
+        ${SYSTEM_EVIDENCE.map(se => `<span class="badge badge-system">${se.name}</span>`).join(' ')}
+      </div>
+    </div>`;
+
+  // Audit Trail
+  html += '<h2 style="font-size:16px;font-weight:700;color:var(--gray-900);margin:28px 0 8px;">Audit Trail</h2>';
+  html += renderAuditLog(pt);
+
+  area.innerHTML = html;
+}
+
+// ── PIPELINE ──
+function renderPipeline(pt) {
+  const steps = [
+    { label: 'Submitted', sublabel: pt.submitter.name, state: 'done' },
+    { label: 'CPO Review', sublabel: 'Tier 1a', state: tierToState(pt.t1a.status, pt.status === 'PENDING_T1') },
+    { label: 'Risk Officer', sublabel: 'Tier 1b', state: tierToState(pt.t1b.status, pt.status === 'PENDING_T1') },
+    { label: 'CRO Review', sublabel: 'Tier 2', state: tierToState(pt.t2.status, pt.status === 'PENDING_T2') },
+    { label: 'Matcha Sync', sublabel: 'Activation', state: pt.matcha.status === 'synced' ? 'done' : 'waiting' },
+  ];
+
+  return `
+    <div class="pipeline">
+      <div class="pipeline-title">Approval Pipeline</div>
+      <div class="pipeline-steps">
+        ${steps.map(s => `
+          <div class="pipeline-step ${s.state}">
+            <div class="pipeline-icon">
+              ${s.state === 'done' ? '&#10003;' : s.state === 'rejected' ? '&#10007;' : s.state === 'current' ? '&#9679;' : '&#8212;'}
+            </div>
+            <div class="pipeline-label">${s.label}</div>
+            <div class="pipeline-sublabel">${s.sublabel}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function tierToState(tierStatus, isCurrentPhase) {
+  if (tierStatus === 'approved') return 'done';
+  if (tierStatus === 'rejected') return 'rejected';
+  if (tierStatus === 'pending' && isCurrentPhase) return 'current';
+  return 'waiting';
+}
+
+// ── TIER CARDS ──
+function renderTierCards(pt, actionable) {
+  const rc = ROLE_CONFIG[currentRole];
+  let html = '';
+
+  if (pt.status === 'PENDING_T1') {
+    html += '<div class="tier-grid">';
+    html += renderOneTierCard(pt, 'cpo', 't1a', 'CPO Review', [
+      'Section selection appropriate for product type',
+      'Correct variant chosen per section',
+      'Evidence declarations complete and sensible',
+      'Upload box configuration reasonable',
+      'Aligns with business intent'
+    ]);
+    html += renderOneTierCard(pt, 'risk_officer', 't1b', 'Risk Officer Review', [
+      'Documents provide sufficient data for risk assessment',
+      'Document types map correctly to verification items',
+      'Conditional exclusions are safe (no risk gaps)',
+      'Field coverage supports underwriting requirements',
+      'No missing evidence for collateral valuation'
+    ]);
+    html += '</div>';
+  }
+
+  if (pt.status === 'PENDING_T2') {
+    html += renderCROCard(pt);
+  }
+
+  return html;
+}
+
+function renderOneTierCard(pt, role, field, title, checks) {
+  const tierData = pt[field];
+  const rc = ROLE_CONFIG[currentRole];
+  const isMyCard = (currentRole === role);
+  const highlight = isMyCard && tierData.status === 'pending' ? 'highlight' : '';
+  const dotClass = tierData.status;
+
+  let content = '';
+
+  if (tierData.status === 'pending') {
+    content += `<ul class="checklist">${checks.map(c => `<li>${c}</li>`).join('')}</ul>`;
+    if (isMyCard) {
+      content += `
+        <div class="tier-actions">
+          <button class="btn btn-success btn-sm" onclick="approveT1('${pt.id}','${field}')">Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="openRejectModal('${pt.id}','${field}')">Return</button>
+        </div>`;
+    } else {
+      content += `<div style="font-size:12px;color:var(--gray-500);font-style:italic;">Switch role to ${ROLE_CONFIG[role].label} to take action</div>`;
+    }
+  } else if (tierData.status === 'approved') {
+    content += `<ul class="checklist">${checks.map(c => `<li class="checked">${c}</li>`).join('')}</ul>`;
+    content += `<div class="tier-result approved"><span class="actor">${tierData.actor}</span> approved<span class="ts">${formatDateTime(tierData.timestamp)}</span></div>`;
+  } else if (tierData.status === 'rejected') {
+    content += `<div class="tier-result rejected"><span class="actor">${tierData.actor}</span> returned<span class="ts">${formatDateTime(tierData.timestamp)}</span></div>`;
+    if (tierData.feedback) {
+      content += `<div class="audit-feedback" style="margin-top:8px;">${tierData.feedback}</div>`;
+    }
+  }
+
+  return `
+    <div class="tier-card ${highlight}">
+      <div class="tier-card-header">
+        <h3>${title}</h3>
+        <div class="tier-status-dot ${dotClass}"></div>
+        ${tierStatusBadge(tierData.status)}
+      </div>
+      ${content}
+    </div>`;
+}
+
+function renderCROCard(pt) {
+  const isMyCard = (currentRole === 'cro');
+  const highlight = isMyCard && pt.t2.status === 'pending' ? 'highlight' : '';
+
+  const checks = [
+    'Both T1 approvers have reviewed and approved',
+    'Product type configuration is complete and consistent',
+    'Risk alignment confirmed by Risk Officer',
+    'Business alignment confirmed by CPO',
+    'Ready for Matcha sync and campaign use'
+  ];
+
+  let content = `<ul class="checklist">${checks.map(c => {
+    const checked = pt.t1a.status === 'approved' && pt.t1b.status === 'approved' ? 'checked' : '';
+    return `<li class="${checked}">${c}</li>`;
+  }).join('')}</ul>`;
+
+  if (pt.t2.status === 'pending' && isMyCard) {
+    content += `
+      <div style="margin-top:10px;padding:10px 12px;background:var(--green-light);border-radius:6px;font-size:12px;color:var(--green);margin-bottom:10px;">
+        Both Tier 1 approvers have approved. You may proceed with final authorization.
+      </div>
+      <div class="tier-actions">
+        <button class="btn btn-success" onclick="approveCRO('${pt.id}')">Approve &amp; Activate</button>
+        <button class="btn btn-danger" onclick="openRejectModal('${pt.id}','t2')">Return</button>
+      </div>`;
+  } else if (!isMyCard) {
+    content += `<div style="font-size:12px;color:var(--gray-500);font-style:italic;margin-top:8px;">Switch role to CRO to take action</div>`;
+  }
+
+  return `
+    <div class="tier-card ${highlight}" style="max-width:500px;">
+      <div class="tier-card-header">
+        <h3>CRO Final Authorization (Tier 2)</h3>
+        <div class="tier-status-dot ${pt.t2.status === 'pending' ? 'pending' : pt.t2.status}"></div>
+        ${tierStatusBadge(pt.t2.status)}
+      </div>
+      ${content}
+    </div>`;
+}
+
+// ── SECTION REVIEW ──
+function renderReviewSection(sec, idx) {
+  const evCount = sec.evidence.length;
+  let ubCount = 0;
+  sec.evidence.forEach(ev => { ubCount += ev.uploadBoxes.length; });
+
+  let body = '';
+
+  // Fields grid
+  body += '<h4 style="font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.04em;margin-top:14px;margin-bottom:8px;">Fields (' + sec.fields.length + ')</h4>';
+  body += '<div class="field-grid">';
+  sec.fields.forEach(f => {
+    body += `<div class="field-chip">${f.replace(/_/g, ' ')}</div>`;
+  });
+  body += '</div>';
+
+  // Evidence table
+  if (evCount > 0) {
+    body += `<h4 style="font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.04em;margin-top:18px;margin-bottom:8px;">Evidence (${evCount})</h4>`;
+    body += `<table class="data-table">
+      <thead><tr>
+        <th>Evidence Name</th>
+        <th>Doc Type</th>
+        <th>Condition</th>
+        <th>Upload Boxes</th>
+      </tr></thead><tbody>`;
+
+    sec.evidence.forEach((ev, evIdx) => {
+      const condStr = ev.condition
+        ? `<span class="badge badge-cond">${ev.condition.field} ${ev.condition.operator} ${ev.condition.value}</span>`
+        : '<span style="color:var(--gray-400);">Always</span>';
+
+      body += `<tr>
+        <td>
+          <div style="font-weight:500;">${ev.name}</div>
+          <div style="font-size:11px;color:var(--gray-500);">${ev.nameEn}</div>
+        </td>
+        <td><span class="mono">${ev.docTypeKey}</span></td>
+        <td>${condStr}</td>
+        <td><span class="badge badge-fields">${ev.uploadBoxes.length} box${ev.uploadBoxes.length !== 1 ? 'es' : ''}</span></td>
+      </tr>`;
+
+      // Upload box detail
+      body += `<tr><td colspan="4" style="padding:0 10px 8px;">
+        <div class="ub-detail">
+          ${ev.uploadBoxes.map(ub => `
+            <div class="ub-detail-row">
+              <span class="label">#${ub.order}</span>
+              <span style="flex:1;font-weight:500;">${ub.name}</span>
+              <span>${ub.allowMultiple ? 'Multiple' : 'Single'}</span>
+              <span>Min: ${ub.min} / Max: ${ub.max}</span>
+              ${ub.tooltip ? `<span style="color:var(--blue);" title="${ub.tooltip}">Has tooltip</span>` : ''}
+            </div>`).join('')}
+        </div>
+      </td></tr>`;
+    });
+
+    body += '</tbody></table>';
+  } else {
+    body += '<p style="font-size:12px;color:var(--gray-500);margin-top:14px;font-style:italic;">No evidence configured for this section</p>';
+  }
+
+  return `
+    <div class="review-section expanded" id="review-sec-${idx}">
+      <div class="review-section-header" onclick="toggleReviewSection(${idx})">
+        <div class="review-section-title">
+          ${sec.name}
+          <span style="font-weight:400;color:var(--gray-500);font-size:13px;">${sec.variant}</span>
+          ${sec.required ? '<span class="badge badge-pending">Required</span>' : ''}
+        </div>
+        <div class="review-section-summary">${sec.fields.length} fields &middot; ${evCount} evidence &middot; ${ubCount} boxes</div>
+        <div class="review-section-chevron">&#9660;</div>
+      </div>
+      <div class="review-section-body">${body}</div>
+    </div>`;
+}
+
+function toggleReviewSection(idx) {
+  document.getElementById('review-sec-' + idx).classList.toggle('expanded');
+}
+
+// ── AUDIT LOG ──
+function renderAuditLog(pt) {
+  const iconMap = {
+    'created': 'create',
+    'edited': 'create',
+    'submitted': 'submit',
+    'approved_t1a': 'approve',
+    'approved_t1b': 'approve',
+    'approved_t2': 'approve',
+    'rejected_t1a': 'reject',
+    'rejected_t1b': 'reject',
+    'rejected_t2': 'reject',
+    'matcha_sync': 'system',
+    'activated': 'system',
+  };
+  const symbolMap = {
+    'create': '&#9998;',
+    'submit': '&#10148;',
+    'approve': '&#10003;',
+    'reject': '&#10007;',
+    'system': '&#9881;',
+  };
+
+  let html = '<div class="audit-timeline">';
+  pt.auditLog.forEach(entry => {
+    const dotType = iconMap[entry.action] || 'create';
+    html += `
+      <div class="audit-entry">
+        <div class="audit-dot ${dotType}">${symbolMap[dotType]}</div>
+        <div class="audit-info">
+          <div class="audit-action">
+            <span class="actor">${entry.actor}</span> (${entry.role}) &mdash; ${entry.detail}
+          </div>
+          <div class="audit-meta">${formatDateTime(entry.timestamp)}</div>
+          ${entry.feedback ? `<div class="audit-feedback">${entry.feedback}</div>` : ''}
+        </div>
+      </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+// ── ACTIONS ──
+function approveT1(ptId, field) {
+  const pt = APPROVAL_QUEUE.find(p => p.id === ptId);
+  if (!pt) return;
+
+  const rc = ROLE_CONFIG[currentRole];
+  pt[field].status = 'approved';
+  pt[field].actor = rc.name;
+  pt[field].timestamp = new Date().toISOString();
+
+  pt.auditLog.push({
+    action: 'approved_' + field,
+    actor: rc.name,
+    role: rc.label,
+    timestamp: pt[field].timestamp,
+    detail: `${rc.label} approved \u2014 review complete`
+  });
+
+  // Check if both T1 approved → move to PENDING_T2
+  if (pt.t1a.status === 'approved' && pt.t1b.status === 'approved') {
+    pt.status = 'PENDING_T2';
+    pt.t2.status = 'pending';
+    toast(`Both Tier 1 approved! ${pt.name} moved to PENDING_T2 (CRO review)`);
+  } else {
+    toast(`${rc.label} approval recorded for ${pt.name}`);
+  }
+
+  renderQueue();
+  renderDetail(ptId);
+}
+
+function approveCRO(ptId) {
+  const pt = APPROVAL_QUEUE.find(p => p.id === ptId);
+  if (!pt) return;
+
+  const rc = ROLE_CONFIG[currentRole];
+  pt.t2.status = 'approved';
+  pt.t2.actor = rc.name;
+  pt.t2.timestamp = new Date().toISOString();
+
+  pt.auditLog.push({
+    action: 'approved_t2',
+    actor: rc.name,
+    role: rc.label,
+    timestamp: pt.t2.timestamp,
+    detail: 'CRO approved \u2014 final authorization granted'
+  });
+
+  // Simulate Matcha sync
+  pt.status = 'SYNCING';
+  pt.auditLog.push({
+    action: 'matcha_sync',
+    actor: 'System',
+    role: 'Onigiri',
+    timestamp: new Date().toISOString(),
+    detail: 'Matcha document type sync initiated'
+  });
+
+  renderQueue();
+  renderDetail(ptId);
+
+  // Simulate async sync success
+  setTimeout(() => {
+    pt.matcha.status = 'synced';
+    pt.status = 'ACTIVE';
+    pt.auditLog.push({
+      action: 'activated',
+      actor: 'System',
+      role: 'Onigiri',
+      timestamp: new Date().toISOString(),
+      detail: `Product type activated \u2014 v${pt.version} now available for campaign selection`
+    });
+    toast(`${pt.name} is now ACTIVE! Available for campaign selection.`);
+    renderQueue();
+    if (selectedPtId === ptId) renderDetail(ptId);
+  }, 2000);
+}
+
+function openRejectModal(ptId, tier) {
+  rejectTarget = { ptId, tier };
+  const pt = APPROVAL_QUEUE.find(p => p.id === ptId);
+  const rc = ROLE_CONFIG[currentRole];
+  document.getElementById('reject-modal-title').textContent =
+    `Return "${pt.name}" for Revision`;
+  document.getElementById('reject-reason').value = '';
+  document.getElementById('reject-modal').classList.add('open');
+}
+
+function closeRejectModal() {
+  document.getElementById('reject-modal').classList.remove('open');
+  rejectTarget = null;
+}
+
+function confirmReject() {
+  if (!rejectTarget) return;
+  const reason = document.getElementById('reject-reason').value.trim();
+  if (!reason) {
+    document.getElementById('reject-reason').style.borderColor = 'var(--red)';
+    return;
+  }
+
+  const pt = APPROVAL_QUEUE.find(p => p.id === rejectTarget.ptId);
+  if (!pt) return;
+
+  const rc = ROLE_CONFIG[currentRole];
+  const field = rejectTarget.tier;
+
+  pt[field].status = 'rejected';
+  pt[field].actor = rc.name;
+  pt[field].timestamp = new Date().toISOString();
+  pt[field].feedback = reason;
+
+  pt.status = 'RETURNED';
+
+  // Reset all tier statuses
+  if (field !== 't1a') pt.t1a.status = pt.t1a.status === 'approved' ? 'approved' : 'pending';
+  if (field !== 't1b') pt.t1b.status = pt.t1b.status === 'approved' ? 'approved' : 'pending';
+  pt.t2.status = 'waiting';
+
+  pt.auditLog.push({
+    action: 'rejected_' + field,
+    actor: rc.name,
+    role: rc.label,
+    timestamp: pt[field].timestamp,
+    detail: `${rc.label} returned for revision`,
+    feedback: reason
+  });
+
+  closeRejectModal();
+  toast(`${pt.name} returned to submitter with feedback`);
+  renderQueue();
+  renderDetail(rejectTarget.ptId);
+}
+
+// ── INIT ──
+renderQueue();
+</script>
+</body>
+</html>

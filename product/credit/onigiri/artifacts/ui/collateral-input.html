@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ข้อมูลหลักประกัน — Onigiri</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:      #2b6cb0;
+      --primary-dark: #1e4e8c;
+      --primary-light:#ebf4ff;
+      --primary-bg:   #f0f6ff;
+      --green:        #1E8E3E;
+      --green-light:  #E6F4EA;
+      --red:          #C5221F;
+      --red-light:    #FCE8E6;
+      --amber:        #E37400;
+      --amber-light:  #FEF3E2;
+      --gray-50:      #f7fafc;
+      --gray-100:     #edf2f7;
+      --gray-200:     #e2e8f0;
+      --gray-300:     #cbd5e0;
+      --gray-400:     #a0aec0;
+      --gray-500:     #718096;
+      --gray-600:     #4a5568;
+      --gray-700:     #2d3748;
+      --gray-800:     #1a202c;
+      --white:        #ffffff;
+      --radius:       4px;
+      --shadow:       0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    body { font-family: 'Sarabun', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray-100); color: var(--gray-700); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+    /* ── SHELL ── */
+    .top-bar { background: var(--primary); color: white; padding: 0 24px; height: 48px; display: flex; align-items: center; gap: 16px; font-size: 14px; }
+    .top-bar-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+    .top-bar-logo-icon { width: 26px; height: 26px; background: rgba(255,255,255,0.2); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+    .top-bar-nav { display: flex; gap: 2px; margin-left: 24px; }
+    .top-bar-nav a { color: rgba(255,255,255,0.7); text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 13px; transition: all 0.15s; }
+    .top-bar-nav a:hover { color: white; background: rgba(255,255,255,0.1); }
+    .top-bar-nav a.active { color: white; background: rgba(255,255,255,0.15); font-weight: 600; }
+    .top-bar-spacer { flex: 1; }
+    .top-bar-user { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .top-bar-avatar { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+
+    .breadcrumb-bar { background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 10px 24px; font-size: 13px; color: var(--gray-500); display: flex; align-items: center; gap: 8px; }
+    .breadcrumb-bar a { color: var(--primary); text-decoration: none; }
+    .breadcrumb-bar a:hover { text-decoration: underline; }
+    .breadcrumb-bar .sep { color: var(--gray-400); }
+
+    .page-layout { display: flex; gap: 0; max-width: 1400px; margin: 0 auto; min-height: calc(100vh - 90px); }
+
+    /* ── SIDEBAR ── */
+    .left-sidebar { width: 220px; background: var(--white); border-right: 1px solid var(--gray-200); padding: 16px 0; flex-shrink: 0; }
+    .sidebar-section-title { font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.06em; padding: 0 16px 8px; }
+    .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 13px; color: var(--gray-600); cursor: pointer; transition: all 0.12s; border-left: 3px solid transparent; }
+    .sidebar-item:hover { background: var(--gray-50); }
+    .sidebar-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; border-left-color: var(--primary); }
+    .sidebar-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .dot-done { background: var(--green); } .dot-current { background: var(--primary); } .dot-empty { background: var(--gray-300); }
+    .sidebar-item .check-icon { font-size: 14px; color: var(--green); }
+    .sidebar-divider { height: 1px; background: var(--gray-200); margin: 12px 0; }
+
+    .main-content { flex: 1; padding: 0; overflow-y: auto; }
+
+    /* ── CARDS ── */
+    .section-card { background: var(--white); margin: 16px 20px; border-radius: 6px; border: 1px solid var(--gray-200); box-shadow: var(--shadow); overflow: hidden; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--primary); color: white; }
+    .section-header h2 { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .section-header .section-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; }
+    .section-header .section-check.checked { background: white; border-color: white; color: var(--primary); }
+    .section-body { padding: 20px; }
+
+    /* ── FORM ── */
+    .form-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px 16px; margin-bottom: 18px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.span-2 { grid-column: span 2; } .form-group.span-3 { grid-column: span 3; } .form-group.span-5 { grid-column: span 5; }
+    .form-label { font-size: 13px; font-weight: 500; color: var(--primary-dark); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+    .form-label .req { color: var(--red); font-size: 12px; }
+
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 7px 10px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 14px; color: var(--gray-700); background: var(--white); font-family: inherit; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(43,108,176,0.15); }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--gray-400); }
+    .form-textarea { resize: vertical; min-height: 60px; }
+    .form-input.date-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23718096' viewBox='0 0 16 16'%3E%3Cpath d='M4 0a1 1 0 0 1 1 1v1h6V1a1 1 0 0 1 2 0v1h1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h1V1a1 1 0 0 1 1-1zM1 7v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7H1z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; }
+
+    .input-with-unit { display: flex; align-items: stretch; }
+    .input-with-unit .form-input { border-radius: var(--radius) 0 0 var(--radius); border-right: none; }
+    .input-unit { padding: 7px 12px; background: var(--gray-100); border: 1px solid var(--gray-300); border-radius: 0 var(--radius) var(--radius) 0; font-size: 13px; color: var(--gray-500); white-space: nowrap; display: flex; align-items: center; }
+
+    .combo-input { display: flex; align-items: stretch; gap: 0; }
+    .combo-input .form-select { width: 140px; flex-shrink: 0; border-radius: var(--radius) 0 0 var(--radius); border-right: none; }
+    .combo-input .form-input { flex: 1; border-radius: 0 var(--radius) var(--radius) 0; }
+
+    .area-input { display: flex; align-items: stretch; gap: 8px; }
+    .area-input .area-field { display: flex; align-items: stretch; flex: 1; }
+    .area-input .form-input { border-radius: var(--radius) 0 0 var(--radius); border-right: none; text-align: right; }
+    .area-input .input-unit { min-width: 50px; justify-content: center; }
+
+    /* ── COLOR PICKER ── */
+    .color-option { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+    .color-swatch { width: 44px; height: 44px; border-radius: 8px; border: 2px solid transparent; transition: all 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .color-option:hover .color-swatch { transform: scale(1.08); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .color-option.selected .color-swatch { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(43,108,176,0.25); }
+    .color-name { font-size: 11px; color: var(--gray-500); text-align: center; }
+    .color-option.selected .color-name { color: var(--primary); font-weight: 600; }
+
+    /* ── RADIO / CHECKBOX ── */
+    .radio-row { display: flex; align-items: center; gap: 0; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+    .radio-row:last-child { border-bottom: none; }
+    .radio-row-label { font-size: 13px; font-weight: 600; color: var(--primary-dark); min-width: 280px; flex-shrink: 0; }
+    .radio-group { display: flex; gap: 32px; }
+    .radio-option { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .radio-option input[type="radio"] { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+    .radio-option label { font-size: 13px; color: var(--gray-700); cursor: pointer; }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+    .checkbox-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+    .checkbox-row label { font-size: 13px; color: var(--gray-700); cursor: pointer; }
+
+    .section-subtitle { font-size: 13px; font-weight: 600; color: var(--primary); padding: 10px 0 8px; border-bottom: 1px solid var(--gray-200); margin-bottom: 14px; }
+
+    .remark-banner { background: var(--amber-light); border: 1px solid rgba(227,116,0,0.2); border-radius: 6px; padding: 10px 16px; margin-bottom: 18px; display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--gray-700); }
+    .remark-banner-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── COLLATERAL TYPE SELECTOR ── */
+    .type-selector { background: var(--white); margin: 16px 20px 0; border-radius: 6px 6px 0 0; border: 1px solid var(--gray-200); border-bottom: none; padding: 16px 20px; box-shadow: var(--shadow); }
+    .type-selector-label { font-size: 13px; font-weight: 600; color: var(--primary-dark); margin-bottom: 10px; }
+    .type-tabs { display: flex; gap: 0; }
+    .type-tab { padding: 10px 28px; cursor: pointer; border: 2px solid var(--gray-300); background: var(--white); color: var(--gray-600); font-size: 14px; font-weight: 500; font-family: inherit; transition: all 0.15s; display: flex; align-items: center; gap: 8px; }
+    .type-tab:first-child { border-radius: 6px 0 0 6px; }
+    .type-tab:last-child { border-radius: 0 6px 6px 0; }
+    .type-tab:not(:first-child) { margin-left: -2px; }
+    .type-tab.active { background: var(--primary); color: white; border-color: var(--primary); position: relative; z-index: 1; }
+    .type-tab:hover:not(.active) { background: var(--gray-50); border-color: var(--gray-400); }
+    .type-tab-icon { font-size: 18px; }
+
+    /* ── CONDITIONAL SECTIONS ── */
+    .condo-section { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 6px; padding: 16px; margin-bottom: 18px; }
+    .condo-section-title { font-size: 13px; font-weight: 600; color: var(--amber); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .map-placeholder { background: var(--gray-100); border: 2px dashed var(--gray-300); border-radius: 6px; height: 180px; display: flex; align-items: center; justify-content: center; color: var(--gray-400); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .map-placeholder:hover { border-color: var(--primary); color: var(--primary); }
+    .accessories-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 24px; margin-top: 8px; }
+    .conditions-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 24px; }
+
+    /* ── ACTION BAR ── */
+    .action-bar { position: sticky; bottom: 0; background: var(--white); border-top: 1px solid var(--gray-200); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 -2px 8px rgba(0,0,0,0.06); }
+    .action-bar-left { font-size: 12px; color: var(--gray-500); display: flex; align-items: center; gap: 8px; }
+    .action-bar-left .save-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    .action-bar-right { display: flex; gap: 8px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--radius); font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: var(--white); color: var(--gray-600); border: 1px solid var(--gray-300); }
+    .btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-400); }
+
+    .progress-bar { display: flex; align-items: center; gap: 4px; margin: 16px 20px 0; }
+    .progress-segment { flex: 1; height: 4px; border-radius: 2px; background: var(--gray-200); }
+    .progress-segment.filled { background: var(--primary); }
+    .progress-segment.active { background: var(--primary); opacity: 0.5; }
+    .progress-text { font-size: 12px; color: var(--gray-500); margin: 6px 20px 0; }
+
+    @media (max-width: 1100px) { .form-grid { grid-template-columns: repeat(3, 1fr); } .form-group.span-5 { grid-column: span 3; } }
+    @media (max-width: 768px) { .form-grid { grid-template-columns: repeat(2, 1fr); } .form-group.span-5, .form-group.span-3, .form-group.span-2 { grid-column: span 2; } .page-layout { flex-direction: column; } .left-sidebar { width: 100%; } .radio-row { flex-direction: column; align-items: flex-start; gap: 8px; } .accessories-grid { grid-template-columns: repeat(2, 1fr); } .conditions-grid { grid-template-columns: 1fr; } .type-tabs { flex-wrap: wrap; } }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<div class="top-bar">
+  <div class="top-bar-logo"><div class="top-bar-logo-icon">O</div> Onigiri</div>
+  <div class="top-bar-nav">
+    <a href="#">Dashboard</a>
+    <a href="index.html">Product Types</a>
+    <a href="campaign-builder.html">Campaigns</a>
+    <a href="#" class="active">Applications</a>
+    <a href="#">Settings</a>
+  </div>
+  <div class="top-bar-spacer"></div>
+  <div class="top-bar-user"><div class="top-bar-avatar">SK</div><span>สมชาย ก. · Credit Officer</span></div>
+</div>
+
+<!-- ── BREADCRUMB ── -->
+<div class="breadcrumb-bar">
+  <a href="#">หน้าหลัก</a><span class="sep">/</span>
+  <a href="#">สร้างสัญญาใหม่</a><span class="sep">/</span>
+  <strong id="breadcrumb-type" style="color:var(--gray-700);">ข้อมูลหลักประกัน</strong>
+</div>
+
+<!-- ── PROGRESS ── -->
+<div class="progress-bar">
+  <div class="progress-segment filled"></div>
+  <div class="progress-segment filled"></div>
+  <div class="progress-segment filled"></div>
+  <div class="progress-segment active"></div>
+  <div class="progress-segment"></div>
+</div>
+<div class="progress-text">ขั้นตอนที่ 4 จาก 5 — ข้อมูลหลักประกัน</div>
+
+<!-- ── PAGE LAYOUT ── -->
+<div class="page-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <div class="left-sidebar">
+    <div class="sidebar-section-title">Sections</div>
+    <div class="sidebar-item"><span class="check-icon">&#10003;</span> ข้อมูลส่วนตัว</div>
+    <div class="sidebar-item"><span class="check-icon">&#10003;</span> ที่อยู่</div>
+    <div class="sidebar-item"><span class="check-icon">&#10003;</span> อาชีพ</div>
+    <div class="sidebar-item active"><div class="dot dot-current"></div> ข้อมูลหลักประกัน</div>
+    <div class="sidebar-item"><div class="dot dot-empty"></div> เอกสาร</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title">Status</div>
+    <div class="sidebar-item" style="font-size:12px;color:var(--gray-400);">
+      Product Type: <strong id="sidebar-product-type" style="color:var(--primary);">Bike Title</strong>
+    </div>
+    <div class="sidebar-item" style="font-size:12px;color:var(--gray-400);">
+      Collateral: <strong id="sidebar-collateral" style="color:var(--primary);">Bike</strong>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <!-- MAIN CONTENT                                       -->
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="main-content">
+
+    <!-- ── COLLATERAL TYPE SELECTOR ── -->
+    <div class="type-selector">
+      <div class="type-selector-label">เลือกประเภทหลักประกัน</div>
+      <div class="type-tabs">
+        <button class="type-tab active" onclick="switchType('bike')">
+          <span class="type-tab-icon">&#127949;</span> รถจักรยานยนต์
+        </button>
+        <button class="type-tab" onclick="switchType('car')">
+          <span class="type-tab-icon">&#128663;</span> รถยนต์
+        </button>
+        <button class="type-tab" onclick="switchType('tractor')">
+          <span class="type-tab-icon">&#128668;</span> แทรกเตอร์
+        </button>
+        <button class="type-tab" onclick="switchType('land')">
+          <span class="type-tab-icon">&#127966;</span> ที่ดิน
+        </button>
+      </div>
+    </div>
+
+    <!-- ╔════════════════════════════════════════════════╗ -->
+    <!-- ║  BIKE SECTION                                  ║ -->
+    <!-- ╚════════════════════════════════════════════════╝ -->
+    <div id="section-bike">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>ข้อมูลหลักประกัน — รถจักรยานยนต์</h2>
+          <div class="section-check" onclick="this.classList.toggle('checked')">&#10003;</div>
+        </div>
+        <div class="section-body">
+
+          <div class="remark-banner" id="ry17-remark" style="display:none;">
+            <span class="remark-banner-icon">&#9888;</span>
+            <div>รย.17 — ไม่มีรูปหน้าเว็บกรมขนส่ง (DLT web page picture not required)</div>
+          </div>
+
+          <!-- Registration -->
+          <div class="section-subtitle">ข้อมูลทะเบียน</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">วันที่จดทะเบียน <span class="req">*</span></label>
+              <input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">วันที่ครอบครอง</label>
+              <input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">ประเภทการครอบครอง</label>
+              <select class="form-select"><option>เลือก</option><option>เจ้าของ</option><option>ผู้ครอบครอง</option><option>ผู้เช่าซื้อ</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">ผู้ถือครองก่อนหน้า</label>
+              <select class="form-select"><option>เลือก</option><option>มือหนึ่ง</option><option>มือสอง</option><option>มือสามขึ้นไป</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">วันที่ครอบครอง (ผู้ถือครองก่อนหน้า)</label>
+              <input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">เลขทะเบียน <span class="req">*</span></label>
+              <input type="text" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">จังหวัด <span class="req">*</span></label>
+              <select class="form-select"><option>เลือก</option><option>กรุงเทพมหานคร</option><option>เชียงใหม่</option><option>ขอนแก่น</option><option>นครราชสีมา</option><option>สงขลา</option><option>ชลบุรี</option><option>อื่นๆ...</option></select>
+            </div>
+            <div class="form-group span-2">
+              <label class="form-label">ประเภทตาม พ.ร.บ.(รย.) <span class="req">*</span></label>
+              <select class="form-select" id="bike-act-type" onchange="onBikeActTypeChange()">
+                <option>เลือก</option>
+                <option value="RY-12" selected>รย.12 — รถจักรยานยนต์ส่วนบุคคล</option>
+                <option value="RY-17">รย.17 — รถจักรยานยนต์สาธารณะ</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Vehicle Info -->
+          <div class="section-subtitle">ข้อมูลรถ</div>
+          <div class="form-grid" id="bike-dropdown-mode">
+            <div class="form-group">
+              <label class="form-label">ยี่ห้อรถ <span class="req">*</span></label>
+              <select class="form-select" id="bike-brand" onchange="onBikeBrandChange()">
+                <option>เลือก</option><option value="honda" selected>Honda</option><option value="yamaha">Yamaha</option><option value="suzuki">Suzuki</option><option value="kawasaki">Kawasaki</option><option value="gpx">GPX</option><option value="other">อื่นๆ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">แบบรุ่น <span class="req">*</span></label>
+              <select class="form-select" id="bike-model">
+                <option>เลือก</option><option selected>Wave 110i</option><option>Wave 125i</option><option>Click 125i</option><option>Click 150i</option><option>PCX 160</option><option>Scoopy i</option><option>Forza 350</option><option>CRF300L</option><option>CB150R</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">รุ่นปี (ค.ศ.) <span class="req">*</span></label>
+              <select class="form-select"><option>เลือก</option><option>2027</option><option selected>2026</option><option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option></select>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;margin-bottom:14px;">
+            <input type="checkbox" id="bike-no-data" style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;" onchange="toggleManual('bike')" />
+            <label for="bike-no-data" style="font-size:13px;color:var(--primary);font-weight:600;cursor:pointer;">ไม่มีข้อมูลในระบบ</label>
+          </div>
+          <div id="bike-manual-mode" style="display:none;">
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">ยี่ห้อรถ <span class="req">*</span></label><input type="text" class="form-input" placeholder="ระบุยี่ห้อรถ" /></div>
+              <div class="form-group"><label class="form-label">แบบรุ่น <span class="req">*</span></label><input type="text" class="form-input" placeholder="ระบุแบบรุ่น" /></div>
+              <div class="form-group"><label class="form-label">รุ่นปี (ค.ศ.) <span class="req">*</span></label><input type="text" class="form-input" placeholder="เช่น 2026" /></div>
+              <div class="form-group span-2"><label class="form-label">จำนวนเงินสูงสุดที่ CA อนุมัติ</label><div class="input-with-unit"><input type="text" class="form-input" /><span class="input-unit">บาท</span></div></div>
+            </div>
+          </div>
+
+          <!-- Color -->
+          <div style="margin:4px 0 18px;">
+            <div style="font-size:13px;font-weight:500;color:var(--primary-dark);margin-bottom:10px;">สี (เลือกได้สูงสุด 3 สี) <span id="bike-color-count" style="color:var(--gray-400);font-weight:400;font-size:12px;">— เลือกแล้ว 0 สี</span></div>
+            <div id="bike-color-grid" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+          </div>
+
+          <!-- Engine & Chassis -->
+          <div class="section-subtitle">ข้อมูลเครื่องยนต์ & ตัวถัง</div>
+          <div class="form-grid">
+            <div class="form-group span-2">
+              <label class="form-label">เลขตัวถัง <span class="req">*</span></label>
+              <div class="combo-input">
+                <select class="form-select"><option>ระบุเอง</option><option>ไม่มีข้อมูล</option><option>MLHJA5610R5100001</option><option>MLHJA5610R5100002</option></select>
+                <input type="text" class="form-input" placeholder="ระบุเลขตัวถัง" style="text-transform:uppercase;" />
+              </div>
+            </div>
+            <div class="form-group span-2">
+              <label class="form-label">เลขเครื่องยนต์ <span class="req">*</span></label>
+              <div class="combo-input">
+                <select class="form-select"><option>ระบุเอง</option><option>ไม่มีข้อมูล</option><option>JA56E-1100001</option><option>JA56E-1100002</option></select>
+                <input type="text" class="form-input" placeholder="ระบุเลขเครื่องยนต์" style="text-transform:uppercase;" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">จำนวนซีซี <span class="req">*</span></label>
+              <div class="input-with-unit"><input type="text" class="form-input" value="110" /><span class="input-unit">ซีซี</span></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">วันครบกำหนดเสียภาษี</label>
+              <input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" />
+            </div>
+            <div class="form-group span-2">
+              <label class="form-label">ที่มาของวันครบกำหนดเสียภาษี</label>
+              <select class="form-select"><option>เลือก</option><option>หน้าภาษี</option><option>ใบเสร็จต่อภาษี/ป้ายต่อภาษี</option></select>
+            </div>
+          </div>
+
+          <!-- Name match -->
+          <div class="section-subtitle">การตรวจสอบความถูกต้อง</div>
+          <div style="margin-bottom:4px;">
+            <div class="radio-row">
+              <div class="radio-row-label">ชื่อในเล่มทะเบียนรถตรงกับในบัตรประชาชน</div>
+              <div class="radio-group">
+                <div class="radio-option"><input type="radio" name="bike_name_match" id="bike_match_yes" checked /><label for="bike_match_yes">ตรงกัน</label></div>
+                <div class="radio-option"><input type="radio" name="bike_name_match" id="bike_match_no" /><label for="bike_match_no">ไม่ตรงกัน</label></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ╔════════════════════════════════════════════════╗ -->
+    <!-- ║  TRACTOR SECTION                               ║ -->
+    <!-- ╚════════════════════════════════════════════════╝ -->
+    <div id="section-tractor" style="display:none;">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>ข้อมูลหลักประกัน — แทรกเตอร์</h2>
+          <div class="section-check" onclick="this.classList.toggle('checked')">&#10003;</div>
+        </div>
+        <div class="section-body">
+
+          <div class="remark-banner" id="ry13-remark" style="display:none;">
+            <span class="remark-banner-icon">&#9888;</span>
+            <div>รย.13 — ไม่มีรูปหน้าเว็บกรมขนส่ง (DLT web page picture not required)</div>
+          </div>
+
+          <!-- Registration -->
+          <div class="section-subtitle">ข้อมูลทะเบียน</div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">วันที่จดทะเบียน <span class="req">*</span></label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+            <div class="form-group"><label class="form-label">วันที่ครอบครอง</label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+            <div class="form-group"><label class="form-label">ประเภทการครอบครอง</label><select class="form-select"><option>เลือก</option><option>เจ้าของ</option><option>ผู้ครอบครอง</option><option>ผู้เช่าซื้อ</option></select></div>
+            <div class="form-group"><label class="form-label">ผู้ถือครองก่อนหน้า</label><select class="form-select"><option>เลือก</option><option>มือหนึ่ง</option><option>มือสอง</option><option>มือสามขึ้นไป</option></select></div>
+            <div class="form-group"><label class="form-label">วันที่ครอบครอง (ผู้ถือครองก่อนหน้า)</label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+            <div class="form-group"><label class="form-label">เลขทะเบียน <span class="req">*</span></label><input type="text" class="form-input" /></div>
+            <div class="form-group"><label class="form-label">จังหวัด <span class="req">*</span></label><select class="form-select"><option>เลือก</option><option>กรุงเทพมหานคร</option><option>เชียงใหม่</option><option>ขอนแก่น</option><option>นครราชสีมา</option><option>สงขลา</option><option>ชลบุรี</option><option>อื่นๆ...</option></select></div>
+            <div class="form-group span-2"><label class="form-label">ประเภทตาม พ.ร.บ.(รย.) <span class="req">*</span></label>
+              <select class="form-select" id="tractor-act-type" onchange="onTractorActTypeChange()"><option>เลือก</option><option value="RY-8">รย.8 — รถบดถนน</option><option value="RY-9">รย.9 — รถแทรกเตอร์</option><option value="RY-13" selected>รย.13 — รถพ่วง</option><option value="RY-14">รย.14 — รถบรรทุกพ่วง</option></select>
+            </div>
+          </div>
+
+          <!-- Vehicle Info -->
+          <div class="section-subtitle">ข้อมูลรถ</div>
+          <div class="form-grid" id="tractor-dropdown-mode">
+            <div class="form-group"><label class="form-label">ยี่ห้อรถ <span class="req">*</span></label>
+              <select class="form-select" id="tractor-brand" onchange="onTractorBrandChange()"><option>เลือก</option><option value="kubota" selected>Kubota</option><option value="yanmar">Yanmar</option><option value="john-deere">John Deere</option><option value="iseki">Iseki</option><option value="mitsubishi">Mitsubishi</option><option value="ford">Ford / New Holland</option><option value="massey">Massey Ferguson</option><option value="other">อื่นๆ</option></select>
+            </div>
+            <div class="form-group"><label class="form-label">แบบรุ่น <span class="req">*</span></label>
+              <select class="form-select" id="tractor-model"><option>เลือก</option><option selected>L4018</option><option>L5018</option><option>M7040</option><option>MU5501</option><option>B2420</option></select>
+            </div>
+            <div class="form-group"><label class="form-label">รุ่นปี (ค.ศ.) <span class="req">*</span></label>
+              <select class="form-select"><option>เลือก</option><option>2027</option><option selected>2026</option><option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option></select>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;margin-bottom:14px;">
+            <input type="checkbox" id="tractor-no-data" style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;" onchange="toggleManual('tractor')" />
+            <label for="tractor-no-data" style="font-size:13px;color:var(--primary);font-weight:600;cursor:pointer;">ไม่มีข้อมูลในระบบ</label>
+          </div>
+          <div id="tractor-manual-mode" style="display:none;">
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">ยี่ห้อรถ <span class="req">*</span></label><input type="text" class="form-input" placeholder="ระบุยี่ห้อรถ" /></div>
+              <div class="form-group"><label class="form-label">แบบรุ่น <span class="req">*</span></label><input type="text" class="form-input" placeholder="ระบุแบบรุ่น" /></div>
+              <div class="form-group"><label class="form-label">รุ่นปี (ค.ศ.) <span class="req">*</span></label><input type="text" class="form-input" placeholder="เช่น 2026" /></div>
+              <div class="form-group"><label class="form-label">แรงม้า <span class="req">*</span></label><div class="input-with-unit"><input type="text" class="form-input" placeholder="" /><span class="input-unit">HP</span></div></div>
+              <div class="form-group"><label class="form-label">จำนวนเงินสูงสุดที่ CA อนุมัติ</label><div class="input-with-unit"><input type="text" class="form-input" /><span class="input-unit">บาท</span></div></div>
+            </div>
+          </div>
+
+          <!-- Color -->
+          <div style="margin:4px 0 18px;">
+            <div style="font-size:13px;font-weight:500;color:var(--primary-dark);margin-bottom:10px;">สี (เลือกได้สูงสุด 3 สี) <span id="tractor-color-count" style="color:var(--gray-400);font-weight:400;font-size:12px;">— เลือกแล้ว 0 สี</span></div>
+            <div id="tractor-color-grid" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+          </div>
+
+          <!-- Engine -->
+          <div class="section-subtitle">ข้อมูลเครื่องยนต์ & ตัวถัง</div>
+          <div class="form-grid">
+            <div class="form-group span-2"><label class="form-label">เลขตัวถัง <span class="req">*</span></label><input type="text" class="form-input" style="text-transform:uppercase;" /></div>
+            <div class="form-group span-2"><label class="form-label">เลขเครื่องยนต์ <span class="req">*</span></label><input type="text" class="form-input" style="text-transform:uppercase;" /></div>
+            <div class="form-group" id="tractor-hp-engine"><label class="form-label">แรงม้า <span class="req">*</span></label><div class="input-with-unit"><input type="text" class="form-input" value="40" /><span class="input-unit">HP</span></div></div>
+            <div class="form-group"><label class="form-label">จำนวนชั่วโมงการทำงาน</label><div class="input-with-unit"><input type="text" class="form-input" /><span class="input-unit">ชม.</span></div></div>
+            <div class="form-group"><label class="form-label">วันครบกำหนดเสียภาษี</label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+            <div class="form-group span-2"><label class="form-label">ที่มาของวันครบกำหนดเสียภาษี</label><select class="form-select"><option>เลือก</option><option>หน้าภาษี</option><option>ใบเสร็จต่อภาษี/ป้ายต่อภาษี</option></select></div>
+            <div class="form-group"><label class="form-label">เลขที่คู่มือ</label><input type="text" class="form-input" /></div>
+          </div>
+
+          <!-- Status -->
+          <div class="section-subtitle">สถานะการดัดแปลง & ความถูกต้อง</div>
+          <div style="margin-bottom:4px;">
+            <div class="radio-row">
+              <div class="radio-row-label">สถานะการดัดแปลงสภาพ อื่นๆ</div>
+              <div class="radio-group">
+                <div class="radio-option"><input type="radio" name="tractor_mod" id="tractor_mod_no" checked /><label for="tractor_mod_no">ไม่ดัดแปลง</label></div>
+                <div class="radio-option"><input type="radio" name="tractor_mod" id="tractor_mod_yes" /><label for="tractor_mod_yes">ดัดแปลง</label></div>
+              </div>
+            </div>
+            <div class="radio-row">
+              <div class="radio-row-label">ชื่อในเล่มทะเบียนรถตรงกับในบัตรประชาชน</div>
+              <div class="radio-group">
+                <div class="radio-option"><input type="radio" name="tractor_name_match" id="tractor_match_yes" checked /><label for="tractor_match_yes">ตรงกัน</label></div>
+                <div class="radio-option"><input type="radio" name="tractor_name_match" id="tractor_match_no" /><label for="tractor_match_no">ไม่ตรงกัน</label></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Accessories -->
+          <div class="section-subtitle">อุปกรณ์เสริม</div>
+          <div class="accessories-grid" id="tractor-accessories">
+            <div class="checkbox-row"><input type="checkbox" id="acc-1" /><label for="acc-1">ใบมีดดันดินแบบคานล่าง</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="acc-2" /><label for="acc-2">ใบมีดดันหินดินแบบคานบน</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="acc-3" /><label for="acc-3">ผานพรวน</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="acc-4" /><label for="acc-4">ผานบุกเบิก</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="acc-5" /><label for="acc-5">ผานยกร่อง</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="acc-6" /><label for="acc-6">โรตารี (จอบหมุน)</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="acc-7" /><label for="acc-7">เครื่องตัดหญ้า</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="acc-8" /><label for="acc-8">บุ้งกี๋</label></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:12px;" id="tractor-acc-add">
+            <input type="text" class="form-input" id="acc-custom-input" placeholder="เพิ่มรายการอุปกรณ์เสริม..." style="max-width:300px;" />
+            <button class="btn btn-secondary" onclick="addCustomAccessory()" style="white-space:nowrap;">+ เพิ่มรายการ</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ╔════════════════════════════════════════════════╗ -->
+    <!-- ║  LAND SECTION                                  ║ -->
+    <!-- ╚════════════════════════════════════════════════╝ -->
+    <div id="section-land" style="display:none;">
+
+      <!-- Ownership -->
+      <div class="section-card">
+        <div class="section-header"><h2>ผู้ถือครองกรรมสิทธิ์</h2><div class="section-check" onclick="this.classList.toggle('checked')">&#10003;</div></div>
+        <div class="section-body">
+          <!-- Name match check -->
+          <div class="form-grid" style="margin-bottom:16px;">
+            <div class="form-group span-3">
+              <label class="form-label">ชื่อผู้ถือครองกรรมสิทธิ์ตรงกับลูกค้า <span class="req">*</span></label>
+              <div style="display:flex;gap:16px;margin-top:8px;">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+                  <input type="radio" name="land-owner-match" value="match" onchange="onOwnerMatchChange()" /> ตรง — ชื่อในโฉนดตรงกับลูกค้า
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+                  <input type="radio" name="land-owner-match" value="no-match" onchange="onOwnerMatchChange()" checked /> ไม่ตรง — ชื่อในโฉนดไม่ตรงกับลูกค้า
+                </label>
+              </div>
+            </div>
+          </div>
+          <!-- Pre-filled banner (shown when matched) -->
+          <div id="land-owner-prefill-banner" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#2e7d32;">
+            ระบบดึงข้อมูลจากลูกค้าผู้กู้มาแสดงอัตโนมัติ
+          </div>
+          <!-- Owner detail fields -->
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">คำนำหน้า <span class="req">*</span></label><select class="form-select" id="land-owner-prefix"><option>เลือก</option><option>นาย</option><option>นาง</option><option>นางสาว</option></select></div>
+            <div class="form-group span-2"><label class="form-label">ชื่อ <span class="req">*</span></label><input type="text" class="form-input" id="land-owner-fname" /></div>
+            <div class="form-group span-2"><label class="form-label">นามสกุล <span class="req">*</span></label><input type="text" class="form-input" id="land-owner-lname" /></div>
+            <div class="form-group"><label class="form-label">วันที่ครอบครอง</label><input type="text" class="form-input date-input" id="land-owner-possession-date" placeholder="วว/ดด/ปปปป" /></div>
+            <div class="form-group"><label class="form-label">ประเภทการครอบครอง</label><select class="form-select" id="land-owner-type" onchange="onOwnershipTypeChange()"><option>เลือก</option><option>ปกติ</option><option>โอนกรมสิทธิ์ภายในครอบครัว</option><option>เพิ่งผ่อนชำระเสร็จ</option></select></div>
+            <div class="form-group" id="land-prev-owner-group" style="display:none;"><label class="form-label">ผู้ถือครองก่อนหน้า</label><select class="form-select"><option>เลือก</option><option>บิดา/มารดา</option><option>คู่สมรส</option><option>บุตร</option></select></div>
+            <div class="form-group span-2" id="land-prev-date-group" style="display:none;"><label class="form-label">วันที่ครอบครอง (ผู้ถือครองก่อนหน้า)</label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Title Deed -->
+      <div class="section-card">
+        <div class="section-header"><h2>เอกสารสิทธิ</h2><div class="section-check" onclick="this.classList.toggle('checked')">&#10003;</div></div>
+        <div class="section-body">
+          <div class="section-subtitle">ข้อมูลเอกสาร</div>
+          <div class="form-grid">
+            <div class="form-group span-2"><label class="form-label">ประเภทเอกสารสิทธิ <span class="req">*</span></label>
+              <select class="form-select" id="deed-type" onchange="onDeedTypeChange()"><option>เลือก</option><option value="ns4">โฉนดที่ดิน (นส.4)</option><option value="ns3k">หนังสือรับรองการใช้ประโยชน์ (นส.3 ก)</option><option value="condo">หนังสือกรรมสิทธิ์ห้องชุด (อ.ช.2)</option></select>
+            </div>
+            <!-- ประเภท นส.4 — visible when deed-type = ns4 -->
+            <div class="form-group" id="ns4-subtype-group" style="display:none;"><label class="form-label">ประเภท นส.4 <span class="req">*</span></label><select class="form-select" id="ns4-subtype"><option>เลือก</option><option>นส.4 ก.</option><option>นส.4 จ.</option></select></div>
+            <!-- ประเภทหลักประกัน — visible when ns4 or ns3k -->
+            <div class="form-group" id="collateral-type-group" style="display:none;"><label class="form-label">ประเภทหลักประกัน <span class="req">*</span></label><select class="form-select" id="land-collateral-type" onchange="onLandCollateralTypeChange()"><option>เลือก</option><option>ที่ดินเปล่า</option><option>ที่ดินพร้อมสิ่งปลูกสร้าง</option></select></div>
+            <!-- ประเภทหลักประกันย่อย — for ns4/ns3k, options depend on ประเภทหลักประกัน -->
+            <div class="form-group span-2" id="collateral-subtype-group" style="display:none;"><label class="form-label">ประเภทหลักประกันย่อย</label><select class="form-select" id="land-collateral-subtype"><option>เลือก</option></select></div>
+            <!-- ประเภทหลักประกันย่อย — for condo (อช.2) -->
+            <div class="form-group span-2" id="condo-subtype-group" style="display:none;"><label class="form-label">ประเภทหลักประกันย่อย</label><select class="form-select" id="condo-subtype" onchange="onCondoSubtypeChange()"><option>เลือก</option><option>ห้องชุดสำนักงาน</option><option>ห้องชุดเพื่อพาณิชยกรรม</option><option>ห้องชุดเพื่ออยู่อาศัย</option></select></div>
+            <!-- land-only fields: เลขที่โฉนด, เลขที่ดิน, เนื้อที่ -->
+            <div class="form-group" id="land-deed-number-group"><label class="form-label">เลขที่โฉนด <span class="req">*</span></label><input type="text" class="form-input" /></div>
+            <div class="form-group" id="land-land-number-group"><label class="form-label">เลขที่ดิน <span class="req">*</span></label><input type="text" class="form-input" /></div>
+            <div class="form-group span-3" id="land-area-group"><label class="form-label">เนื้อที่ <span class="req">*</span></label>
+              <div class="area-input">
+                <div class="area-field"><input type="text" class="form-input" placeholder="0" /><span class="input-unit">ไร่</span></div>
+                <div class="area-field"><input type="text" class="form-input" placeholder="0" /><span class="input-unit">งาน</span></div>
+                <div class="area-field"><input type="text" class="form-input" placeholder="0.00" /><span class="input-unit">ตร.วา</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="form-grid" id="land-area-sqm-group" style="display:none;">
+            <div class="form-group span-2"><label class="form-label">เนื้อที่ประมาณ</label><div class="input-with-unit"><input type="text" class="form-input" placeholder="0.00" /><span class="input-unit">ตร.ม.</span></div></div>
+          </div>
+
+          <!-- ที่ตั้งเอกสารสิทธิ — hidden for อช.2 -->
+          <div id="land-location-section">
+            <div id="land-location-fields">
+              <div class="section-subtitle">ที่ตั้งเอกสารสิทธิ</div>
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">ตำบล / แขวง <span class="req">*</span></label><input type="text" class="form-input" /></div>
+                <div class="form-group"><label class="form-label">อำเภอ / เขต <span class="req">*</span></label><input type="text" class="form-input" /></div>
+                <div class="form-group"><label class="form-label">จังหวัด <span class="req">*</span></label><select class="form-select"><option>เลือก</option><option>กรุงเทพมหานคร</option><option>เชียงใหม่</option><option>ขอนแก่น</option><option>นครราชสีมา</option><option>อื่นๆ...</option></select></div>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group span-2" id="land-address-match-group" style="display:none;"><label class="form-label">ที่ตั้งหลักประกันตรงกับที่อยู่ใด</label><select class="form-select" id="land-address-match" onchange="onAddressMatchChange()"><option>เลือก</option><option value="registered">ที่อยู่ตามทะเบียนบ้าน</option><option value="current">ที่อยู่ปัจจุบัน</option><option value="other">อื่นๆ</option></select></div>
+            </div>
+          </div>
+
+          <div id="land-address-section" style="display:none;">
+            <!-- Pre-filled banner for address -->
+            <div id="land-address-prefill-banner" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#2e7d32;">
+              ระบบดึงข้อมูลที่อยู่มาแสดงอัตโนมัติ
+            </div>
+
+            <div class="section-subtitle">ที่อยู่หลักประกัน</div>
+            <div class="form-grid" id="land-address-fields">
+              <div class="form-group"><label class="form-label">บ้านเลขที่</label><input type="text" class="form-input" id="land-addr-house" /></div>
+              <div class="form-group"><label class="form-label">หมู่บ้าน / อาคาร</label><input type="text" class="form-input" id="land-addr-village" /></div>
+              <div class="form-group"><label class="form-label">หมู่</label><input type="text" class="form-input" id="land-addr-moo" /></div>
+              <div class="form-group"><label class="form-label">ซอย</label><input type="text" class="form-input" id="land-addr-soi" /></div>
+              <div class="form-group"><label class="form-label">ถนน</label><input type="text" class="form-input" id="land-addr-road" /></div>
+              <div class="form-group"><label class="form-label">แขวง / ตำบล</label><input type="text" class="form-input" id="land-addr-subdistrict" /></div>
+              <div class="form-group"><label class="form-label">เขต / อำเภอ</label><input type="text" class="form-input" id="land-addr-district" /></div>
+              <div class="form-group"><label class="form-label">จังหวัด</label><select class="form-select" id="land-addr-province"><option>เลือก</option><option>กรุงเทพมหานคร</option><option>เชียงใหม่</option><option>ขอนแก่น</option><option>นครราชสีมา</option><option>อื่นๆ...</option></select></div>
+              <div class="form-group"><label class="form-label">รหัสไปรษณีย์</label><input type="text" class="form-input" id="land-addr-zipcode" maxlength="5" /></div>
+            </div>
+          </div>
+
+          <!-- Condo — placed BEFORE พิกัด for อช.2 -->
+          <div id="condo-section" style="display:none;">
+            <!-- Condo room fields — shown for all subtypes -->
+            <div id="condo-detail-section" class="condo-section" style="display:none;">
+              <div class="condo-section-title">&#127970; ข้อมูลอาคารชุด (อช.2)</div>
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">ห้องชุดเลขที่</label><input type="text" class="form-input" /></div>
+                <div class="form-group"><label class="form-label">ชั้นที่</label><input type="text" class="form-input" /></div>
+                <div class="form-group"><label class="form-label">อาคารเลขที่</label><input type="text" class="form-input" /></div>
+                <div class="form-group span-2"><label class="form-label">ทะเบียนอาคารชุด</label><input type="text" class="form-input" /></div>
+                <div class="form-group span-2"><label class="form-label">ชื่ออาคารชุด</label><input type="text" class="form-input" /></div>
+              </div>
+              <!-- Condo address — only for สำนักงาน and พาณิชยกรรม -->
+              <div id="condo-address-detail" style="display:none;">
+              <div class="section-subtitle" style="margin-top:16px;">ที่อยู่อาคารชุด</div>
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">หมู่</label><input type="text" class="form-input" /></div>
+                <div class="form-group"><label class="form-label">ซอย</label><input type="text" class="form-input" /></div>
+                <div class="form-group"><label class="form-label">ถนน</label><input type="text" class="form-input" /></div>
+                <div class="form-group"><label class="form-label">แขวง / ตำบล</label><input type="text" class="form-input" /></div>
+                <div class="form-group"><label class="form-label">เขต / อำเภอ</label><input type="text" class="form-input" /></div>
+                <div class="form-group"><label class="form-label">จังหวัด</label><select class="form-select"><option>เลือก</option><option>กรุงเทพมหานคร</option><option>เชียงใหม่</option><option>ขอนแก่น</option><option>นครราชสีมา</option><option>อื่นๆ...</option></select></div>
+                <div class="form-group"><label class="form-label">รหัสไปรษณีย์</label><input type="text" class="form-input" maxlength="5" /></div>
+              </div>
+              </div><!-- /condo-address-detail -->
+            </div>
+            <!-- Condo residential: ที่ตั้งหลักประกันตรงกับที่อยู่ใด — shown when ห้องชุดเพื่ออยู่อาศัย -->
+            <div id="condo-address-match-section" style="display:none;">
+              <div class="form-grid" style="margin-top:16px;">
+                <div class="form-group span-2"><label class="form-label">ที่ตั้งหลักประกันตรงกับที่อยู่ใด</label><select class="form-select" id="condo-address-match" onchange="onCondoAddressMatchChange()"><option>เลือก</option><option value="registered">ที่อยู่ตามทะเบียนบ้าน</option><option value="current">ที่อยู่ปัจจุบัน</option><option value="other">อื่นๆ</option></select></div>
+              </div>
+              <div id="condo-address-prefill-banner" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 14px;margin:12px 0;font-size:13px;color:#2e7d32;">
+                ระบบดึงข้อมูลที่อยู่มาแสดงอัตโนมัติ
+              </div>
+              <div id="condo-address-fields-section" style="display:none;">
+                <div class="section-subtitle">ที่อยู่หลักประกัน</div>
+                <div class="form-grid">
+                  <div class="form-group"><label class="form-label">บ้านเลขที่</label><input type="text" class="form-input" id="condo-addr-house" /></div>
+                  <div class="form-group"><label class="form-label">หมู่บ้าน / อาคาร</label><input type="text" class="form-input" id="condo-addr-village" /></div>
+                  <div class="form-group"><label class="form-label">หมู่</label><input type="text" class="form-input" id="condo-addr-moo" /></div>
+                  <div class="form-group"><label class="form-label">ซอย</label><input type="text" class="form-input" id="condo-addr-soi" /></div>
+                  <div class="form-group"><label class="form-label">ถนน</label><input type="text" class="form-input" id="condo-addr-road" /></div>
+                  <div class="form-group"><label class="form-label">แขวง / ตำบล</label><input type="text" class="form-input" id="condo-addr-subdistrict" /></div>
+                  <div class="form-group"><label class="form-label">เขต / อำเภอ</label><input type="text" class="form-input" id="condo-addr-district" /></div>
+                  <div class="form-group"><label class="form-label">จังหวัด</label><select class="form-select" id="condo-addr-province"><option>เลือก</option><option>กรุงเทพมหานคร</option><option>เชียงใหม่</option><option>ขอนแก่น</option><option>นครราชสีมา</option><option>อื่นๆ...</option></select></div>
+                  <div class="form-group"><label class="form-label">รหัสไปรษณีย์</label><input type="text" class="form-input" id="condo-addr-zipcode" maxlength="5" /></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-subtitle">พิกัด & แผนที่</div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">ละติจูด</label><input type="text" class="form-input" placeholder="เช่น 13.7563" /></div>
+            <div class="form-group"><label class="form-label">ลองติจูด</label><input type="text" class="form-input" placeholder="เช่น 100.5018" /></div>
+            <div class="form-group span-3"><label class="form-label">Pin Google Map</label><div class="map-placeholder" onclick="alert('เปิด Google Maps')">&#128205; คลิกเพื่อปักหมุดบน Google Maps</div></div>
+          </div>
+
+          <div id="land-conditions-section" style="display:none;">
+            <div class="section-subtitle">เงื่อนไขต่างๆ (กรณี นส.4 และ นส.3ก.)</div>
+            <div class="conditions-grid" style="margin-bottom:18px;">
+              <div class="checkbox-row"><input type="checkbox" id="cond-1" onchange="onConditionChange()" /><label for="cond-1">ที่ดินติดภาระจำยอม</label></div>
+              <div class="checkbox-row"><input type="checkbox" id="cond-2" onchange="onConditionChange()" /><label for="cond-2">ที่ดินติดสัญญาขายฝาก / สัญญาจำนอง / ไม่เป็นที่ดินที่ระบุการห้ามโอน (โฉนดหลังแดง)</label></div>
+              <div class="checkbox-row"><input type="checkbox" id="cond-3" onchange="onConditionChange()" /><label for="cond-3">ที่ดินแปลงเข้า-ออก, แปลงถนน, แปลงตะเข็บ หรือทางสาธารณูปโภค</label></div>
+              <div class="checkbox-row"><input type="checkbox" id="cond-4" onchange="onConditionChange()" /><label for="cond-4">ที่ดินติดสิทธิต่างๆ เช่น สิทธิอาศัย สิทธิเก็บกิน สิทธิเหนือพื้นดิน</label></div>
+              <div class="checkbox-row"><input type="checkbox" id="cond-none" onchange="onConditionNoneChange()" /><label for="cond-none">ไม่ติดเงื่อนไขใดๆข้างต้น</label></div>
+            </div>
+          </div>
+
+          <div id="condo-conditions-section" style="display:none;">
+            <div class="section-subtitle">เงื่อนไขต่างๆ (กรณี อช.2)</div>
+            <div class="conditions-grid" style="margin-bottom:18px;">
+              <div class="checkbox-row"><input type="checkbox" id="condo-cond-1" onchange="onCondoConditionChange()" /><label for="condo-cond-1">ที่ดินติดสัญญาขายฝาก / สัญญาจำนอง / ไม่เป็นที่ดินที่ระบุการห้ามโอน (โฉนดหลังแดง)</label></div>
+              <div class="checkbox-row"><input type="checkbox" id="condo-cond-2" onchange="onCondoConditionChange()" /><label for="condo-cond-2">ที่ดินติดสิทธิต่างๆ เช่น สิทธิอาศัย สิทธิเก็บกิน สิทธิเหนือพื้นดิน</label></div>
+              <div class="checkbox-row"><input type="checkbox" id="condo-cond-none" onchange="onCondoConditionNoneChange()" /><label for="condo-cond-none">ไม่ติดเงื่อนไขใดๆข้างต้น</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Land Characteristics — hidden for อช.2 -->
+      <div class="section-card" id="land-characteristics-section" style="display:none;">
+        <div class="section-header"><h2>ลักษณะที่ดิน</h2><div class="section-check" onclick="this.classList.toggle('checked')">&#10003;</div></div>
+        <div class="section-body">
+          <div style="display:flex;flex-direction:column;gap:18px;">
+            <div>
+              <div class="form-label" style="margin-bottom:8px;">รูปแปลงที่ดิน <span class="req">*</span></div>
+              <div style="display:flex;gap:20px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="land-shape" /> สี่เหลี่ยมต่างๆ</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="land-shape" /> เหลี่ยมอื่นๆ</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="land-shape" /> สามเหลี่ยม</label>
+              </div>
+            </div>
+            <div>
+              <div class="form-label" style="margin-bottom:8px;">ถนน เข้า-ออก หลักประกัน <span class="req">*</span></div>
+              <div style="display:flex;gap:20px;flex-wrap:wrap;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="land-road" /> ถนนคอนกรีต/ถนนดำ</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="land-road" /> ถนนหินคลุก</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="land-road" /> ถนนลูกรัง/ถนนดิน</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="land-road" /> ไม่มีถนนเข้า-ออกหลักประกัน</label>
+              </div>
+            </div>
+            <div>
+              <div class="form-label" style="margin-bottom:8px;">ระบบไฟฟ้า <span class="req">*</span></div>
+              <div style="display:flex;gap:20px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="land-electric" /> เข้าถึง</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="land-electric" /> เข้าไม่ถึง</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appraisal -->
+      <div class="section-card">
+        <div class="section-header"><h2>ข้อมูลใบประเมินจากกรมที่ดิน</h2><div class="section-check" onclick="this.classList.toggle('checked')">&#10003;</div></div>
+        <div class="section-body">
+          <div class="form-grid">
+            <div class="form-group span-2" id="appraisal-land-group"><label class="form-label" id="appraisal-land-label">ราคาประเมินหลักประกัน (ที่ดิน) <span class="req">*</span></label><div class="input-with-unit"><input type="text" class="form-input" /><span class="input-unit">บาท</span></div></div>
+            <div class="form-group span-2" id="appraisal-building-group" style="display:none;"><label class="form-label">ราคาประเมินหลักประกัน (สิ่งปลูกสร้าง)</label><div class="input-with-unit"><input type="text" class="form-input" /><span class="input-unit">บาท</span></div></div>
+            <div class="form-group"><label class="form-label">วันที่ออกใบประเมิน</label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+            <div class="form-group" id="condo-debt-free-date" style="display:none;"><label class="form-label">วันที่ออกเอกสารใบปลอดหนี้</label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+          </div>
+          <div class="section-subtitle">Checklist</div>
+          <div class="conditions-grid" style="margin-bottom:4px;">
+            <div class="checkbox-row"><input type="checkbox" id="appr-1" onchange="onApprConditionChange()" /><label for="appr-1">ใบประเมินติดคำสั่งอายัด/ติดคำสั่งยึด</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="appr-2" onchange="onApprConditionChange()" /><label for="appr-2">ใบประเมินมีการออกใบแทน</label></div>
+            <div class="checkbox-row"><input type="checkbox" id="appr-none" onchange="onApprConditionNoneChange()" /><label for="appr-none">ไม่ติดเงื่อนไขใดๆข้างต้น</label></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /section-land -->
+
+    <!-- ╔════════════════════════════════════════════════╗ -->
+    <!-- ║  CAR SECTION                                    ║ -->
+    <!-- ╚════════════════════════════════════════════════╝ -->
+    <div id="section-car" style="display:none;">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>ข้อมูลหลักประกัน — รถยนต์</h2>
+          <div class="section-check" onclick="this.classList.toggle('checked')">&#10003;</div>
+        </div>
+        <div class="section-body">
+
+          <!-- Car sub-type tabs -->
+          <div style="display:flex;gap:8px;margin-bottom:18px;">
+            <button class="type-tab active" onclick="switchCarSubtype(this,'sedan')" style="font-size:13px;padding:6px 16px;">รถเก๋ง</button>
+            <button class="type-tab" onclick="switchCarSubtype(this,'pickup')" style="font-size:13px;padding:6px 16px;">รถกระบะ</button>
+            <button class="type-tab" onclick="switchCarSubtype(this,'van')" style="font-size:13px;padding:6px 16px;">รถตู้</button>
+          </div>
+
+          <!-- Registration -->
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">วันที่จดทะเบียน</label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+            <div class="form-group"><label class="form-label">วันที่ครอบครอง</label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+            <div class="form-group"><label class="form-label">ประเภทการครอบครอง</label><select class="form-select"><option>เลือก</option><option>ปกติ</option><option>โอนกรมสิทธิ์ภายในครอบครัว</option><option>เพิ่งผ่อนชำระเสร็จ</option></select></div>
+            <div class="form-group"><label class="form-label">วันที่ครอบครอง (ผู้ถือครองก่อนหน้า)</label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+            <div class="form-group"><label class="form-label">ผู้ถือครองก่อนหน้า</label><select class="form-select"><option>เลือก</option><option>มือหนึ่ง</option><option>มือสอง</option><option>มือสามขึ้นไป</option></select></div>
+          </div>
+
+          <!-- Vehicle info -->
+          <div class="form-grid" style="margin-top:16px;">
+            <div class="form-group"><label class="form-label">เลขทะเบียน</label><input type="text" class="form-input" /></div>
+            <div class="form-group"><label class="form-label">จังหวัด</label><select class="form-select"><option>เลือก</option><option>กรุงเทพมหานคร</option><option>เชียงใหม่</option><option>ขอนแก่น</option><option>นครราชสีมา</option><option>อื่นๆ...</option></select></div>
+            <div class="form-group"><label class="form-label">ประเภทรถตาม พ.ร.บ.(ร.ย.)</label><select class="form-select" id="car-act-type" onchange="onCarActTypeChange()"><option>เลือก</option><option>ร.ย.1</option><option>ร.ย.2</option><option>ร.ย.3</option><option>ร.ย.12</option></select></div>
+            <div class="form-group"><label class="form-label">ยี่ห้อรถ <span class="req">*</span></label><select class="form-select" id="car-brand" onchange="onCarBrandChange()"><option>เลือก</option><option>Toyota</option><option>Honda</option><option>Isuzu</option><option>Mitsubishi</option><option>Nissan</option><option>Mazda</option><option>Ford</option><option>MG</option></select></div>
+            <div class="form-group"><label class="form-label">แบบรุ่น <span class="req">*</span></label><select class="form-select" id="car-model"><option>เลือก</option></select></div>
+          </div>
+          <div id="car-dropdown-mode">
+            <div class="form-grid" style="margin-top:16px;">
+              <div class="form-group"><label class="form-label">รุ่นปี (ค.ศ.) <span class="req">*</span></label><select class="form-select"><option>เลือก</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option><option>2019</option><option>2018</option></select></div>
+              <div class="form-group"><label class="form-label">เกียร์</label><select class="form-select"><option>เลือก</option><option>อัตโนมัติ (AT)</option><option>ธรรมดา (MT)</option><option>CVT</option></select></div>
+              <div class="form-group"><label class="form-label">รุ่นย่อย</label><select class="form-select"><option>เลือก</option></select></div>
+              <div class="form-group"><label class="form-label">จำนวนประตู</label><select class="form-select"><option>เลือก</option><option>2</option><option>4</option><option>5</option></select></div>
+              <div class="form-group"><label class="form-label">คำอธิบาย</label><select class="form-select"><option>เลือก</option></select></div>
+            </div>
+          </div>
+
+          <!-- ไม่มีตัวเลือกรถนี้ในระบบ -->
+          <div style="margin:16px 0;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+              <input type="checkbox" id="car-no-data" onchange="toggleManual('car')" /> ไม่มีตัวเลือกรถนี้ในระบบ
+            </label>
+          </div>
+          <div id="car-manual-mode" style="display:none;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:16px;margin-bottom:16px;">
+            <div class="section-subtitle" style="margin-top:0;">ข้อมูลตัวรถ</div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">ยี่ห้อรถ <span class="req">*</span></label><input type="text" class="form-input" placeholder="ระบุยี่ห้อ" /></div>
+              <div class="form-group"><label class="form-label">แบบรุ่น <span class="req">*</span></label><input type="text" class="form-input" placeholder="ระบุรุ่น" /></div>
+              <div class="form-group"><label class="form-label">รุ่นปี (ค.ศ.) <span class="req">*</span></label><input type="text" class="form-input" placeholder="เช่น 2023" /></div>
+              <div class="form-group"><label class="form-label">เกียร์</label><select class="form-select"><option>เลือก</option><option>อัตโนมัติ (AT)</option><option>ธรรมดา (MT)</option><option>CVT</option></select></div>
+            </div>
+            <div class="form-grid" style="margin-top:12px;">
+              <div class="form-group"><label class="form-label">รุ่นย่อย</label><input type="text" class="form-input" placeholder="ระบุรุ่นย่อย" /></div>
+              <div class="form-group"><label class="form-label">จำนวนประตู</label><div class="input-with-unit"><input type="text" class="form-input" placeholder="" /><span class="input-unit">ประตู</span></div></div>
+              <div class="form-group"><label class="form-label">จำนวนเงินสูงสุดที่ CA อนุมัติ</label><div class="input-with-unit"><input type="text" class="form-input" /><span class="input-unit">บาท</span></div></div>
+            </div>
+          </div>
+
+          <!-- สี -->
+          <div class="section-subtitle">สี <span style="font-weight:400;color:var(--gray-400);">(เลือกได้สูงสุด 3 สี)</span> <span id="car-color-count" style="font-size:12px;color:var(--gray-400);margin-left:4px;"></span></div>
+          <div id="car-color-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;"></div>
+
+          <!-- Chassis / Engine / CC / Mileage / Tax -->
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">เลขตัวถัง</label><input type="text" class="form-input" /></div>
+            <div class="form-group"><label class="form-label">เลขเครื่องยนต์</label><input type="text" class="form-input" /></div>
+            <div class="form-group"><label class="form-label">จำนวนซีซี</label><div class="input-with-unit"><input type="text" class="form-input" /><span class="input-unit">ซีซี</span></div></div>
+            <div class="form-group"><label class="form-label">เลขไมล์</label><div class="input-with-unit"><input type="text" class="form-input" id="car-mileage" /><span class="input-unit">กม.</span></div>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--gray-500);margin-top:6px;"><input type="checkbox" onchange="document.getElementById('car-mileage').disabled=this.checked;if(this.checked)document.getElementById('car-mileage').value='';" /> ไม่สามารถระบุได้</label>
+            </div>
+            <div class="form-group"><label class="form-label">วันครบกำหนดเสียภาษี (พ.ศ.)</label><input type="text" class="form-input date-input" placeholder="วว/ดด/ปปปป" /></div>
+          </div>
+          <div class="form-grid" style="margin-top:12px;">
+            <div class="form-group"><label class="form-label">เลขที่คู่มือ</label><input type="text" class="form-input" /></div>
+            <div class="form-group" id="car-cage-group" style="display:none;"><label class="form-label">ติดคอกตู้หรือไม่</label><select class="form-select"><option>เลือก</option><option>ติดคอกตู้</option><option>ไม่ติดคอกตู้</option></select></div>
+          </div>
+
+          <!-- ที่มาของวันครบกำหนดเสียภาษี -->
+          <div class="form-grid">
+            <div class="form-group span-2"><label class="form-label">ที่มาของวันครบกำหนดเสียภาษี</label><select class="form-select"><option>เลือก</option><option>หน้าภาษี</option><option>ใบเสร็จต่อภาษี/ป้ายต่อภาษี</option></select></div>
+          </div>
+
+          <!-- Status radios -->
+          <div style="margin-top:18px;display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;gap:16px;">
+              <span class="form-label" style="min-width:260px;margin:0;">สถานะการดัดแปลงสภาพการติดแก๊ส</span>
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="car-gas" /> ไม่ดัดแปลง (สภาพตามโรงงาน)</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="car-gas" /> ดัดแปลง (เปลี่ยน/เพิ่ม/ลด ถังแก๊ส)</label>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              <span class="form-label" style="min-width:260px;margin:0;">สถานะการดัดแปลงสภาพ อื่นๆ</span>
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="car-mod" /> ไม่ดัดแปลง</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="car-mod" /> ดัดแปลง</label>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              <span class="form-label" style="min-width:260px;margin:0;">ชื่อในเล่มทะเบียนรถตรงกับ ในบัตรประชาชน</span>
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="car-name-match" /> ตรงกัน</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="radio" name="car-name-match" /> ไม่ตรงกัน</label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /section-car -->
+
+    <!-- ── ACTION BAR ── -->
+    <div class="action-bar">
+      <div class="action-bar-left"><div class="save-dot"></div> บันทึกอัตโนมัติแล้ว เมื่อสักครู่</div>
+      <div class="action-bar-right">
+        <button class="btn btn-secondary" onclick="window.history.back()">ย้อนกลับ</button>
+        <button class="btn btn-secondary">บันทึกร่าง</button>
+        <button class="btn btn-primary">ถัดไป: เอกสาร</button>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /page-layout -->
+
+<script>
+// ══════════════════════════════════════════
+// TYPE SWITCHING
+// ══════════════════════════════════════════
+const TYPE_CONFIG = {
+  bike:    { label: 'Bike Title',    collateral: 'Bike',    breadcrumb: 'Bike Title / ข้อมูลหลักประกัน' },
+  car:     { label: 'Car Title',     collateral: 'Car',     breadcrumb: 'Car Title / ข้อมูลหลักประกัน' },
+  tractor: { label: 'Tractor Title', collateral: 'Tractor', breadcrumb: 'Tractor Title / ข้อมูลหลักประกัน' },
+  land:    { label: 'Land Title',    collateral: 'Land',    breadcrumb: 'Land Title / ข้อมูลหลักประกัน' },
+};
+
+function switchType(type) {
+  // Toggle tabs
+  document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  // Toggle sections
+  ['bike','car','tractor','land'].forEach(t => {
+    document.getElementById('section-' + t).style.display = t === type ? 'block' : 'none';
+  });
+
+  // Update sidebar & breadcrumb
+  const cfg = TYPE_CONFIG[type];
+  document.getElementById('sidebar-product-type').textContent = cfg.label;
+  document.getElementById('sidebar-collateral').textContent = cfg.collateral;
+  document.getElementById('breadcrumb-type').textContent = cfg.breadcrumb;
+
+  // Render color grids for the active type
+  if (type === 'bike' || type === 'car' || type === 'tractor') renderColors(type);
+}
+
+// ══════════════════════════════════════════
+// MANUAL ENTRY TOGGLE (bike & tractor)
+// ══════════════════════════════════════════
+function toggleManual(type) {
+  const checked = document.getElementById(type + '-no-data').checked;
+  document.getElementById(type + '-dropdown-mode').style.display = checked ? 'none' : 'grid';
+  document.getElementById(type + '-manual-mode').style.display = checked ? 'block' : 'none';
+  // Tractor: hide แรงม้า in engine section when manual mode has its own
+  if (type === 'tractor') {
+    const hpEngine = document.getElementById('tractor-hp-engine');
+    if (hpEngine) hpEngine.style.display = checked ? 'none' : 'flex';
+  }
+}
+
+// ══════════════════════════════════════════
+// ACT TYPE REMARKS
+// ══════════════════════════════════════════
+function onBikeActTypeChange() {
+  const val = document.getElementById('bike-act-type').value;
+  document.getElementById('ry17-remark').style.display = val === 'RY-17' ? 'flex' : 'none';
+}
+function onTractorActTypeChange() {
+  const val = document.getElementById('tractor-act-type').value;
+  document.getElementById('ry13-remark').style.display = val === 'RY-13' ? 'flex' : 'none';
+}
+
+// ══════════════════════════════════════════
+// BRAND → MODEL (bike)
+// ══════════════════════════════════════════
+function onBikeBrandChange() {
+  const brand = document.getElementById('bike-brand').value;
+  const ms = document.getElementById('bike-model');
+  const m = {
+    honda:['Wave 110i','Wave 125i','Click 125i','Click 150i','PCX 160','Scoopy i','Forza 350','CRF300L','CB150R','ADV 160'],
+    yamaha:['Finn 115i','Grand Filano','NMAX 155','XMAX 300','MT-15','YZF-R15','Exciter 155'],
+    suzuki:['Smash 115','Raider 150','GSX-R150','Burgman Street','V-Strom 250'],
+    kawasaki:['Z125','Ninja 250','Z400','Ninja 400','Versys-X 300','W175'],
+    gpx:['Drone 150','Demon GR200R','Legend 200','Gentleman 200'],
+    other:[],
+  };
+  ms.innerHTML = '<option>เลือก</option>' + (m[brand]||[]).map(v=>`<option>${v}</option>`).join('');
+}
+
+// ══════════════════════════════════════════
+// BRAND → MODEL (tractor)
+// ══════════════════════════════════════════
+function onTractorBrandChange() {
+  const brand = document.getElementById('tractor-brand').value;
+  const ms = document.getElementById('tractor-model');
+  const m = {
+    kubota:['L4018','L5018','M7040','MU5501','B2420','L3608','L4508','M6040'],
+    yanmar:['EF393T','EF453T','YM2000','YM3000','AF-18','AF-22'],
+    'john-deere':['5050D','5075E','5310','6100D'],
+    iseki:['TU1700','TU2100','TA247','TA255'],
+    mitsubishi:['MT2001','MT2501','GS200','GS250'],
+    ford:['4600','6610','TT75'],
+    massey:['MF135','MF165','MF241','MF385'],
+    other:[],
+  };
+  ms.innerHTML = '<option>เลือก</option>' + (m[brand]||[]).map(v=>`<option>${v}</option>`).join('');
+}
+
+// ══════════════════════════════════════════
+// CAR — brand/model, act type, subtype tabs
+// ══════════════════════════════════════════
+function onCarActTypeChange() {}
+
+function onCarBrandChange() {
+  const brand = document.getElementById('car-brand').value;
+  const ms = document.getElementById('car-model');
+  const m = {
+    Toyota:['Vios','Yaris','Corolla Altis','Camry','Hilux Revo','Fortuner','Innova','C-HR','Corolla Cross'],
+    Honda:['City','Civic','Accord','Jazz','HR-V','CR-V','BR-V','WR-V'],
+    Isuzu:['D-Max','MU-X'],
+    Mitsubishi:['Attrage','Mirage','Triton','Pajero Sport','Xpander','Outlander'],
+    Nissan:['Almera','Note','Kicks','Navara','Terra','X-Trail'],
+    Mazda:['Mazda2','Mazda3','CX-3','CX-5','CX-30','BT-50'],
+    Ford:['Ranger','Everest','Territory'],
+    MG:['MG3','MG5','MG ZS','MG HS','MG EP','MG4'],
+  };
+  ms.innerHTML = '<option>เลือก</option>' + (m[brand]||[]).map(v=>`<option>${v}</option>`).join('');
+}
+
+function switchCarSubtype(btn, subtype) {
+  btn.parentElement.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('car-cage-group').style.display = subtype === 'pickup' ? '' : 'none';
+}
+
+// ══════════════════════════════════════════
+// LAND OWNER MATCH (pre-fill from customer)
+// ══════════════════════════════════════════
+const mockCustomer = { prefix: 'นาย', fname: 'สมชาย', lname: 'ใจดี', possessionDate: '15/03/2567', ownerType: 'เจ้าของกรรมสิทธิ์' };
+
+function onOwnerMatchChange() {
+  const matched = document.querySelector('input[name="land-owner-match"][value="match"]').checked;
+  const banner = document.getElementById('land-owner-prefill-banner');
+  const prefix = document.getElementById('land-owner-prefix');
+  const fname = document.getElementById('land-owner-fname');
+  const lname = document.getElementById('land-owner-lname');
+  const pDate = document.getElementById('land-owner-possession-date');
+  const oType = document.getElementById('land-owner-type');
+
+  if (matched) {
+    banner.style.display = 'block';
+    prefix.value = mockCustomer.prefix;
+    fname.value = mockCustomer.fname;
+    lname.value = mockCustomer.lname;
+    pDate.value = mockCustomer.possessionDate;
+    oType.value = mockCustomer.ownerType;
+    fname.style.backgroundColor = '#f1f8e9';
+    lname.style.backgroundColor = '#f1f8e9';
+    pDate.style.backgroundColor = '#f1f8e9';
+  } else {
+    banner.style.display = 'none';
+    prefix.value = 'เลือก';
+    fname.value = '';
+    lname.value = '';
+    pDate.value = '';
+    oType.value = 'เลือก';
+    fname.style.backgroundColor = '';
+    lname.style.backgroundColor = '';
+    pDate.style.backgroundColor = '';
+  }
+}
+
+// ══════════════════════════════════════════
+// OWNERSHIP TYPE → show/hide ผู้ถือครองก่อนหน้า
+// ══════════════════════════════════════════
+function onOwnershipTypeChange() {
+  const val = document.getElementById('land-owner-type').value;
+  const isTransfer = val === 'โอนกรมสิทธิ์ภายในครอบครัว';
+  const isPaidOff = val === 'เพิ่งผ่อนชำระเสร็จ';
+  document.getElementById('land-prev-owner-group').style.display = isTransfer ? '' : 'none';
+  document.getElementById('land-prev-date-group').style.display = (isTransfer || isPaidOff) ? '' : 'none';
+}
+
+// ══════════════════════════════════════════
+// ADDRESS MATCH → pre-fill ที่อยู่หลักประกัน
+// ══════════════════════════════════════════
+const mockAddresses = {
+  registered: { house:'123/4', village:'หมู่บ้านสุขสันต์', moo:'5', soi:'สุขุมวิท 71', road:'สุขุมวิท', subdistrict:'พระโขนงเหนือ', district:'วัฒนา', province:'กรุงเทพมหานคร', zipcode:'10110' },
+  current:    { house:'88/2', village:'The Garden', moo:'', soi:'รามคำแหง 24', road:'รามคำแหง', subdistrict:'หัวหมาก', district:'บางกะปิ', province:'กรุงเทพมหานคร', zipcode:'10240' }
+};
+
+function onAddressMatchChange() {
+  const val = document.getElementById('land-address-match').value;
+  const banner = document.getElementById('land-address-prefill-banner');
+  const fields = ['house','village','moo','soi','road','subdistrict','district','zipcode'];
+  const province = document.getElementById('land-addr-province');
+
+  if (val === 'other' || val === 'เลือก') {
+    banner.style.display = 'none';
+    fields.forEach(f => { const el = document.getElementById('land-addr-' + f); el.value = ''; el.style.backgroundColor = ''; });
+    province.value = 'เลือก'; province.style.backgroundColor = '';
+  } else {
+    const data = mockAddresses[val];
+    if (!data) return;
+    banner.style.display = 'block';
+    fields.forEach(f => { const el = document.getElementById('land-addr-' + f); el.value = data[f] || ''; el.style.backgroundColor = data[f] ? '#f1f8e9' : ''; });
+    province.value = data.province; province.style.backgroundColor = '#f1f8e9';
+  }
+}
+
+// ══════════════════════════════════════════
+// DEED TYPE → conditional dropdowns (land)
+// ══════════════════════════════════════════
+function onCondoSubtypeChange() {
+  const val = document.getElementById('condo-subtype').value;
+  const isSelected = val !== 'เลือก';
+  const showCommercial = val === 'ห้องชุดสำนักงาน' || val === 'ห้องชุดเพื่อพาณิชยกรรม';
+  const showResidential = val === 'ห้องชุดเพื่ออยู่อาศัย';
+  // Show condo detail fields (room/building info) for all 3 subtypes
+  document.getElementById('condo-detail-section').style.display = isSelected ? '' : 'none';
+  // Show address fields only for สำนักงาน/พาณิชยกรรม
+  document.getElementById('condo-address-detail').style.display = showCommercial ? '' : 'none';
+  // Show address match dropdown for อยู่อาศัย
+  document.getElementById('condo-address-match-section').style.display = showResidential ? '' : 'none';
+  if (!showResidential) {
+    document.getElementById('condo-address-match').value = 'เลือก';
+    document.getElementById('condo-address-prefill-banner').style.display = 'none';
+    document.getElementById('condo-address-fields-section').style.display = 'none';
+    clearCondoAddressFields();
+  }
+}
+
+function onCondoAddressMatchChange() {
+  const val = document.getElementById('condo-address-match').value;
+  const banner = document.getElementById('condo-address-prefill-banner');
+  const fields = ['house','village','moo','soi','road','subdistrict','district','zipcode'];
+  const province = document.getElementById('condo-addr-province');
+
+  if (val === 'other' || val === 'เลือก') {
+    banner.style.display = 'none';
+    document.getElementById('condo-address-fields-section').style.display = val === 'other' ? '' : 'none';
+    clearCondoAddressFields();
+  } else {
+    const data = mockAddresses[val];
+    if (!data) return;
+    document.getElementById('condo-address-fields-section').style.display = '';
+    banner.style.display = 'block';
+    fields.forEach(f => { const el = document.getElementById('condo-addr-' + f); el.value = data[f] || ''; el.style.backgroundColor = data[f] ? '#f1f8e9' : ''; });
+    province.value = data.province; province.style.backgroundColor = '#f1f8e9';
+  }
+}
+
+function clearCondoAddressFields() {
+  ['house','village','moo','soi','road','subdistrict','district','zipcode'].forEach(f => {
+    const el = document.getElementById('condo-addr-' + f); el.value = ''; el.style.backgroundColor = '';
+  });
+  const prov = document.getElementById('condo-addr-province'); prov.value = 'เลือก'; prov.style.backgroundColor = '';
+}
+
+function onDeedTypeChange() {
+  const val = document.getElementById('deed-type').value;
+  const isNs4 = val === 'ns4';
+  const isNs3k = val === 'ns3k';
+  const isCondo = val === 'condo';
+  const isLand = isNs4 || isNs3k;
+
+  document.getElementById('ns4-subtype-group').style.display = isNs4 ? '' : 'none';
+  document.getElementById('collateral-type-group').style.display = isLand ? '' : 'none';
+  document.getElementById('collateral-subtype-group').style.display = isLand ? '' : 'none';
+  document.getElementById('condo-subtype-group').style.display = isCondo ? '' : 'none';
+  document.getElementById('condo-section').style.display = isCondo ? 'block' : 'none';
+  if (!isCondo) { document.getElementById('condo-detail-section').style.display = 'none'; document.getElementById('condo-subtype').value = 'เลือก'; }
+  document.getElementById('land-conditions-section').style.display = isLand ? '' : 'none';
+  document.getElementById('land-characteristics-section').style.display = isLand ? '' : 'none';
+  document.getElementById('condo-conditions-section').style.display = isCondo ? '' : 'none';
+  document.getElementById('condo-debt-free-date').style.display = isCondo ? '' : 'none';
+  // Hide เลขที่ดิน, ที่ตั้งเอกสารสิทธิ for อช.2 — keep โฉนด & เนื้อที่ visible
+  document.getElementById('land-deed-number-group').querySelector('.form-label').innerHTML = isCondo ? 'ปลูกสร้างบนโฉนดเลขที่ <span class="req">*</span>' : 'เลขที่โฉนด <span class="req">*</span>';
+  document.getElementById('land-land-number-group').style.display = isCondo ? 'none' : '';
+  document.getElementById('land-area-sqm-group').style.display = isCondo ? '' : 'none';
+  document.getElementById('land-location-section').style.display = isCondo ? 'none' : '';
+
+  // Reset dependent dropdowns and address match
+  if (isLand) onLandCollateralTypeChange();
+  updateAddressMatchVisibility();
+  updateAppraisalFields();
+}
+
+const landSubtypeOptions = {
+  'ที่ดินเปล่า': ['ที่ดินที่ก่อให้เกิดมลพิษ เช่น บ่อขยะ บ่อบำบัดน้ำเสีย','บ่อดิน','บ่อเลี้ยงปลา','ที่นา','ที่ดินเกษตรกรรม','ที่ดินเปล่า'],
+  'ที่ดินพร้อมสิ่งปลูกสร้าง': ['โรงงาน','โกดัง','หอพัก','ตึกสำนักงาน','บ้านแฝด','อาคารพาณิชย์','ทาวน์เฮ้าส์','บ้านเดี่ยว']
+};
+
+function onLandCollateralTypeChange() {
+  const sel = document.getElementById('land-collateral-type').value;
+  const sub = document.getElementById('land-collateral-subtype');
+  const opts = landSubtypeOptions[sel] || [];
+  sub.innerHTML = '<option>เลือก</option>' + opts.map(o => `<option>${o}</option>`).join('');
+  updateAddressMatchVisibility();
+  updateAppraisalFields();
+}
+
+function updateAppraisalFields() {
+  const deed = document.getElementById('deed-type').value;
+  const isCondo = deed === 'condo';
+  const isLand = deed === 'ns4' || deed === 'ns3k';
+  const collType = document.getElementById('land-collateral-type').value;
+  const hasBuilding = isLand && collType === 'ที่ดินพร้อมสิ่งปลูกสร้าง';
+  // Label: อช.2 → "ราคาประเมินหลักประกัน", นส.4/นส.3ก → "ราคาประเมินหลักประกัน (ที่ดิน)"
+  document.getElementById('appraisal-land-label').innerHTML = isCondo
+    ? 'ราคาประเมินหลักประกัน <span class="req">*</span>'
+    : 'ราคาประเมินหลักประกัน (ที่ดิน) <span class="req">*</span>';
+  // สิ่งปลูกสร้าง: only when นส.4/นส.3ก AND ประเภทหลักประกันย่อย = ที่ดินพร้อมสิ่งปลูกสร้าง
+  document.getElementById('appraisal-building-group').style.display = hasBuilding ? '' : 'none';
+}
+
+// ══════════════════════════════════════════
+// CONDITIONS CHECKBOX (land นส.4)
+// ══════════════════════════════════════════
+function onConditionNoneChange() {
+  const none = document.getElementById('cond-none').checked;
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('cond-' + i).checked = false;
+    document.getElementById('cond-' + i).disabled = none;
+  }
+}
+function onConditionChange() {
+  const anyChecked = [1,2,3,4].some(i => document.getElementById('cond-' + i).checked);
+  if (anyChecked) document.getElementById('cond-none').checked = false;
+}
+
+function onCondoConditionNoneChange() {
+  const none = document.getElementById('condo-cond-none').checked;
+  for (let i = 1; i <= 2; i++) {
+    document.getElementById('condo-cond-' + i).checked = false;
+    document.getElementById('condo-cond-' + i).disabled = none;
+  }
+}
+function onCondoConditionChange() {
+  const anyChecked = [1,2].some(i => document.getElementById('condo-cond-' + i).checked);
+  if (anyChecked) document.getElementById('condo-cond-none').checked = false;
+}
+
+function onApprConditionNoneChange() {
+  const none = document.getElementById('appr-none').checked;
+  for (let i = 1; i <= 2; i++) {
+    document.getElementById('appr-' + i).checked = false;
+    document.getElementById('appr-' + i).disabled = none;
+  }
+}
+function onApprConditionChange() {
+  const anyChecked = [1,2].some(i => document.getElementById('appr-' + i).checked);
+  if (anyChecked) document.getElementById('appr-none').checked = false;
+}
+
+function updateAddressMatchVisibility() {
+  const deed = document.getElementById('deed-type').value;
+  const collType = document.getElementById('land-collateral-type').value;
+  const show = (deed === 'ns4' || deed === 'ns3k') && collType === 'ที่ดินพร้อมสิ่งปลูกสร้าง';
+  document.getElementById('land-location-fields').style.display = show ? 'none' : '';
+  document.getElementById('land-address-match-group').style.display = show ? '' : 'none';
+  document.getElementById('land-address-section').style.display = show ? '' : 'none';
+  if (!show) {
+    // Reset address match and clear pre-fill
+    document.getElementById('land-address-match').value = 'เลือก';
+    document.getElementById('land-address-prefill-banner').style.display = 'none';
+    ['house','village','moo','soi','road','subdistrict','district','zipcode'].forEach(f => {
+      const el = document.getElementById('land-addr-' + f); el.value = ''; el.style.backgroundColor = '';
+    });
+    const prov = document.getElementById('land-addr-province'); prov.value = 'เลือก'; prov.style.backgroundColor = '';
+  }
+}
+
+// ══════════════════════════════════════════
+// COLOR PICKER (shared for bike & tractor)
+// ══════════════════════════════════════════
+const COLORS = [
+  { name:'เหลือง', hex:'#F5C542' },{ name:'ส้ม', hex:'#E8853D' },{ name:'แดง', hex:'#DC3545' },
+  { name:'ชมพู', hex:'#FF6B9D' },{ name:'ม่วง', hex:'#9B59B6' },{ name:'น้ำเงิน', hex:'#3B5CC6' },
+  { name:'ฟ้า', hex:'#5DADE2' },{ name:'เขียว', hex:'#27AE60' },{ name:'น้ำตาล', hex:'#B5651D' },
+  { name:'ดำ', hex:'#2C3E50' },{ name:'เทา', hex:'#95A5A6' },
+  { name:'ขาว', hex:'#F0F0F0', border:'#CBD5E0' },
+  { name:'หลายสี', hex:'linear-gradient(135deg, #F5C542 0%, #27AE60 33%, #3B5CC6 66%, #DC3545 100%)', isGradient:true },
+];
+
+const colorState = { bike: [], car: [], tractor: [] };
+
+function renderColors(type) {
+  const grid = document.getElementById(type + '-color-grid');
+  if (!grid) return;
+  const sel = colorState[type];
+  grid.innerHTML = COLORS.map(c => {
+    const on = sel.includes(c.name);
+    const bg = `background:${c.hex};`;
+    const bd = c.border ? `border:1px solid ${c.border};` : '';
+    return `<div class="color-option ${on?'selected':''}" onclick="toggleColor('${type}','${c.name}')"><div class="color-swatch" style="${bg}${bd}"></div><span class="color-name">${c.name}</span></div>`;
+  }).join('');
+  document.getElementById(type + '-color-count').textContent = `— เลือกแล้ว ${sel.length} สี`;
+}
+
+function toggleColor(type, name) {
+  const sel = colorState[type];
+  const idx = sel.indexOf(name);
+  if (idx >= 0) sel.splice(idx, 1);
+  else { if (sel.length >= 3) sel.shift(); sel.push(name); }
+  renderColors(type);
+}
+
+// ══════════════════════════════════════════
+// CUSTOM ACCESSORY
+// ══════════════════════════════════════════
+let accCounter = 8;
+function addCustomAccessory() {
+  const input = document.getElementById('acc-custom-input');
+  const name = input.value.trim();
+  if (!name) return;
+  accCounter++;
+  const id = 'acc-' + accCounter;
+  const row = document.createElement('div');
+  row.className = 'checkbox-row';
+  row.innerHTML = `<input type="checkbox" id="${id}" checked /><label for="${id}">${name}</label>`;
+  document.getElementById('tractor-accessories').appendChild(row);
+  input.value = '';
+  input.focus();
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+renderColors('bike');
+renderColors('car');
+renderColors('tractor');
+</script>
+
+</body>
+</html>
