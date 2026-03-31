@@ -2,8 +2,8 @@
 
 **Product:** Onigiri — Loan Origination System
 **Portfolio:** Credit
-**Last Updated:** 2026-03-18
-**Last Session:** Introduced 3-level document hierarchy (Document Type → Evidence → Upload Box). Document types are now Engineering-owned AI classification categories. PO configures evidence (what customer brings) per section with upload boxes (order, allow multiple, min/max files, tooltip). Same document type can map to multiple evidence entries. System-generated documents (Contract, PDPA, Insurance) auto-included.
+**Last Updated:** 2026-03-30
+**Last Session:** Added Insurance Integration capability (5 features + 1 cross-capability item). Two insurance types: Credit Insurance (plan retrieval from external API) and Voluntary/Compulsory Insurance (reference number lookup). Ontop/Deduct premium logic based on campaign budget threshold (max_credit_line × insurance_budget_pct). Updated Campaign Config, Smart Form, Product Type Config, and PRODUCT.md.
 
 ---
 
@@ -28,6 +28,19 @@
 | Product Type Publication Authorization | Product Type Configuration | [ITEM](backlog/ITEM_product-type-publication-authorization.md) |
 | Product Type Builder | Product Type Configuration | [ITEM](backlog/ITEM_product-type-builder.md) |
 | Application Template Assignment | Loan Campaign Configuration | [ITEM](backlog/ITEM_application-template-assignment.md) |
+| DipChip Integration Gate | AI-Assisted Data Entry | [ITEM](backlog/ITEM_dipchip-integration-gate.md) |
+| Document Upload with AI Extraction | AI-Assisted Data Entry | [ITEM](backlog/ITEM_document-upload-ai-extraction.md) |
+| Extraction Field Mapping Registry | AI-Assisted Data Entry | [ITEM](backlog/ITEM_extraction-field-mapping-registry.md) |
+| Smart Form Pre-fill Engine | AI-Assisted Data Entry | [ITEM](backlog/ITEM_smart-form-prefill-engine.md) |
+| Pre-fill Conflict Resolution | AI-Assisted Data Entry | [ITEM](backlog/ITEM_prefill-conflict-resolution.md) |
+| Extraction Confidence Display | AI-Assisted Data Entry | [ITEM](backlog/ITEM_extraction-confidence-display.md) |
+| Multi-Document Pre-fill Orchestration | AI-Assisted Data Entry | [ITEM](backlog/ITEM_multi-document-prefill.md) |
+| Credit Insurance Plan Retrieval | Insurance Integration | [ITEM](backlog/ITEM_credit-insurance-plan-retrieval.md) |
+| External Insurance Reference Lookup | Insurance Integration | [ITEM](backlog/ITEM_external-insurance-reference-lookup.md) |
+| Insurance Premium Ontop/Deduct Calculator | Insurance Integration | [ITEM](backlog/ITEM_insurance-premium-ontop-deduct-calculator.md) |
+| Insurance Section in Smart Form | Insurance Integration | [ITEM](backlog/ITEM_insurance-section-smart-form.md) |
+| Insurance Data Pass-through to Plan Calculation | Insurance Integration | [ITEM](backlog/ITEM_insurance-plan-calculation-passthrough.md) |
+| Campaign Insurance Budget Configuration | Loan Campaign Configuration | [ITEM](backlog/ITEM_campaign-insurance-budget-config.md) |
 
 ## 🗄️ DEPRECATED
 | Feature | Capability | Date | Item File |
@@ -48,3 +61,5 @@
 | 2026-03-18 | @FEATURE | Created Campaign ↔ Product Type integration spec: Application Template Assignment feature (PM selects ACTIVE product type → sections + docs inherited read-only). Added Application Type eligibility field (new_booking/topup/restructure). Added product type version pinning rule. Corrected: collateral type remains independent eligibility criterion. | FEATURE_application-template-assignment.md (new), ITEM_application-template-assignment.md (new), Campaign CAPABILITY.md (updated), Product Type Config CAPABILITY.md (updated), BACKLOG.md (updated), CHANGELOG_009 (new) |
 | 2026-03-18 | @FEATURE | Redesigned Product Type Builder: 5-step → 3-step wizard. Merged document type registration + requirement declaration into Configure Sections step (inline per section accordion card). PO sees fields + documents together in context. Updated mock UI with accordion cards. | FEATURE_product-type-builder.md (updated), Product Type Config CAPABILITY.md (updated), product-type-builder.html (rebuilt), BACKLOG.md (updated), CHANGELOG_010 (new) |
 | 2026-03-18 | @CAPABILITY | Introduced 3-level document hierarchy: Document Type (AI classification, Engineering-owned) → Evidence (what customer brings, PO per section) → Upload Box (upload slots with order, allow multiple, min/max, tooltip). Document Type Registration shifted to Engineering ownership. Same doc type can map to multiple evidence entries. Two evidence categories: customer/guarantor docs + system-generated (Contract, PDPA, Insurance — always same). | FEATURE_document-type-registration.md (rewritten), FEATURE_document-requirement-declaration.md (rewritten), CAPABILITY.md (updated), FEATURE_product-type-builder.md (updated), BACKLOG.md (updated), CHANGELOG_011 (new) |
+| 2026-03-30 | @CAPABILITY | Added AI-Assisted Data Entry capability with 7 features. Extended Wasabi with extraction mode (dual-mode: verification + extraction). DipChip gate → upload → Wasabi extraction → mapping registry → pre-fill engine → conflict resolution → confidence display → multi-document orchestration. Reuses existing extraction_template table bidirectionally. Updated Wasabi boundary, Instruction Verification, Report Assembly. | AI-Assisted Data Entry CAPABILITY.md (new), 7x FEATURE_*.md (new), 7x ITEM_*.md (new), Wasabi PRODUCT.md (updated), Wasabi Instruction Verification CAPABILITY.md (updated), Wasabi Report Assembly CAPABILITY.md (updated), Onigiri PRODUCT.md (updated), BACKLOG.md (updated), CHANGELOG_012 (new) |
+| 2026-03-30 | @CAPABILITY | Added Insurance Integration capability with 5 features + 1 cross-capability item. Two insurance types: Credit Insurance (external API plan retrieval) and Voluntary/Compulsory Insurance (reference number lookup). Ontop/Deduct logic: total_premium vs campaign budget (max_credit_line × insurance_budget_pct). Both types can coexist; credit insurance optional; multiple voluntary references allowed. Insurance fields locked at Approval HWM. | Insurance Integration CAPABILITY.md (new), 5x FEATURE_*.md (new), 6x ITEM_*.md (new), Campaign Config CAPABILITY.md (updated), Smart Form CAPABILITY.md (updated), Product Type Config CAPABILITY.md (updated), PRODUCT.md (updated), BACKLOG.md (updated), CHANGELOG_013 (new) |

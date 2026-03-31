@@ -93,6 +93,7 @@ Onigiri models documents in three levels. Understanding this hierarchy is essent
 | **Evidence Requirements** | Which evidence is required per section, with upload box configuration and conditional rules | **PO** (self-service) | Admin UI: add evidence per section → configure upload boxes (order, allow multiple, min/max files, tooltip) → set conditional rules |
 | **Document Types** | AI classification categories for the document verification system | **Engineering** | Engineering registers types in Onigiri registry; synced to Matcha at activation |
 | **Data Extraction Templates** | Which application fields map to Matcha's `check_name` keys per document type | **Engineering** creates templates | Engineering seeds templates; PO selects template per evidence entry |
+| **Insurance Enablement** | Which insurance types are available for this product type: `credit_insurance` (boolean) and `voluntary_insurance` (boolean) | **PO** toggles on/off | Admin UI: toggle in Product Type Builder "Configure Sections" step. Controls visibility of insurance sub-sections in Smart Form. See [Insurance Integration](../insurance-integration/CAPABILITY.md) |
 
 ### Section Variants: Engineering-Owned
 

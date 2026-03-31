@@ -4,7 +4,7 @@
 **Portfolio**: Credit → [PORTFOLIO](../../PORTFOLIO.md)
 **Status**: 📝 Draft
 **Executive Owner**: CPO
-**Last Updated**: 2026-03-09 (workflow update)
+**Last Updated**: 2026-03-30
 
 > *Onigiri (おにぎり) — A tightly packed, self-contained unit. Like the rice ball, Onigiri wraps the entire loan origination lifecycle into a single, cohesive product — from application intake through underwriting to disbursement. Everything the borrower needs, held together in one place.*
 
@@ -31,7 +31,8 @@ A single configurable platform that governs the full loan application lifecycle 
 - Underwriting workflow state machine (Draft → Risk Assessment → Approval → Create Facility → ... → Funded)
 - Loan campaign configuration (pricing, eligibility, form template, risk strategy, execution steps)
 - Risk assessment engine (JMESPath-based Strategy → Policy → Rule hierarchy)
-- Integration gateway to Matcha, Wasabi, DaVinci, Sensei, Core Banking, NCB at defined boundaries
+- Insurance plan selection and premium impact on loan calculation (Ontop/Deduct logic)
+- Integration gateway to Matcha, Wasabi, DaVinci, Sensei, Core Banking, NCB, External Insurance System at defined boundaries
 
 **This product IS NOT responsible for:**
 - Document verification logic or QA workflow (owned by **Matcha**)
@@ -42,26 +43,33 @@ A single configurable platform that governs the full loan application lifecycle 
 - Vehicle market rate management, source data ingestion, and canonical rate computation (owned by **Dashi** — Asset Valuation Service)
 - Loan repayment scheduling, statements, or early settlement (future: **Loan Servicing** product)
 - Delinquency management or collection workflows (future: **Collections** product)
+- Insurance plan catalog management or policy issuance (owned by **External Insurance System**)
 
 **This product RECEIVES from:**
 - DaVinci → customer identity + product summary on application creation → via REST API
 - Miso → standardized score object `{ rating, risk_band, indicators[], model_version, trace_id }` → via REST API response
 - Dashi → canonical vehicle market rate `{ vehicle_id, canonical_rate, rate_basis, adjustment_applied }` → via REST API response
-- Wasabi → early-warning document verification report during Draft phase → via async callback
+- Wasabi (verification mode) → early-warning document verification report during Draft phase → via async callback
+- Wasabi (extraction mode) → document extraction report with field values + confidence during data entry → via async callback
 - Matcha → verification outcome (APPROVED/RETURNED/REFERRED) → via webhook callback
 - Core Banking → fund transfer COMPLETE callback `{ status=COMPLETE, transferResult: Success|Reject, transferReferenceId }` → via webhook callback
 - NCB → credit bureau inquiry result → via API (triggered by OTP consent in Smart Form)
 - Core Banking → fund transfer result (success / failure) → via webhook callback
+- External Insurance System → eligible credit insurance plans `{ plans[]: { plan_id, name, premium, coverage_amount, coverage_term, insurer_name } }` → via REST API response
+- External Insurance System → insurance policy details by reference `{ reference_number, plan_name, premium, coverage_amount, coverage_term, expiry_date, insurer_name, policy_status }` → via REST API response
 
 **This product SENDS to:**
 - Miso → application JSON + campaign ID on Risk Assessment state entry → via REST API
 - Dashi → vehicle identifier (make + model + year + grade) during collateral valuation step → via REST API
 - Matcha → document verification task (POST /task) after Create Facility state → via REST API
-- Wasabi → document image URL + expected type + system data on upload → via async API
+- Wasabi (verification mode) → document image URL + expected type + system data on upload → via async API
+- Wasabi (extraction mode) → document image URL + expected type + operational_mode: "extraction" during data entry → via async API
 - Sensei → TaskCreationRequest event when branch action is needed → via event
 - Core Banking → Create Facility command, Create Loan + Disbursement command → via API
 - NCB → credit bureau inquiry request → via API
 - DaVinci → ApplicationCreated, ApplicationApproved, CustomerProfileUpdated events → via event
+- External Insurance System → credit insurance plan inquiry `POST /insurance/credit/plans` with `{ loan_amount, customer_id, collateral_type, campaign_id }` → via REST API
+- External Insurance System → insurance reference lookup `GET /insurance/reference/{ref_number}` → via REST API
 
 ---
 
@@ -75,6 +83,8 @@ A single configurable platform that governs the full loan application lifecycle 
 | [Risk Assessment Engine](capabilities/risk-assessment-engine/CAPABILITY.md) | Engineering | Draft | JMESPath-based configurable rule engine. Strategy → Policy → Rule hierarchy. Produces max risk level, deviation flags, conditional document requirements. Full evaluation trace for audit. |
 | [Disbursement Orchestration](capabilities/disbursement-orchestration/CAPABILITY.md) | Engineering | Draft | Owns post-document-verification states: receiver account pre-check (draft gate), Matcha callback routing from `pending_document_checking` (approved/returned/referred), loan officer confirm/reject from `waiting_for_confirmation`, system `waiting_create_facility`, Core Banking COMPLETE callback routing (Success / Reject). |
 | [Product Type Configuration](capabilities/product-type-configuration/CAPABILITY.md) | Product | Draft | Self-service collateral type definition: template-based form section builder, document requirement declaration with conditional rules, Onigiri-owned document type registry with Matcha sync. Two-tier approval (CPO + Risk Officer → CRO). Upstream enabler for Campaign Configuration. |
+| [AI-Assisted Data Entry](capabilities/ai-assisted-data-entry/CAPABILITY.md) | Engineering | Draft | AI-powered document image extraction to pre-fill Smart Form fields during data entry. DipChip gate → document upload → Wasabi extraction mode → field mapping → pre-fill with confidence indicators. Source priority: DipChip > manual > AI. |
+| [Insurance Integration](capabilities/insurance-integration/CAPABILITY.md) | Engineering | Draft | Insurance plan selection during Loan Setup: credit insurance plan retrieval from external API + voluntary/compulsory insurance reference lookup. Ontop/Deduct premium calculation based on campaign budget threshold (`max_credit_line × insurance_budget_pct`). Passes insurance data to Plan Calculation API. |
 
 ---
 
@@ -95,7 +105,7 @@ This field coordinates field mutability between the **Underwriting Workflow** an
 
 | Event | HWM Reached | Fields Locked |
 |-------|-------------|---------------|
-| Approver clicks Approve | `Approval` | Loan amount, interest rate, product type, loan term |
+| Approver clicks Approve | `Approval` | Loan amount, interest rate, product type, loan term, **insurance selections** (credit insurance plan + voluntary/compulsory references) |
 | Create Facility state entered | `Create Facility` | **Disbursement channel**, bank account, payment details |
 | Create Loan + Disbursement completes | `Create Loan + Disbursement` | All financial fields |
 
@@ -195,6 +205,7 @@ graph LR
     CoreBanking[Core Banking]
     NCB[NCB\nCredit Bureau]
     Dashi[Dashi\nAsset Valuation]
+    ExtInsurance[External Insurance\nSystem]
 
     DaVinci -->|Customer identity| Onigiri
     Onigiri -->|App events| DaVinci
@@ -211,6 +222,8 @@ graph LR
     Onigiri -->|Create Facility + Fund Transfer initiation| CoreBanking
     CoreBanking -->|Fund Transfer COMPLETE callback| Onigiri
     Onigiri -->|NCB inquiry| NCB
+    Onigiri -->|Plan inquiry + Reference lookup| ExtInsurance
+    ExtInsurance -->|Eligible plans + Policy details| Onigiri
 ```
 
 ---

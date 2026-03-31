@@ -41,7 +41,7 @@ Define and manage loan product configurations (campaigns) that house all configu
 | Dimension | What It Configures |
 |-----------|-------------------|
 | **Campaign Type** | `application_type` this campaign targets (`new_booking`, `topup`, `restructure`); for restructure campaigns, whether it is EasyPass or Non-EasyPass |
-| **Pricing** | Loan amount range, interest rate, available tenors, max LTV, min/max credit line; for restructure campaigns, Plan Calculation parameters (tenor options, interest rate for installment computation) |
+| **Pricing** | Loan amount range, interest rate, available tenors, max LTV, min/max credit line, insurance budget percentage; for restructure campaigns, Plan Calculation parameters (tenor options, interest rate for installment computation) |
 | **Eligibility Criteria** | Rule-based gateway (customer type, age, collateral, credit score, occupation) — evaluated before full application entry |
 | **Application Template** | Which pages/sections/fields appear; required documents; conditional document logic |
 | **Risk Strategy** | Which risk assessment strategy to execute (Strategy → Policy → Rule) |
@@ -56,6 +56,7 @@ Define and manage loan product configurations (campaigns) that house all configu
 | Available tenors | 3, 6, 9, 12, ... months |
 | Max LTV | 120% |
 | Min/Max credit line | Configurable per campaign |
+| Insurance budget percentage | Default 10%; determines the threshold for Ontop/Deduct insurance premium calculation (`insurance_budget = max_credit_line × insurance_budget_pct`). See [Insurance Integration](../insurance-integration/CAPABILITY.md) |
 
 ### Campaign Publication Authorization
 

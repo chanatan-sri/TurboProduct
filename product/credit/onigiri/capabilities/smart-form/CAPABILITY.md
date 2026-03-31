@@ -60,7 +60,7 @@ Fields are organized into **Lockpoint Groups** bound to `state_high_water_mark` 
 
 | Lockpoint Group | Fields | Lock When HWM ≥ | Rationale |
 |-----------------|--------|-----------------|-----------|
-| `LOAN_TERMS` | Loan amount, interest rate, product type, loan term | `Approval` | These were reviewed and authorized by a credit authority. Post-approval changes bypass that authorization. |
+| `LOAN_TERMS` | Loan amount, interest rate, product type, loan term, **insurance selections** (credit insurance plan + voluntary/compulsory references) | `Approval` | These were reviewed and authorized by a credit authority. Post-approval changes bypass that authorization. Insurance premiums affect loan amount (Ontop) or net disbursement (Deduct). See [Insurance Integration](../insurance-integration/CAPABILITY.md). |
 | `DISBURSEMENT_CHANNEL` | Disbursement channel, bank account number, payment details | `Create Facility` | The Core Banking facility is created against a specific disbursement type. Changing it post-facility requires a new facility — a new application. |
 | `ALL_FINANCIAL` | All fields in `LOAN_TERMS` + `DISBURSEMENT_CHANNEL` | `Create Loan + Disbursement` | Funds have been released. No financial field may be changed. |
 
@@ -586,7 +586,7 @@ Smart Form stages map to the sections selected in the product type:
 |-------|----------|-----------|
 | **Borrower** | Identity, Address, Occupation, Income & Expenses, References | PO selects which to include + one variant per section |
 | **Guarantor** | Identity, Address | Fixed structure (uses same variant definitions) |
-| **Loan Setup** | Collateral | One variant per product type (always required) |
+| **Loan Setup** | Collateral, Insurance | Collateral: one variant per product type (always required). Insurance: conditionally visible based on product type flags (`credit_insurance`, `voluntary_insurance`). See [Insurance Integration](../insurance-integration/CAPABILITY.md) |
 | **Summary** | — | Auto-generated from filled sections |
 | **Document Upload** | — | Driven by product type's document configuration |
 
