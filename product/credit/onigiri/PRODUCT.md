@@ -4,7 +4,7 @@
 **Portfolio**: Credit → [PORTFOLIO](../../PORTFOLIO.md)
 **Status**: 📝 Draft
 **Executive Owner**: CPO
-**Last Updated**: 2026-03-05
+**Last Updated**: 2026-03-30
 
 > *Onigiri (おにぎり) — A tightly packed, self-contained unit. Like the rice ball, Onigiri wraps the entire loan origination lifecycle into a single, cohesive product — from application intake through underwriting to disbursement. Everything the borrower needs, held together in one place.*
 
@@ -31,7 +31,8 @@ A single configurable platform that governs the full loan application lifecycle 
 - Underwriting workflow state machine (Draft → Risk Assessment → Approval → Create Facility → ... → Funded)
 - Loan campaign configuration (pricing, eligibility, form template, risk strategy, execution steps)
 - Risk assessment engine (JMESPath-based Strategy → Policy → Rule hierarchy)
-- Integration gateway to Matcha, Wasabi, DaVinci, Sensei, Core Banking, NCB at defined boundaries
+- Insurance plan selection and premium impact on loan calculation (Ontop/Deduct logic)
+- Integration gateway to Matcha, Wasabi, DaVinci, Sensei, Core Banking, NCB, External Insurance System at defined boundaries
 
 **This product IS NOT responsible for:**
 - Document verification logic or QA workflow (owned by **Matcha**)
@@ -41,23 +42,30 @@ A single configurable platform that governs the full loan application lifecycle 
 - Credit scoring model selection, inference execution, or raw score handling (owned by **Miso**)
 - Loan repayment scheduling, statements, or early settlement (future: **Loan Servicing** product)
 - Delinquency management or collection workflows (future: **Collections** product)
+- Insurance plan catalog management or policy issuance (owned by **External Insurance System**)
 
 **This product RECEIVES from:**
 - DaVinci → customer identity + product summary on application creation → via REST API
 - Miso → standardized score object `{ rating, risk_band, indicators[], model_version, trace_id }` → via REST API response
-- Wasabi → early-warning document verification report during Draft phase → via async callback
+- Wasabi (verification mode) → early-warning document verification report during Draft phase → via async callback
+- Wasabi (extraction mode) → document extraction report with field values + confidence during data entry → via async callback
 - Matcha → verification outcome (APPROVED/RETURNED/REFERRED) → via webhook callback
 - NCB → credit bureau inquiry result → via API (triggered by OTP consent in Smart Form)
 - Core Banking → fund transfer result (success / failure) → via webhook callback
+- External Insurance System → eligible credit insurance plans `{ plans[]: { plan_id, name, premium, coverage_amount, coverage_term, insurer_name } }` → via REST API response
+- External Insurance System → insurance policy details by reference `{ reference_number, plan_name, premium, coverage_amount, coverage_term, expiry_date, insurer_name, policy_status }` → via REST API response
 
 **This product SENDS to:**
 - Miso → application JSON + campaign ID on Risk Assessment state entry → via REST API
 - Matcha → document verification task (POST /task) after Create Facility state → via REST API
-- Wasabi → document image URL + expected type + system data on upload → via async API
+- Wasabi (verification mode) → document image URL + expected type + system data on upload → via async API
+- Wasabi (extraction mode) → document image URL + expected type + operational_mode: "extraction" during data entry → via async API
 - Sensei → TaskCreationRequest event when branch action is needed → via event
 - Core Banking → Create Facility command, Create Loan + Disbursement command → via API
 - NCB → credit bureau inquiry request → via API
 - DaVinci → ApplicationCreated, ApplicationApproved, CustomerProfileUpdated events → via event
+- External Insurance System → credit insurance plan inquiry `POST /insurance/credit/plans` with `{ loan_amount, customer_id, collateral_type, campaign_id }` → via REST API
+- External Insurance System → insurance reference lookup `GET /insurance/reference/{ref_number}` → via REST API
 
 ---
 
@@ -69,7 +77,37 @@ A single configurable platform that governs the full loan application lifecycle 
 | [Underwriting Workflow](capabilities/underwriting-workflow/CAPABILITY.md) | Engineering | Draft | Fixed-topology 4-phase state machine (Origination → Underwriting → Decision → Terminal). 11 states. Configurable execution steps inside each state. Cash vs. non-cash path divergence. |
 | [Loan Campaign Configuration](capabilities/loan-campaign-configuration/CAPABILITY.md) | Product | Draft | Single configuration umbrella per loan product: pricing, eligibility rules, application template, risk strategy, workflow execution steps. Zero code changes for new campaigns. |
 | [Risk Assessment Engine](capabilities/risk-assessment-engine/CAPABILITY.md) | Engineering | Draft | JMESPath-based configurable rule engine. Strategy → Policy → Rule hierarchy. Produces max risk level, deviation flags, conditional document requirements. Full evaluation trace for audit. |
-| [Disbursement Orchestration](capabilities/disbursement-orchestration/CAPABILITY.md) | Engineering | Concept | Receives Matcha `approved` callback and Core Banking fund transfer callback to advance the application through `waiting_fund_transfer` → `waiting_create_loan_operation`. Owns post-document-verification disbursement states. |
+| [Disbursement Orchestration](capabilities/disbursement-orchestration/CAPABILITY.md) | Engineering | Draft | Owns post-document-verification states: receiver account pre-check (draft gate), Matcha callback routing from `pending_document_checking` (approved/returned/referred), loan officer confirm/reject from `waiting_for_confirmation`, system `waiting_create_facility`, Core Banking COMPLETE callback routing (Success / Reject). |
+| [Product Type Configuration](capabilities/product-type-configuration/CAPABILITY.md) | Product | Draft | Self-service collateral type definition: template-based form section builder, document requirement declaration with conditional rules, Onigiri-owned document type registry with Matcha sync. Two-tier approval (CPO + Risk Officer → CRO). Upstream enabler for Campaign Configuration. |
+| [AI-Assisted Data Entry](capabilities/ai-assisted-data-entry/CAPABILITY.md) | Engineering | Draft | AI-powered document image extraction to pre-fill Smart Form fields during data entry. DipChip gate → document upload → Wasabi extraction mode → field mapping → pre-fill with confidence indicators. Source priority: DipChip > manual > AI. |
+| [Insurance Integration](capabilities/insurance-integration/CAPABILITY.md) | Engineering | Draft | Insurance plan selection during Loan Setup: credit insurance plan retrieval from external API + voluntary/compulsory insurance reference lookup. Ontop/Deduct premium calculation based on campaign budget threshold (`max_credit_line × insurance_budget_pct`). Passes insurance data to Plan Calculation API. |
+
+---
+
+## Cross-Capability Integrity Rules
+
+The following rules govern interactions between capabilities and are enforced at the product level.
+
+### Application State High-Water Mark (HWM)
+
+The application record maintains a `state_high_water_mark` field — the furthest workflow state ever entered by this application. HWM is monotonically increasing and never retreats, regardless of how many times the application returns to Draft.
+
+This field coordinates field mutability between the **Underwriting Workflow** and **Smart Form** capabilities:
+
+- **Underwriting Workflow** writes HWM on every state entry transition (before execution steps run)
+- **Smart Form** reads HWM to determine which Lockpoint Groups are read-only when the form renders in Draft
+
+**Lockpoint summary:**
+
+| Event | HWM Reached | Fields Locked |
+|-------|-------------|---------------|
+| Approver clicks Approve | `Approval` | Loan amount, interest rate, product type, loan term, **insurance selections** (credit insurance plan + voluntary/compulsory references) |
+| Create Facility state entered | `Create Facility` | **Disbursement channel**, bank account, payment details |
+| Create Loan + Disbursement completes | `Create Loan + Disbursement` | All financial fields |
+
+**Why disbursement channel is locked at Create Facility:** The Core Banking facility is created against a specific disbursement type. In the updated workflow, the cash/non-cash routing decision (Cash?) occurs before Create Facility — meaning by the time any Create Facility state is entered, the disbursement path is already committed. Allowing the channel to change post-facility would cause a path mismatch on re-entry — resulting in a second `Create Loan + Disbursement` execution against a new Core Banking record (double disbursement). The HWM lock is the primary prevention. Idempotency guards on the Create Facility and Create Loan + Disbursement execution steps are the defense-in-depth layer.
+
+**Remediation when channel must genuinely change:** Cancel the application and submit a new one. This generates a clean audit trail and ensures a fresh facility is created with the correct disbursement type.
 
 ---
 
@@ -163,6 +201,7 @@ graph LR
     Sensei[Sensei\nBranch Worklist]
     CoreBanking[Core Banking]
     NCB[NCB\nCredit Bureau]
+    ExtInsurance[External Insurance\nSystem]
 
     DaVinci -->|Customer identity| Onigiri
     Onigiri -->|App events| DaVinci
@@ -177,6 +216,8 @@ graph LR
     Onigiri -->|Create Facility| CoreBanking
     CoreBanking -->|Fund transfer result| Onigiri
     Onigiri -->|NCB inquiry| NCB
+    Onigiri -->|Plan inquiry + Reference lookup| ExtInsurance
+    ExtInsurance -->|Eligible plans + Policy details| Onigiri
 ```
 
 ---

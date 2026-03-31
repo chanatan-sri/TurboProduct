@@ -51,6 +51,26 @@ Provide a configurable, section-based loan application form that captures borrow
 | Application Data | DocumentDB | Full JSON application document (all form sections, field values, uploaded document references) | Every save-draft and every workflow transition |
 | Workflow State | RDS | Current workflow state, transition history, timestamps, actor IDs, audit trail | Every workflow transition |
 
+### Field Lockpoint Groups
+
+Fields are organized into **Lockpoint Groups** bound to `state_high_water_mark` thresholds. Once the application's HWM reaches or exceeds a group's threshold, every field in that group becomes permanently read-only in all subsequent Draft states — regardless of what caused the return to Draft.
+
+| Lockpoint Group | Fields | Lock When HWM ≥ | Rationale |
+|-----------------|--------|-----------------|-----------|
+| `LOAN_TERMS` | Loan amount, interest rate, product type, loan term, **insurance selections** (credit insurance plan + voluntary/compulsory references) | `Approval` | These were reviewed and authorized by a credit authority. Post-approval changes bypass that authorization. Insurance premiums affect loan amount (Ontop) or net disbursement (Deduct). See [Insurance Integration](../insurance-integration/CAPABILITY.md). |
+| `DISBURSEMENT_CHANNEL` | Disbursement channel, bank account number, payment details | `Create Facility` | The Core Banking facility is created against a specific disbursement type. Changing it post-facility requires a new facility — a new application. |
+| `ALL_FINANCIAL` | All fields in `LOAN_TERMS` + `DISBURSEMENT_CHANNEL` | `Create Loan + Disbursement` | Funds have been released. No financial field may be changed. |
+
+### Read-Only Rendering Rules
+
+| Rule | Specification |
+|------|---------------|
+| Locked fields render as read-only | Fields in a locked group display their stored value with a lock indicator. They are never hidden or removed from the form. |
+| Tooltip on locked fields | Each locked field shows a tooltip explaining which event caused the lock and the required remediation (e.g., *"Disbursement channel locked when facility was created in Core Banking. To change, cancel this application and submit a new one."*) |
+| Submit remains available | The Submit action is available whenever all non-locked required fields are filled. Locked fields do not block submission. |
+| Server-side enforcement | The application data update API rejects writes to fields in locked groups, regardless of client-side rendering state. The API lock is authoritative; the client lock is UX. |
+
+
 ### Field Definition Properties
 
 | Property | Description |
@@ -293,7 +313,102 @@ The land collateral section is organized into five sub-sections. All sub-section
 
 ### Section Selection Rule
 
-A campaign selects exactly one Collateral Section from the registry above. Multiple collateral types under a single campaign are not supported — each collateral type must be its own campaign. Enforcement is via the campaign's eligibility rule (`collateral_type = <type>`), which gates entry before the form loads.
+A **product type** selects which sections to include and picks **one variant per section**. The Collateral section is always required; all other sections (Identity, Address, Occupation, Income & Expenses, References) are toggleable by the PO. A **campaign** references the product type — it does not select sections directly.
+
+| Rule | Detail |
+|------|--------|
+| Collateral section | Always required — cannot be toggled off |
+| Standard sections | PO toggles on/off per product type |
+| Variant per section | Exactly one variant selected per included section |
+| Multiple collateral types | Not supported within a single product type — each collateral type is a separate product type |
+| Enforcement | Product type defines the section/variant set; campaign's eligibility rule gates entry before the form loads |
+
+### Stage-to-Section Mapping
+
+Smart Form stages map to the sections selected in the product type:
+
+| Stage | Sections | Selection |
+|-------|----------|-----------|
+| **Borrower** | Identity, Address, Occupation, Income & Expenses, References | PO selects which to include + one variant per section |
+| **Guarantor** | Identity, Address | Fixed structure (uses same variant definitions) |
+| **Loan Setup** | Collateral, Insurance | Collateral: one variant per product type (always required). Insurance: conditionally visible based on product type flags (`credit_insurance`, `voluntary_insurance`). See [Insurance Integration](../insurance-integration/CAPABILITY.md) |
+| **Summary** | — | Auto-generated from filled sections |
+| **Document Upload** | — | Driven by product type's document configuration |
+
+---
+
+### Auto-Prefill Rules
+
+#### Auto-Prefill — `restructure`
+
+Prefill source: **DaVinci** (customer record) + **Core Banking** (existing loan record).
+
+Applies to both restructure entry paths (via pre-approval and direct).
+
+| Data Group | Source | Fields Prefilled |
+|---|---|---|
+| Customer identity and profile | DaVinci | Name, ID card, address, contact details |
+| Existing loan reference | Core Banking | Loan account number, product type |
+| Loan financial data | Core Banking | Outstanding balance, original tenor, DPD, contract age, interest rate |
+| Collateral data | Core Banking / DaVinci | Collateral type, valuation amount, appraisal date |
+
+For restructure **via pre-approval**: `pre_approval_snapshot` carries the selected campaign and plan as a starting point for the Finance Page. This is separate from form field prefill — the snapshot is not used as a field data source.
+
+#### Prefill Field Editability
+
+Editability of prefilled fields is determined per field per `application_type`. A prefilled field may be editable (CO can override), read-only (CO cannot change), or conditionally editable (editable until a workflow state threshold is reached). Detail is defined per loan type section.
+
+---
+
+### Application Types — `restructure`
+
+Restructure has two entry paths. Both produce the same application record structure and follow the same workflow from Draft onwards.
+
+**Path 1 — Via Pre-Approval (Draft Initializer)**
+
+- Draft is created from a confirmed pre-approval (`pre_approval_id` present on the application)
+- Form fields prefilled from DaVinci + Core Banking
+- Finance Page pre-populates from `pre_approval_snapshot` as the starting point
+- CO may re-select campaign or plan option on the Finance Page
+
+**Path 2 — Direct (No Pre-Approval)**
+
+- Draft is created without a prior pre-approval
+- Form fields prefilled from DaVinci + Core Banking
+- CO selects campaign and plan option on the Finance Page
+
+Both paths support Finance Page re-selection and Plan Calculation API recalculation triggered by any change.
+
+---
+
+### Finance Page Rules by Application Type
+
+| Application Type | Behaviour |
+|---|---|
+| `new_booking` | No Finance Page — standard Loan Setup fields only |
+| `topup` | Campaign pre-selected at worklist; Finance Page renders plan details for CO confirmation; campaign cannot be switched inside Smart Form |
+| `restructure` (via pre-approval) | Finance Page pre-populates from `pre_approval_snapshot`; CO may change campaign or plan option; any change triggers Plan Calculation API recalculation |
+| `restructure` (direct) | Finance Page renders eligible campaigns and plan options; CO selects; any change triggers Plan Calculation API recalculation |
+
+- The restructure Finance Page must call the Plan Calculation API whenever the CO changes the selected campaign, plan option, or payment due date. The CO cannot progress to Summary until a successful recalculation response confirms the selected plan.
+- The pre-approval plan is the **default selection**, not a lock. Changes made in Smart Form override the snapshot. `pre_approval_snapshot` is preserved for change detection at submission.
+
+---
+
+### Tenor Filter (Restructure Only)
+
+- Tenor options **equal to or shorter than** the original loan tenor are disabled on the Finance Page for all restructure paths.
+- Applies to both restructure entry paths (via pre-approval and direct).
+- If no valid tenor options remain after Plan Calculation API recalculation, the CO cannot progress to Summary.
+
+---
+
+### Document Upload Rules by Application Type
+
+- The required document checklist is always driven by the campaign's **Application Template** — not hardcoded by `application_type`.
+- `restructure` uses a restructure-specific document set defined in the restructure campaign template.
+- Documents uploaded at the **pre-approval stage** are stored on the pre-approval record — not on the Draft application. If the campaign template requires the same document type at the Draft stage, the CO must upload again on the application.
+- Wasabi early-warning scan is triggered on every document upload regardless of `application_type`.
 
 ---
 
