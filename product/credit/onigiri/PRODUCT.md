@@ -73,6 +73,7 @@ A single configurable platform that governs the full loan application lifecycle 
 | [Loan Campaign Configuration](capabilities/loan-campaign-configuration/CAPABILITY.md) | Product | Draft | Single configuration umbrella per loan product: pricing, eligibility rules, application template, risk strategy, workflow execution steps. Zero code changes for new campaigns. |
 | [Risk Assessment Engine](capabilities/risk-assessment-engine/CAPABILITY.md) | Engineering | Draft | JMESPath-based configurable rule engine. Strategy → Policy → Rule hierarchy. Produces max risk level, deviation flags, conditional document requirements. Full evaluation trace for audit. |
 | [Disbursement Orchestration](capabilities/disbursement-orchestration/CAPABILITY.md) | Engineering | Draft | Owns post-document-verification states: receiver account pre-check (draft gate), Matcha callback routing from `pending_document_checking` (approved/returned/referred), loan officer confirm/reject from `waiting_for_confirmation`, system `waiting_create_facility`, Core Banking COMPLETE callback routing (Success / Reject). |
+| [Cash Disbursement](capabilities/cash-disbursement/CAPABILITY.md) | Engineering | Draft | Owns the cash disbursement path after `Cash?=y` routing: conditional officer confirmation gate (`NeedConfCash` / `ConfirmationCash`), sequential Core Banking execution steps (Create Facility, Create Loan + Disbursement), and post-disbursement QA review before `Funded`. Cash-specific counterpart to Disbursement Orchestration. |
 
 ---
 

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cash Disbursement Confirmation — Onigiri LOS</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; background: #f4f6f9; color: #1a1a2e; font-size: 14px; }
+
+    /* NAV */
+    nav { background: #1a1a2e; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 52px; position: sticky; top: 0; z-index: 50; }
+    nav .nav-left { display: flex; align-items: center; gap: 16px; }
+    nav .nav-back { color: #a0aec0; text-decoration: none; font-size: 13px; }
+    nav .nav-back:hover { color: #fff; }
+    nav .logo { font-weight: 700; font-size: 16px; }
+    nav .logo span { color: #68d391; }
+    nav .nav-right { display: flex; align-items: center; gap: 20px; color: #a0aec0; font-size: 13px; }
+    nav .officer { color: #fff; font-weight: 500; }
+
+    /* APP HEADER */
+    .app-header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 14px 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .app-header .app-id { font-size: 13px; color: #718096; margin-bottom: 2px; }
+    .app-header .borrower-name { font-size: 17px; font-weight: 700; }
+    .app-header .borrower-id { font-size: 12px; color: #a0aec0; margin-top: 2px; }
+    .app-header .meta { text-align: right; font-size: 12px; color: #718096; line-height: 1.8; }
+    .app-header .meta strong { color: #1a1a2e; }
+
+    /* PAGE */
+    .page { max-width: 820px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* CARD */
+    .card { background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden; }
+    .card-header { padding: 14px 20px 12px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+    .card-body { padding: 20px; }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #a0aec0; }
+
+    /* BANNERS */
+    .banner { border-radius: 10px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; }
+    .banner.warn  { background: #fffbeb; border: 1.5px solid #f6ad55; }
+    .banner.error { background: #fff5f5; border: 1.5px solid #fc8181; }
+    .banner .bicon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .banner .btitle { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .banner.warn  .btitle { color: #b7791f; }
+    .banner.error .btitle { color: #c53030; }
+    .banner .bsub  { font-size: 13px; line-height: 1.5; }
+    .banner.warn  .bsub { color: #7b5e29; }
+    .banner.error .bsub { color: #742a2a; }
+
+    /* PAYMENT OPTIONS */
+    .pm-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .pm-card {
+      border: 2px solid #e2e8f0; border-radius: 10px; padding: 14px 16px;
+      cursor: pointer; transition: all 0.15s; position: relative;
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .pm-card:hover:not(.blocked) { border-color: #90cdf4; background: #f7fafc; }
+    .pm-card.selected { border-color: #3182ce; background: #ebf8ff; }
+    .pm-card.selected::after { content: '✓'; position: absolute; top: 9px; right: 12px; color: #3182ce; font-weight: 700; font-size: 14px; }
+    .pm-card.blocked { opacity: 0.45; cursor: not-allowed; border-color: #e2e8f0; background: #fafafa; }
+    .pm-card.blocked::after { content: '🔒'; position: absolute; top: 9px; right: 12px; font-size: 13px; }
+    .pm-icon  { font-size: 22px; }
+    .pm-name  { font-size: 13.5px; font-weight: 700; color: #2d3748; }
+    .pm-card.selected .pm-name { color: #2b6cb0; }
+    .pm-card.blocked  .pm-name { color: #a0aec0; }
+    .pm-desc  { font-size: 11.5px; color: #a0aec0; }
+
+    /* CASH PANEL */
+    .detail-panel { margin-top: 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .detail-panel-head { background: #f7fafc; padding: 9px 14px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .detail-panel-head .dplabel { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #718096; }
+    .detail-panel-body { padding: 14px 16px; }
+
+    .cash-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #f7f7f7; font-size: 13px; }
+    .cash-row:last-child { border: none; }
+    .cash-row .rl { color: #718096; }
+    .cash-row .rv { font-weight: 600; }
+    .rv.ok  { color: #276749; }
+    .rv.err { color: #c53030; }
+
+    .cash-status { margin-top: 10px; border-radius: 7px; padding: 9px 13px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+    .cash-status.ok  { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
+    .cash-status.err { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+
+    /* REFRESH BTN */
+    .btn-refresh { background: none; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 10px; font-size: 11.5px; color: #718096; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
+    .btn-refresh:hover { border-color: #90cdf4; color: #3182ce; background: #fff; }
+    .ri { display: inline-block; }
+    .spinning .ri { animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ALT PANEL */
+    .alt-panel { margin-top: 14px; background: #f7fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; }
+    .alt-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+    .alt-row:last-child { border: none; }
+    .alt-row .al { color: #a0aec0; font-size: 12px; }
+    .alt-row .av { font-weight: 600; color: #2d3748; }
+
+    /* DIFF TABLE */
+    .diff-table { width: 100%; border-collapse: collapse; }
+    .diff-table th { font-size: 11px; font-weight: 600; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.5px; padding: 0 10px 8px; text-align: left; }
+    .diff-table td { padding: 11px 10px; border-top: 1px solid #f7f7f7; vertical-align: middle; font-size: 13px; }
+    .diff-table tr:hover td { background: #fafafa; }
+    .dfield { font-weight: 600; color: #2d3748; }
+    .dfield small { display: block; font-weight: 400; color: #a0aec0; font-size: 11px; margin-top: 1px; }
+    .dold { color: #a0aec0; text-decoration: line-through; }
+    .darr { color: #cbd5e0; padding: 0 4px; }
+    .dnew { font-weight: 700; color: #2d3748; }
+    .ddelta { display: inline-block; background: #fff5f5; color: #c53030; font-size: 11.5px; font-weight: 600; padding: 2px 7px; border-radius: 12px; margin-left: 6px; }
+    .diff-count { font-size: 12px; color: #e53e3e; font-weight: 600; margin-top: 12px; }
+
+    /* SUMMARY */
+    .sg { display: grid; grid-template-columns: 1fr 1fr; }
+    .sl { font-size: 12px; color: #a0aec0; padding: 8px 0; border-bottom: 1px solid #f7f7f7; }
+    .sv { font-size: 13px; font-weight: 500; color: #2d3748; padding: 8px 0; border-bottom: 1px solid #f7f7f7; text-align: right; }
+    .sv.hi { color: #2b6cb0; font-weight: 700; }
+    .sv.ch { color: #d97706; font-weight: 700; }
+
+    /* ACK */
+    .ack-box { background: #f7fafc; border: 1.5px solid #bee3f8; border-radius: 8px; padding: 13px 15px; display: flex; align-items: flex-start; gap: 11px; cursor: pointer; transition: background 0.15s; }
+    .ack-box:hover:not(.disabled) { background: #ebf8ff; }
+    .ack-box.disabled { opacity: 0.4; pointer-events: none; }
+    .ack-box input[type=checkbox] { width: 17px; height: 17px; accent-color: #3182ce; flex-shrink: 0; margin-top: 2px; }
+    .ack-box label { font-size: 13px; color: #2c5282; line-height: 1.55; cursor: pointer; }
+
+    /* BUTTONS */
+    .action-row { display: flex; gap: 12px; justify-content: flex-end; margin-top: 4px; }
+    .btn { padding: 11px 26px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; display: flex; align-items: center; gap: 7px; }
+    .btn-reject  { background: #fff; color: #e53e3e; border: 1.5px solid #feb2b2; }
+    .btn-reject:hover { background: #fff5f5; }
+    .btn-confirm { background: #276749; color: #fff; }
+    .btn-confirm:hover:not(:disabled) { background: #22543d; }
+    .btn-confirm:disabled { background: #a0aec0; cursor: not-allowed; }
+
+    /* MODAL */
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
+    .overlay.active { display: flex; }
+    .modal { background: #fff; border-radius: 12px; width: 460px; padding: 26px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .modal .msub { font-size: 12px; color: #a0aec0; margin-bottom: 18px; }
+    .rl2 { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; cursor: pointer; font-size: 13px; color: #2d3748; transition: border-color 0.15s; }
+    .rl2:hover { border-color: #90cdf4; background: #f7fafc; }
+    .rl2 input { accent-color: #3182ce; }
+    .modal textarea { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 9px 12px; font-size: 13px; resize: vertical; min-height: 68px; margin-top: 10px; font-family: inherit; }
+    .modal textarea:focus { outline: none; border-color: #90cdf4; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+    .btn-cancel  { background: #fff; color: #718096; border: 1.5px solid #e2e8f0; }
+    .btn-cancel:hover { background: #f7fafc; }
+    .btn-do-reject { background: #e53e3e; color: #fff; }
+    .btn-do-reject:hover { background: #c53030; }
+
+    /* TOAST */
+    .toast { display: none; position: fixed; bottom: 28px; right: 28px; background: #276749; color: #fff; padding: 14px 20px; border-radius: 10px; font-size: 13.5px; font-weight: 500; box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 200; min-width: 270px; line-height: 1.6; }
+    .toast .tt { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+    .toast .ts { color: #c6f6d5; font-size: 12px; }
+    .toast.active { display: block; animation: up 0.25s ease; }
+    @keyframes up { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* STATE PILL */
+    .pill { display: inline-flex; align-items: center; gap: 5px; background: #fffbeb; color: #b7791f; border: 1px solid #f6e05e; font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+    .pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #f6ad55; display: inline-block; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="#" class="nav-back">← Back</a>
+    <span class="logo">ONIGIRI <span>LOS</span></span>
+  </div>
+  <div class="nav-right">
+    <span>🔔</span>
+    <span class="officer">👤 สมชาย ทองดี</span>
+  </div>
+</nav>
+
+<div class="app-header">
+  <div>
+    <div class="app-id">Application #LOS-2026-048291</div>
+    <div class="borrower-name">นายธนกร วงษ์สุวรรณ</div>
+    <div class="borrower-id">National ID: 1-1009-12345-67-8</div>
+  </div>
+  <div class="meta">
+    <div>Campaign: <strong>CarTitle PRO</strong></div>
+    <div>Branch: <strong>สาขารามคำแหง</strong></div>
+    <div style="margin-top:6px;"><span class="pill">ConfirmationCash</span></div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- MAIN BANNER -->
+  <div class="banner warn" id="mainBanner">
+    <div class="bicon">⚠️</div>
+    <div>
+      <div class="btitle">ยืนยันก่อนเบิกจ่าย — Disbursement Confirmation Required</div>
+      <div class="bsub">ข้อมูลใบสมัครมีการเปลี่ยนแปลง <strong>3 รายการ</strong> หลังจากผ่านการอนุมัติแล้ว — The application was modified after approval. Review all changes carefully. <strong>Disbursement is irreversible.</strong></div>
+    </div>
+  </div>
+
+  <!-- CASH BLOCK BANNER (hidden by default) -->
+  <div class="banner error" id="cashBlockBanner" style="display:none;">
+    <div class="bicon">🚫</div>
+    <div>
+      <div class="btitle">เงินสดไม่เพียงพอ — Cash Unavailable at Branch</div>
+      <div class="bsub" id="cashBlockMsg">
+        เงินสดคงเหลือในสาขา (<strong>฿ 180,000.00</strong>) น้อยกว่าจำนวนที่ต้องเบิกจ่าย (<strong>฿ 285,000.00</strong>)<br>
+        The system cannot bypass this state. Please select <strong>PromptPay</strong> or <strong>Bank Transfer</strong> to proceed.
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYMENT METHOD CARD -->
+  <div class="card">
+    <div class="card-header">
+      <div class="section-label">Payment Method / ช่องทางการเบิกจ่าย</div>
+    </div>
+    <div class="card-body">
+
+      <div class="pm-grid">
+        <div class="pm-card blocked" id="opt-cash" onclick="selectPayment('cash')">
+          <div class="pm-icon">💵</div>
+          <div class="pm-name">Cash</div>
+          <div class="pm-desc">เงินสด — รับที่สาขา</div>
+        </div>
+        <div class="pm-card selected" id="opt-promptpay" onclick="selectPayment('promptpay')">
+          <div class="pm-icon">📱</div>
+          <div class="pm-name">PromptPay</div>
+          <div class="pm-desc">พร้อมเพย์ — โอนทันที</div>
+        </div>
+        <div class="pm-card" id="opt-bank" onclick="selectPayment('bank')">
+          <div class="pm-icon">🏦</div>
+          <div class="pm-name">Bank Transfer</div>
+          <div class="pm-desc">โอนเงินผ่านธนาคาร</div>
+        </div>
+      </div>
+
+      <!-- CASH DETAIL PANEL -->
+      <div id="panelCash" class="detail-panel" style="display:none;">
+        <div class="detail-panel-head">
+          <span class="dplabel">🏧 Branch Cash Balance — สาขารามคำแหง</span>
+          <button class="btn-refresh" id="refreshBtn" onclick="refreshBalance()">
+            <span class="ri">↻</span> Refresh
+          </button>
+        </div>
+        <div class="detail-panel-body">
+          <div class="cash-row"><span class="rl">Available Cash in Branch</span><span class="rv err" id="availVal">฿ 180,000.00</span></div>
+          <div class="cash-row"><span class="rl">Disbursement Amount</span><span class="rv" style="color:#2d3748;">฿ 285,000.00</span></div>
+          <div class="cash-row"><span class="rl" id="diffLabel">Shortfall</span><span class="rv err" id="diffVal">▲ ฿ 105,000.00</span></div>
+          <div class="cash-row"><span class="rl" style="font-size:11px;color:#a0aec0;" id="checkedAt">Last checked: 2026-03-31 10:44:07</span><span></span></div>
+          <div class="cash-status err" id="cashStatus">🚫 เงินสดไม่เพียงพอ — Insufficient cash. Select PromptPay or Bank Transfer.</div>
+        </div>
+      </div>
+
+      <!-- PROMPTPAY DETAIL PANEL -->
+      <div id="panelPromptpay" class="alt-panel">
+        <div class="alt-row"><span class="al">PromptPay ID</span><span class="av">📱 098-765-4321</span></div>
+        <div class="alt-row"><span class="al">Registered Name</span><span class="av">นายธนกร วงษ์สุวรรณ</span></div>
+        <div class="alt-row"><span class="al">Registered Bank</span><span class="av">ธนาคารกสิกรไทย (KBank)</span></div>
+        <div class="alt-row"><span class="al">Transfer Amount</span><span class="av" style="color:#2b6cb0;">฿ 285,000.00</span></div>
+        <div style="margin-top:8px;font-size:11.5px;color:#718096;">Processed within 1 business day.</div>
+      </div>
+
+      <!-- BANK DETAIL PANEL -->
+      <div id="panelBank" class="alt-panel" style="display:none;">
+        <div class="alt-row"><span class="al">Bank</span><span class="av">ธนาคารไทยพาณิชย์ (SCB)</span></div>
+        <div class="alt-row"><span class="al">Account Number</span><span class="av">xxx-x-x1234-x</span></div>
+        <div class="alt-row"><span class="al">Account Name</span><span class="av">นายธนกร วงษ์สุวรรณ</span></div>
+        <div class="alt-row"><span class="al">Branch</span><span class="av">สาขาลาดพร้าว</span></div>
+        <div class="alt-row"><span class="al">Transfer Amount</span><span class="av" style="color:#2b6cb0;">฿ 285,000.00</span></div>
+        <div style="margin-top:8px;font-size:11.5px;color:#718096;">Processed within 1–2 business days.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DIFF CARD -->
+  <div class="card">
+    <div class="card-header"><div class="section-label">Changed Fields — Approval Snapshot vs. Current</div></div>
+    <div class="card-body">
+      <table class="diff-table">
+        <thead><tr><th>Field</th><th>At Approval</th><th></th><th>Now</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="dfield">💰 Disbursement Amount<small>จำนวนเงินที่เบิกจ่าย</small></div></td>
+            <td><span class="dold">฿ 320,000.00</span></td>
+            <td><span class="darr">→</span></td>
+            <td><span class="dnew">฿ 285,000.00</span><span class="ddelta">▼ ฿35,000</span></td>
+          </tr>
+          <tr>
+            <td><div class="dfield">📅 Loan Term<small>ระยะเวลากู้</small></div></td>
+            <td><span class="dold">24 months</span></td>
+            <td><span class="darr">→</span></td>
+            <td><span class="dnew">18 months</span></td>
+          </tr>
+          <tr>
+            <td><div class="dfield">🏦 Disbursement Branch<small>สาขาที่รับเงิน</small></div></td>
+            <td><span class="dold">สาขาลาดพร้าว</span></td>
+            <td><span class="darr">→</span></td>
+            <td><span class="dnew">สาขารามคำแหง</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="diff-count">⚠ 3 field(s) changed after approval</div>
+    </div>
+  </div>
+
+  <!-- LOAN SUMMARY -->
+  <div class="card">
+    <div class="card-header"><div class="section-label">Loan Summary (Current)</div></div>
+    <div class="card-body" style="padding:14px 20px;">
+      <div class="sg">
+        <div class="sl">Borrower</div><div class="sv">นายธนกร วงษ์สุวรรณ</div>
+        <div class="sl">Product</div><div class="sv">สินเชื่อทะเบียนรถยนต์ (Car Title Loan)</div>
+        <div class="sl">Collateral</div><div class="sv">Toyota Fortuner 2022 — กข-1234 BKK</div>
+        <div class="sl">Approved Amount</div><div class="sv" style="text-decoration:line-through;color:#a0aec0;">฿ 320,000.00</div>
+        <div class="sl">Disbursement Amount</div><div class="sv hi">฿ 285,000.00</div>
+        <div class="sl">Interest Rate</div><div class="sv">18.00% p.a.</div>
+        <div class="sl">Loan Term</div><div class="sv ch">18 months *(changed)*</div>
+        <div class="sl">Monthly Payment</div><div class="sv">฿ 17,833.00 / month</div>
+        <div class="sl">Payment Method</div><div class="sv" id="summaryMethod">📱 PromptPay — 098-765-4321</div>
+        <div class="sl">Risk Level</div><div class="sv"><span style="background:#fefcbf;color:#744210;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;">MEDIUM</span></div>
+        <div class="sl">Approved By</div><div class="sv">นางสาวพิมพ์ใจ รักดี · 2026-03-28 14:32</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACK + ACTIONS -->
+  <div class="card">
+    <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="ack-box" id="ackBox" onclick="ackClick()">
+        <input type="checkbox" id="ack" onchange="evalBtn()" />
+        <label for="ack">
+          ✅ ข้าพเจ้าได้ตรวจสอบการเปลี่ยนแปลงและช่องทางการเบิกจ่ายแล้ว และยืนยันว่าถูกต้องและได้รับอนุญาต<br>
+          <span style="color:#4a5568;">I have reviewed all changes and the selected payment method, and confirm they are intentional and authorised.</span>
+        </label>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-reject" onclick="openReject()">✗ &nbsp;ปฏิเสธ / Reject</button>
+        <button class="btn btn-confirm" id="confirmBtn" disabled onclick="handleConfirm()">✓ &nbsp;ยืนยันเบิกจ่าย / Confirm &amp; Disburse</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- REJECT MODAL -->
+<div class="overlay" id="rejectModal">
+  <div class="modal">
+    <h3>ปฏิเสธการเบิกจ่าย / Reject Disbursement</h3>
+    <div class="msub">Application #LOS-2026-048291 will return to Draft.</div>
+    <label class="rl2"><input type="radio" name="r" /> จำนวนเงินไม่ถูกต้อง (Incorrect amount)</label>
+    <label class="rl2"><input type="radio" name="r" /> ข้อมูลผิดพลาด (Data entry error)</label>
+    <label class="rl2"><input type="radio" name="r" /> ลูกค้าต้องการเปลี่ยนแปลง (Borrower requests change)</label>
+    <label class="rl2"><input type="radio" name="r" /> อื่น ๆ (Other)</label>
+    <textarea placeholder="หมายเหตุเพิ่มเติม / Additional note (optional)"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeReject()">Cancel</button>
+      <button class="btn btn-do-reject" onclick="doReject()">Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="tt" id="toastTitle">✅ Disbursement confirmed</div>
+  <div class="ts" id="toastSub">Officer: สมชาย ทองดี · 2026-03-31 10:47:22<br>Ref: CONF-2026-048291-001<br>Advancing to Create Facility…</div>
+</div>
+
+<script>
+  // ── DATA ──────────────────────────────────────────────
+  const DISBURSE = 285000;
+  const BALANCES = { low: 180000, high: 420000 };
+  let balance = BALANCES.low;   // start insufficient
+  let method  = 'promptpay';    // default after cash blocked
+
+  // ── INIT ──────────────────────────────────────────────
+  (function init() {
+    renderCashPanel();
+    renderState();
+  })();
+
+  // ── PAYMENT SELECTION ─────────────────────────────────
+  function selectPayment(m) {
+    const cashBlocked = (balance < DISBURSE);
+    if (m === 'cash' && cashBlocked) return;   // click on blocked cash card is no-op
+    method = m;
+    renderState();
+  }
+
+  // ── RENDER ────────────────────────────────────────────
+  function renderState() {
+    const cashBlocked = (balance < DISBURSE);
+
+    // Payment cards
+    document.getElementById('opt-cash').className      = 'pm-card' + (cashBlocked ? ' blocked' : (method==='cash' ? ' selected' : ''));
+    document.getElementById('opt-promptpay').className = 'pm-card' + (method==='promptpay' ? ' selected' : '');
+    document.getElementById('opt-bank').className      = 'pm-card' + (method==='bank' ? ' selected' : '');
+
+    // Detail panels
+    document.getElementById('panelCash').style.display      = method==='cash'      ? 'block' : 'none';
+    document.getElementById('panelPromptpay').style.display = method==='promptpay' ? 'block' : 'none';
+    document.getElementById('panelBank').style.display      = method==='bank'      ? 'block' : 'none';
+
+    // Block banner
+    document.getElementById('cashBlockBanner').style.display = cashBlocked ? 'flex' : 'none';
+
+    // Summary method
+    const labels = {
+      cash:      '💵 Cash — สาขารามคำแหง',
+      promptpay: '📱 PromptPay — 098-765-4321',
+      bank:      '🏦 Bank Transfer — SCB xxx1234'
+    };
+    document.getElementById('summaryMethod').textContent = labels[method];
+
+    // Ack box — disable only if cash is selected and blocked
+    const blocked = (method === 'cash' && cashBlocked);
+    document.getElementById('ackBox').classList.toggle('disabled', blocked);
+    if (blocked) document.getElementById('ack').checked = false;
+
+    evalBtn();
+  }
+
+  function renderCashPanel() {
+    const sufficient = balance >= DISBURSE;
+    const diff = Math.abs(DISBURSE - balance);
+    const fmt = v => '฿ ' + v.toLocaleString('th-TH', {minimumFractionDigits:2});
+
+    document.getElementById('availVal').textContent = fmt(balance);
+    document.getElementById('availVal').className   = 'rv ' + (sufficient ? 'ok' : 'err');
+
+    document.getElementById('diffLabel').textContent = sufficient ? 'Surplus'   : 'Shortfall';
+    document.getElementById('diffVal').textContent   = (sufficient ? '▼ ' : '▲ ') + fmt(diff);
+    document.getElementById('diffVal').className     = 'rv ' + (sufficient ? 'ok' : 'err');
+
+    const status = document.getElementById('cashStatus');
+    if (sufficient) {
+      status.className   = 'cash-status ok';
+      status.textContent = '✅ เงินสดเพียงพอ — Sufficient cash. Disbursement can proceed.';
+    } else {
+      status.className   = 'cash-status err';
+      status.textContent = '🚫 เงินสดไม่เพียงพอ — Insufficient cash. Select PromptPay or Bank Transfer.';
+    }
+  }
+
+  // ── REFRESH ───────────────────────────────────────────
+  function refreshBalance() {
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.add('spinning'); btn.disabled = true;
+    setTimeout(() => {
+      // Toggle for demo
+      balance = balance === BALANCES.low ? BALANCES.high : BALANCES.low;
+      const now = new Date();
+      document.getElementById('checkedAt').textContent = 'Last checked: ' + now.toLocaleTimeString('th-TH');
+      renderCashPanel();
+      // If cash now sufficient and method was forced away, unblock cash card
+      if (balance >= DISBURSE && method !== 'cash') {
+        // Don't auto-switch; just unblock the card
+      }
+      renderState();
+      btn.classList.remove('spinning'); btn.disabled = false;
+    }, 1100);
+  }
+
+  // ── CONFIRM BUTTON ────────────────────────────────────
+  function evalBtn() {
+    const cashBlocked = (method === 'cash' && balance < DISBURSE);
+    const acked = document.getElementById('ack').checked;
+    document.getElementById('confirmBtn').disabled = cashBlocked || !acked;
+  }
+
+  function ackClick() {
+    const cashBlocked = (method === 'cash' && balance < DISBURSE);
+    if (!cashBlocked) document.getElementById('ack').click();
+  }
+
+  // ── CONFIRM ───────────────────────────────────────────
+  function handleConfirm() {
+    const labels = { cash: 'Cash', promptpay: 'PromptPay', bank: 'Bank Transfer' };
+    document.getElementById('toastTitle').textContent = '✅ Disbursement confirmed — ' + labels[method];
+    const t = document.getElementById('toast');
+    t.classList.add('active');
+    document.getElementById('confirmBtn').disabled = true;
+    document.getElementById('confirmBtn').textContent = 'Processing…';
+    setTimeout(() => t.classList.remove('active'), 4500);
+  }
+
+  // ── REJECT ────────────────────────────────────────────
+  function openReject()  { document.getElementById('rejectModal').classList.add('active'); }
+  function closeReject() { document.getElementById('rejectModal').classList.remove('active'); }
+  function doReject() {
+    closeReject();
+    const b = document.getElementById('mainBanner');
+    b.className = 'banner error';
+    b.querySelector('.btitle').textContent = 'Rejected — Application returned to Draft';
+    b.querySelector('.bsub').textContent   = 'The application has been returned to Draft for revision and resubmission.';
+    b.querySelector('.bicon').textContent  = '❌';
+  }
+
+  document.getElementById('rejectModal').addEventListener('click', e => { if (e.target.id === 'rejectModal') closeReject(); });
+</script>
+</body>
+</html>
