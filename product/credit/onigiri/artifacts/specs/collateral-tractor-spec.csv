@@ -1,0 +1,29 @@
+Collateral Type,Sub-type,Section,Field,Field Type,Required,Options / Values,Condition / Visibility Rule
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,วันที่จดทะเบียน,Date,Y,Format: วว/ดด/ปปปป,Always visible
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,วันที่ครอบครอง,Date,Y,"min = วันที่จดทะเบียน, max = วันนี้","Disabled until วันที่จดทะเบียน is selected. Cannot pick a date before วันที่จดทะเบียน or a future date."
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,ประเภทการครอบครอง,Dropdown,Y,"ปกติ, โอนกรรมสิทธิ์ในครอบครัว, เพิ่งผ่อนชำระเช่าซื้อเสร็จสิ้น","Always visible. When ""โอนกรรมสิทธิ์ในครอบครัว"" → show ผู้ถือครองก่อนหน้า"
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,ผู้ถือครองก่อนหน้า,Dropdown,N,"บิดา/มารดา, คู่สมรส, บุตร","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว"
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,วันที่ครอบครอง (ผู้ถือครองก่อนหน้า),Date,Y,"min = วันที่จดทะเบียน, max = วันที่ครอบครอง","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว. Must be between วันที่จดทะเบียน and วันที่ครอบครอง."
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,เลขทะเบียน,Text,Y,,Always visible
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,จังหวัด,Dropdown,Y,Province list,Always visible
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,ประเภทตาม พ.ร.บ.(รย.),Dropdown,Y,"รย.8, รย.9, รย.13 (default), รย.14","Always visible. When รย.13 → show warning banner"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Dropdown Mode,ยี่ห้อรถ,Dropdown,Y,"Kubota, Yanmar, John Deere, Iseki, Mitsubishi, Ford/New Holland, Massey Ferguson, อื่นๆ","Hidden when ""ไม่มีข้อมูลในระบบ"" is checked. Changing brand updates แบบรุ่น."
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Dropdown Mode,แบบรุ่น,Dropdown,Y,Dynamic based on brand,"Hidden when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Dropdown Mode,รุ่นปี (ค.ศ.),Dropdown,Y,2020–2027,"Hidden when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Manual Mode,ยี่ห้อรถ,Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Manual Mode,แบบรุ่น,Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Manual Mode,รุ่นปี (ค.ศ.),Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Manual Mode,แรงม้า,Text + unit (HP),Y,,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked. Replaces แรงม้า in engine section."
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Manual Mode,จำนวนเงินสูงสุดที่ CA อนุมัติ,Text + unit (บาท),N,,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,สี,สี,Color picker,N,Max 3 colors selectable,Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,เลขตัวถัง,Text,Y,Uppercase,Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,เลขเครื่องยนต์,Text,Y,Uppercase,Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,แรงม้า,Text + unit (HP),Y,,"Hidden when manual mode is active"
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,จำนวนชั่วโมงการทำงาน,Text + unit (ชม.),Y,,Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,วันครบกำหนดเสียภาษี,Date,Y,Format: วว/ดด/ปปปป,Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,ที่มาของวันครบกำหนดเสียภาษี,Dropdown,Y,"หน้าภาษี, ใบเสร็จต่อภาษี/ป้ายต่อภาษี",Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,เลขที่คู่มือ,Text,Y,,Always visible
+แทรกเตอร์ (Tractor),,สถานะ & ความถูกต้อง,สถานะการดัดแปลงสภาพ อื่นๆ,Radio,N,"ไม่ดัดแปลง (default), ดัดแปลง",Always visible
+แทรกเตอร์ (Tractor),,สถานะ & ความถูกต้อง,ชื่อในเล่มทะเบียนรถตรงกับในบัตรประชาชน,Radio,N,"ตรงกัน (default), ไม่ตรงกัน",Always visible
+แทรกเตอร์ (Tractor),,อุปกรณ์เสริม,Predefined accessories,Checkboxes,N,"ใบมีดดันดินแบบคานล่าง, ใบมีดดันหินดินแบบคานบน, ผานพรวน, ผานบุกเบิก, ผานยกร่อง, โรตารี (จอบหมุน), เครื่องตัดหญ้า, บุ้งกี๋",Always visible
+แทรกเตอร์ (Tractor),,อุปกรณ์เสริม,Custom accessory,Text + Add button,N,User can add custom accessories,Always visible

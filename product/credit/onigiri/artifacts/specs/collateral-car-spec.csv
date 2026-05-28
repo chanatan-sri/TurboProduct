@@ -1,0 +1,35 @@
+Collateral Type,Sub-type,Section,Field,Field Type,Required,Options / Values,Condition / Visibility Rule
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลทะเบียน,วันที่จดทะเบียน,Date,Y,Format: วว/ดด/ปปปป,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลทะเบียน,วันที่ครอบครอง,Date,Y,"min = วันที่จดทะเบียน, max = วันนี้","Disabled until วันที่จดทะเบียน is selected. Cannot pick a date before วันที่จดทะเบียน or a future date."
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลทะเบียน,ประเภทการครอบครอง,Dropdown,Y,"ปกติ, โอนกรรมสิทธิ์ในครอบครัว, เพิ่งผ่อนชำระเช่าซื้อเสร็จสิ้น","Always visible. When ""โอนกรรมสิทธิ์ในครอบครัว"" → show ผู้ถือครองก่อนหน้า"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลทะเบียน,ผู้ถือครองก่อนหน้า,Dropdown,N,"บิดา/มารดา, คู่สมรส, บุตร","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลทะเบียน,วันที่ครอบครอง (ผู้ถือครองก่อนหน้า),Date,Y,"min = วันที่จดทะเบียน, max = วันที่ครอบครอง","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว. Must be between วันที่จดทะเบียน and วันที่ครอบครอง."
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ,เลขทะเบียน,Text,Y,,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ,จังหวัด,Dropdown,Y,Province list,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ,ประเภทรถตาม พ.ร.บ.(ร.ย.),Dropdown,Y,"ร.ย.1, ร.ย.2, ร.ย.3, ร.ย.12",Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ,ยี่ห้อรถ,Dropdown,Y,"Toyota, Honda, Isuzu, Mitsubishi, Nissan, Mazda, Ford, MG, BYD","Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ,แบบรุ่น,Dropdown,Y,Dynamic based on brand,"Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Dropdown Mode,รุ่นปี (ค.ศ.),Dropdown,Y,2018–2024,"Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Dropdown Mode,เกียร์,Dropdown,N,"อัตโนมัติ (AT), ธรรมดา (MT), CVT","Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Dropdown Mode,รุ่นย่อย,Dropdown,N,Dynamic,"Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Dropdown Mode,จำนวนประตู,Dropdown,N,"2, 4, 5","Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Dropdown Mode,คำอธิบาย,Dropdown,N,Dynamic,"Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,ยี่ห้อรถ,Text,Y,Free text,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,แบบรุ่น,Text,Y,Free text,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,รุ่นปี (ค.ศ.),Text,Y,Free text,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,เกียร์,Dropdown,N,"อัตโนมัติ (AT), ธรรมดา (MT), CVT","Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,รุ่นย่อย,Text,N,Free text,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,จำนวนประตู,Text + unit (ประตู),N,,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,จำนวนเงินสูงสุดที่ CA อนุมัติ,Text + unit (บาท),N,,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,สี,สี,Color picker,N,Max 3 colors selectable,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,เลขตัวถัง,Text,Y,,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,เลขเครื่องยนต์,Text,Y,,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,จำนวนซีซี,Text + unit (ซีซี),N,,"Conditional — Hidden when ยี่ห้อรถ = BYD (EV)"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,เลขไมล์,Text + unit (กม.),Y,,"Always visible. Checkbox ""ไม่สามารถระบุได้"" → disables and clears field"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,วันครบกำหนดเสียภาษี (พ.ศ.),Date,Y,Format: วว/ดด/ปปปป,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,เลขที่คู่มือ,Text,Y,,Always visible
+รถยนต์ (Car),รถกระบะ,เครื่องยนต์ & ตัวถัง,ติดคอกตู้หรือไม่,Dropdown,N,"ติดคอกตู้, ไม่ติดคอกตู้","Conditional — Only visible when sub-type = รถกระบะ (Pickup)"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,ที่มาของวันครบกำหนดเสียภาษี,Dropdown,Y,"หน้าภาษี, ใบเสร็จต่อภาษี/ป้ายต่อภาษี",Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,สถานะ & ความถูกต้อง,สถานะการดัดแปลงสภาพการติดแก๊ส,Radio,N,"ไม่ดัดแปลง (สภาพตามโรงงาน), ดัดแปลง (เปลี่ยน/เพิ่ม/ลด ถังแก๊ส)",Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,สถานะ & ความถูกต้อง,สถานะการดัดแปลงสภาพ อื่นๆ,Radio,N,"ไม่ดัดแปลง, ดัดแปลง",Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,สถานะ & ความถูกต้อง,ชื่อในเล่มทะเบียนรถตรงกับในบัตรประชาชน,Radio,N,"ตรงกัน, ไม่ตรงกัน",Always visible

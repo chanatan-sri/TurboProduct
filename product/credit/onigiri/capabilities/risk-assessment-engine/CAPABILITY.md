@@ -82,16 +82,24 @@ Strategy (e.g., "CarTitleDefault")
 
 ### Risk Level to Approval Authority
 
-| Risk Level | Approver |
-|------------|----------|
-| 10 | CO / SCO / BM / SBM |
-| 20 | AM (Area Manager) |
-| 30 | CA (Credit Analyst) |
-| 40 | CA Manager |
-| 50 | CRO |
-| 60 | CEO |
-| 70 | Auto-decline or special handling |
-| 99 | Auto-decline (policy violation) |
+Risk level is a numeric range. The system routes using `group_role` — not individual position titles. Any user whose account carries a matching `group_role` may action the application. Position names are informational labels describing who belongs to each group; they are not used in routing logic.
+
+| From RL | To RL | group_role | Positions in group (informational) | Outcome |
+|---------|-------|------------|------------------------------------|---------|
+| 1 | 10 | `SALE_BRANCH` | CO, SCO, BM, SBM | Routes to approver worklist |
+| 11 | 20 | `SALE_AREA` | DAM (Deputy Area Manager), AM, SAM (Senior Area Manager) | Routes to approver worklist |
+| 21 | 70 | `CA` | CA | Routes to approver worklist |
+| 71 | 80 | `CA+` | CRO | **System auto-rejects** — phase-specific; future intent to route to human CRO |
+| 81 | 98 | `CA+` | CRO | **System auto-rejects** |
+| 99 | 99 | *(system)* | GOD | **System auto-rejects** — policy violation, unconditional |
+| — | 0 | *(default)* | — | **System auto-rejects** — unclassified risk level |
+
+**Auto-rejection rule**: Any application with `risk_level > 70` is automatically rejected by the system without entering `pending_approval`. Transition is directly to `rejected` with reason `"Auto-decline: risk level {value}"`.
+
+- **71–80 (CA+)**: System auto-rejects in the current phase. Future intent: route to a human CRO approver once the CRO approval workflow is built.
+- **81–98 (CA+)**: System auto-rejects. No planned human routing.
+- **99 (GOD / policy violation)**: Unconditional system auto-reject. No authority override is possible.
+- **Default (0)**: Unclassified risk level — auto-rejected pending engineering triage.
 
 ### Rule Change Authorization
 

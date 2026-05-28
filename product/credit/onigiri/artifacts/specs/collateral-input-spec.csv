@@ -1,0 +1,143 @@
+Collateral Type,Sub-type,Section,Field,Field Type,Required,Options / Values,Condition / Visibility Rule
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,วันที่จดทะเบียน,Date,Y,Format: วว/ดด/ปปปป,Always visible
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,วันที่ครอบครอง,Date,Y,"min = วันที่จดทะเบียน, max = วันนี้","Disabled until วันที่จดทะเบียน is selected. Cannot pick a date before วันที่จดทะเบียน or a future date."
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,ประเภทการครอบครอง,Dropdown,Y,"ปกติ, โอนกรรมสิทธิ์ในครอบครัว, เพิ่งผ่อนชำระเช่าซื้อเสร็จสิ้น","Always visible. When ""โอนกรรมสิทธิ์ในครอบครัว"" → show ผู้ถือครองก่อนหน้า"
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,ผู้ถือครองก่อนหน้า,Dropdown,N,"บิดา/มารดา, คู่สมรส, บุตร","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว"
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,วันที่ครอบครอง (ผู้ถือครองก่อนหน้า),Date,Y,"min = วันที่จดทะเบียน, max = วันที่ครอบครอง","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว. Must be between วันที่จดทะเบียน and วันที่ครอบครอง."
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,เลขทะเบียน,Text,Y,,Always visible
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,จังหวัด,Dropdown,Y,Province list,Always visible
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,ประเภทตาม พ.ร.บ.(รย.),Dropdown,Y,"รย.12 (default), รย.17","Always visible. When รย.17 → show warning banner ""ไม่มีรูปหน้าเว็บกรมขนส่ง"""
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Dropdown Mode,ยี่ห้อรถ,Dropdown,Y,"Honda, Yamaha, Suzuki, Kawasaki, GPX, อื่นๆ","Hidden when ""ไม่มีข้อมูลในระบบ"" is checked. Changing brand updates แบบรุ่น."
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Dropdown Mode,แบบรุ่น,Dropdown,Y,Dynamic based on brand,"Hidden when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Dropdown Mode,รุ่นปี (ค.ศ.),Dropdown,Y,2020–2027,"Hidden when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Manual Mode,ยี่ห้อรถ,Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Manual Mode,แบบรุ่น,Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Manual Mode,รุ่นปี (ค.ศ.),Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Manual Mode,จำนวนเงินสูงสุดที่ CA อนุมัติ,Text + unit (บาท),N,,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,สี,สี,Color picker,N,Max 3 colors selectable,Always visible
+รถจักรยานยนต์ (Bike),,เครื่องยนต์ & ตัวถัง,เลขตัวถัง,Combo (dropdown + text),Y,"Dropdown: ระบุเอง, ไม่มีข้อมูล, pre-populated. Text: uppercase",Always visible
+รถจักรยานยนต์ (Bike),,เครื่องยนต์ & ตัวถัง,เลขเครื่องยนต์,Combo (dropdown + text),Y,"Dropdown: ระบุเอง, ไม่มีข้อมูล, pre-populated. Text: uppercase",Always visible
+รถจักรยานยนต์ (Bike),,เครื่องยนต์ & ตัวถัง,จำนวนซีซี,Text + unit (ซีซี),Y,,Always visible
+รถจักรยานยนต์ (Bike),,เครื่องยนต์ & ตัวถัง,วันครบกำหนดเสียภาษี,Date,Y,Format: วว/ดด/ปปปป,Always visible
+รถจักรยานยนต์ (Bike),,เครื่องยนต์ & ตัวถัง,ที่มาของวันครบกำหนดเสียภาษี,Dropdown,Y,"หน้าภาษี, ใบเสร็จต่อภาษี/ป้ายต่อภาษี",Always visible
+รถจักรยานยนต์ (Bike),,การตรวจสอบความถูกต้อง,ชื่อในเล่มทะเบียนรถตรงกับในบัตรประชาชน,Radio,N,"ตรงกัน (default), ไม่ตรงกัน",Always visible
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,วันที่จดทะเบียน,Date,Y,Format: วว/ดด/ปปปป,Always visible
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,วันที่ครอบครอง,Date,Y,"min = วันที่จดทะเบียน, max = วันนี้","Disabled until วันที่จดทะเบียน is selected. Cannot pick a date before วันที่จดทะเบียน or a future date."
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,ประเภทการครอบครอง,Dropdown,Y,"ปกติ, โอนกรรมสิทธิ์ในครอบครัว, เพิ่งผ่อนชำระเช่าซื้อเสร็จสิ้น","Always visible. When ""โอนกรรมสิทธิ์ในครอบครัว"" → show ผู้ถือครองก่อนหน้า"
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,ผู้ถือครองก่อนหน้า,Dropdown,N,"บิดา/มารดา, คู่สมรส, บุตร","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว"
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,วันที่ครอบครอง (ผู้ถือครองก่อนหน้า),Date,Y,"min = วันที่จดทะเบียน, max = วันที่ครอบครอง","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว. Must be between วันที่จดทะเบียน and วันที่ครอบครอง."
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,เลขทะเบียน,Text,Y,,Always visible
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,จังหวัด,Dropdown,Y,Province list,Always visible
+แทรกเตอร์ (Tractor),,ข้อมูลทะเบียน,ประเภทตาม พ.ร.บ.(รย.),Dropdown,Y,"รย.8, รย.9, รย.13 (default), รย.14","Always visible. When รย.13 → show warning banner"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Dropdown Mode,ยี่ห้อรถ,Dropdown,Y,"Kubota, Yanmar, John Deere, Iseki, Mitsubishi, Ford/New Holland, Massey Ferguson, อื่นๆ","Hidden when ""ไม่มีข้อมูลในระบบ"" is checked. Changing brand updates แบบรุ่น."
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Dropdown Mode,แบบรุ่น,Dropdown,Y,Dynamic based on brand,"Hidden when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Dropdown Mode,รุ่นปี (ค.ศ.),Dropdown,Y,2020–2027,"Hidden when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Manual Mode,ยี่ห้อรถ,Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Manual Mode,แบบรุ่น,Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Manual Mode,รุ่นปี (ค.ศ.),Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Manual Mode,แรงม้า,Text + unit (HP),Y,,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked. Replaces แรงม้า in engine section."
+แทรกเตอร์ (Tractor),,ข้อมูลรถ — Manual Mode,จำนวนเงินสูงสุดที่ CA อนุมัติ,Text + unit (บาท),N,,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+แทรกเตอร์ (Tractor),,สี,สี,Color picker,N,Max 3 colors selectable,Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,เลขตัวถัง,Text,Y,Uppercase,Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,เลขเครื่องยนต์,Text,Y,Uppercase,Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,แรงม้า,Text + unit (HP),Y,,"Hidden when manual mode is active"
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,จำนวนชั่วโมงการทำงาน,Text + unit (ชม.),Y,,Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,วันครบกำหนดเสียภาษี,Date,Y,Format: วว/ดด/ปปปป,Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,ที่มาของวันครบกำหนดเสียภาษี,Dropdown,Y,"หน้าภาษี, ใบเสร็จต่อภาษี/ป้ายต่อภาษี",Always visible
+แทรกเตอร์ (Tractor),,เครื่องยนต์ & ตัวถัง,เลขที่คู่มือ,Text,Y,,Always visible
+แทรกเตอร์ (Tractor),,สถานะ & ความถูกต้อง,สถานะการดัดแปลงสภาพ อื่นๆ,Radio,N,"ไม่ดัดแปลง (default), ดัดแปลง",Always visible
+แทรกเตอร์ (Tractor),,สถานะ & ความถูกต้อง,ชื่อในเล่มทะเบียนรถตรงกับในบัตรประชาชน,Radio,N,"ตรงกัน (default), ไม่ตรงกัน",Always visible
+แทรกเตอร์ (Tractor),,อุปกรณ์เสริม,Predefined accessories,Checkboxes,N,"ใบมีดดันดินแบบคานล่าง, ใบมีดดันหินดินแบบคานบน, ผานพรวน, ผานบุกเบิก, ผานยกร่อง, โรตารี (จอบหมุน), เครื่องตัดหญ้า, บุ้งกี๋",Always visible
+แทรกเตอร์ (Tractor),,อุปกรณ์เสริม,Custom accessory,Text + Add button,N,User can add custom accessories,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลทะเบียน,วันที่จดทะเบียน,Date,Y,Format: วว/ดด/ปปปป,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลทะเบียน,วันที่ครอบครอง,Date,Y,"min = วันที่จดทะเบียน, max = วันนี้","Disabled until วันที่จดทะเบียน is selected. Cannot pick a date before วันที่จดทะเบียน or a future date."
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลทะเบียน,ประเภทการครอบครอง,Dropdown,Y,"ปกติ, โอนกรรมสิทธิ์ในครอบครัว, เพิ่งผ่อนชำระเช่าซื้อเสร็จสิ้น","Always visible. When ""โอนกรรมสิทธิ์ในครอบครัว"" → show ผู้ถือครองก่อนหน้า"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลทะเบียน,ผู้ถือครองก่อนหน้า,Dropdown,N,"บิดา/มารดา, คู่สมรส, บุตร","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลทะเบียน,วันที่ครอบครอง (ผู้ถือครองก่อนหน้า),Date,Y,"min = วันที่จดทะเบียน, max = วันที่ครอบครอง","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว. Must be between วันที่จดทะเบียน and วันที่ครอบครอง."
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ,เลขทะเบียน,Text,Y,,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ,จังหวัด,Dropdown,Y,Province list,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ,ประเภทรถตาม พ.ร.บ.(ร.ย.),Dropdown,Y,"ร.ย.1, ร.ย.2, ร.ย.3, ร.ย.12",Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ,ยี่ห้อรถ,Dropdown,Y,"Toyota, Honda, Isuzu, Mitsubishi, Nissan, Mazda, Ford, MG, BYD","Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ,แบบรุ่น,Dropdown,Y,Dynamic based on brand,"Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Dropdown Mode,รุ่นปี (ค.ศ.),Dropdown,Y,2018–2024,"Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Dropdown Mode,เกียร์,Dropdown,N,"อัตโนมัติ (AT), ธรรมดา (MT), CVT","Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Dropdown Mode,รุ่นย่อย,Dropdown,N,Dynamic,"Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Dropdown Mode,จำนวนประตู,Dropdown,N,"2, 4, 5","Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Dropdown Mode,คำอธิบาย,Dropdown,N,Dynamic,"Hidden when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,ยี่ห้อรถ,Text,Y,Free text,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,แบบรุ่น,Text,Y,Free text,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,รุ่นปี (ค.ศ.),Text,Y,Free text,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,เกียร์,Dropdown,N,"อัตโนมัติ (AT), ธรรมดา (MT), CVT","Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,รุ่นย่อย,Text,N,Free text,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,จำนวนประตู,Text + unit (ประตู),N,,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,ข้อมูลรถ — Manual Mode,จำนวนเงินสูงสุดที่ CA อนุมัติ,Text + unit (บาท),N,,"Shown when ""ไม่มีตัวเลือกรถนี้ในระบบ"" is checked"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,สี,สี,Color picker,N,Max 3 colors selectable,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,เลขตัวถัง,Text,Y,,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,เลขเครื่องยนต์,Text,Y,,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,จำนวนซีซี,Text + unit (ซีซี),N,,"Conditional — Hidden when ยี่ห้อรถ = BYD (EV)"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,เลขไมล์,Text + unit (กม.),Y,,"Always visible. Checkbox ""ไม่สามารถระบุได้"" → disables and clears field"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,วันครบกำหนดเสียภาษี (พ.ศ.),Date,Y,Format: วว/ดด/ปปปป,Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,เลขที่คู่มือ,Text,Y,,Always visible
+รถยนต์ (Car),รถกระบะ,เครื่องยนต์ & ตัวถัง,ติดคอกตู้หรือไม่,Dropdown,N,"ติดคอกตู้, ไม่ติดคอกตู้","Conditional — Only visible when sub-type = รถกระบะ (Pickup)"
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,เครื่องยนต์ & ตัวถัง,ที่มาของวันครบกำหนดเสียภาษี,Dropdown,Y,"หน้าภาษี, ใบเสร็จต่อภาษี/ป้ายต่อภาษี",Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,สถานะ & ความถูกต้อง,สถานะการดัดแปลงสภาพการติดแก๊ส,Radio,N,"ไม่ดัดแปลง (สภาพตามโรงงาน), ดัดแปลง (เปลี่ยน/เพิ่ม/ลด ถังแก๊ส)",Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,สถานะ & ความถูกต้อง,สถานะการดัดแปลงสภาพ อื่นๆ,Radio,N,"ไม่ดัดแปลง, ดัดแปลง",Always visible
+รถยนต์ (Car),รถเก๋ง / รถกระบะ / รถตู้,สถานะ & ความถูกต้อง,ชื่อในเล่มทะเบียนรถตรงกับในบัตรประชาชน,Radio,N,"ตรงกัน, ไม่ตรงกัน",Always visible
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,ชื่อผู้ถือครองกรรมสิทธิ์ตรงกับลูกค้า,Radio,Y,"ตรง, ไม่ตรง (default)","Always visible. When ""ตรง"" → auto-fill owner fields from customer data"
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,คำนำหน้า,Dropdown,Y,"นาย, นาง, นางสาว",Always visible
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,ชื่อ,Text,Y,,Always visible
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,นามสกุล,Text,Y,,Always visible
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,วันที่ครอบครอง,Date,N,Format: วว/ดด/ปปปป,Always visible
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,ประเภทการครอบครอง,Dropdown,N,"ปกติ, โอนกรมสิทธิ์ภายในครอบครัว, เพิ่งผ่อนชำระเสร็จ","Always visible. When ""โอนกรมสิทธิ์ภายในครอบครัว"" → show ผู้ถือครองก่อนหน้า + วันที่"
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,ผู้ถือครองก่อนหน้า,Dropdown,N,"บิดา/มารดา, คู่สมรส, บุตร","Conditional — shown when ประเภทการครอบครอง = โอนกรมสิทธิ์ภายในครอบครัว"
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,วันที่ครอบครอง (ผู้ถือครองก่อนหน้า),Date,N,Format: วว/ดด/ปปปป,"Conditional — shown when ประเภทการครอบครอง = โอนกรมสิทธิ์ภายในครอบครัว or เพิ่งผ่อนชำระเสร็จ"
+ที่ดิน (Land),,เอกสารสิทธิ,ประเภทเอกสารสิทธิ,Dropdown,Y,"โฉนดที่ดิน (นส.4), หนังสือรับรองการใช้ประโยชน์ (นส.3 ก), หนังสือกรรมสิทธิ์ห้องชุด (อ.ช.2)","Always visible. Controls visibility of many downstream fields."
+ที่ดิน (Land),,เอกสารสิทธิ,ประเภท นส.4,Dropdown,Y,"นส.4 ก., นส.4 จ.","Conditional — Only visible when ประเภทเอกสารสิทธิ = นส.4"
+ที่ดิน (Land),,เอกสารสิทธิ,ประเภทหลักประกัน,Dropdown,Y,"ที่ดินเปล่า, ที่ดินพร้อมสิ่งปลูกสร้าง","Conditional — Visible when นส.4 or นส.3ก."
+ที่ดิน (Land),,เอกสารสิทธิ,ประเภทหลักประกันย่อย (land),Dropdown,N,Dynamic based on ประเภทหลักประกัน,"Conditional — Visible when นส.4 or นส.3ก."
+ที่ดิน (Land),,เอกสารสิทธิ,ประเภทหลักประกันย่อย (condo),Dropdown,N,"ห้องชุดสำนักงาน, ห้องชุดเพื่อพาณิชยกรรม, ห้องชุดเพื่ออยู่อาศัย","Conditional — Visible when อ.ช.2"
+ที่ดิน (Land),,เอกสารสิทธิ,เลขที่โฉนด,Text,Y,,"Conditional — For นส.4 and นส.3ก."
+ที่ดิน (Land),,เอกสารสิทธิ,เลขที่ดิน,Text,Y,,"Conditional — For นส.4 and นส.3ก."
+ที่ดิน (Land),,เอกสารสิทธิ,เนื้อที่ (ไร่/งาน/ตร.วา),Area (3 fields),Y,,"Conditional — For นส.4 and นส.3ก."
+ที่ดิน (Land),,เอกสารสิทธิ,เนื้อที่ประมาณ (ตร.ม.),Text + unit (ตร.ม.),N,,"Conditional — Visible for อ.ช.2 only"
+ที่ดิน (Land),,ที่ตั้งเอกสารสิทธิ,ตำบล / แขวง,Text,Y,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ที่ตั้งเอกสารสิทธิ,อำเภอ / เขต,Text,Y,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ที่ตั้งเอกสารสิทธิ,จังหวัด,Dropdown,Y,Province list,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ที่ตั้งหลักประกัน,ที่ตั้งหลักประกันตรงกับที่อยู่ใด,Dropdown,N,"ที่อยู่ตามทะเบียนบ้าน, ที่อยู่ปัจจุบัน, อื่นๆ","Conditional — Shown for ที่ดินพร้อมสิ่งปลูกสร้าง. Auto-fill on selection."
+ที่ดิน (Land),,ที่อยู่หลักประกัน,บ้านเลขที่,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,หมู่บ้าน / อาคาร,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,หมู่,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,ซอย,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,ถนน,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,แขวง / ตำบล,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,เขต / อำเภอ,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,จังหวัด,Dropdown,N,Province list,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,รหัสไปรษณีย์,Text,N,maxlength=5,Conditional — shown after address match selection
+ที่ดิน (Land),,ข้อมูลอาคารชุด,ห้องชุดเลขที่,Text,N,,"Conditional — Only for อ.ช.2"
+ที่ดิน (Land),,ข้อมูลอาคารชุด,ชั้นที่,Text,N,,"Conditional — Only for อ.ช.2"
+ที่ดิน (Land),,ข้อมูลอาคารชุด,อาคารเลขที่,Text,N,,"Conditional — Only for อ.ช.2"
+ที่ดิน (Land),,ข้อมูลอาคารชุด,ทะเบียนอาคารชุด,Text,N,,"Conditional — Only for อ.ช.2"
+ที่ดิน (Land),,ข้อมูลอาคารชุด,ชื่ออาคารชุด,Text,N,,"Conditional — Only for อ.ช.2"
+ที่ดิน (Land),,ที่อยู่อาคารชุด,หมู่ / ซอย / ถนน / แขวง / เขต / จังหวัด / รหัสไปรษณีย์,Mixed,N,Standard address fields,"Conditional — Only for ห้องชุดสำนักงาน and ห้องชุดเพื่อพาณิชยกรรม"
+ที่ดิน (Land),,ที่อยู่อาคารชุด (อยู่อาศัย),ที่ตั้งหลักประกันตรงกับที่อยู่ใด,Dropdown,N,"เลือก, ที่อยู่ตามทะเบียนบ้าน, ที่อยู่ปัจจุบัน, อื่นๆ","Conditional — Only for ห้องชุดเพื่ออยู่อาศัย"
+ที่ดิน (Land),,พิกัด & แผนที่,ละติจูด,Text,N,e.g. 13.7563,Always visible
+ที่ดิน (Land),,พิกัด & แผนที่,ลองติจูด,Text,N,e.g. 100.5018,Always visible
+ที่ดิน (Land),,พิกัด & แผนที่,Pin Google Map,Map button,N,Opens Google Maps,Always visible
+ที่ดิน (Land),,เงื่อนไข (นส.4 / นส.3ก.),ที่ดินติดภาระจำยอม,Checkbox,N,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,เงื่อนไข (นส.4 / นส.3ก.),ที่ดินติดสัญญาขายฝาก / สัญญาจำนอง / ห้ามโอน (โฉนดหลังแดง),Checkbox,N,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,เงื่อนไข (นส.4 / นส.3ก.),ที่ดินแปลงเข้า-ออก / แปลงถนน / แปลงตะเข็บ / ทางสาธารณูปโภค,Checkbox,N,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,เงื่อนไข (นส.4 / นส.3ก.),ที่ดินติดสิทธิต่างๆ (สิทธิอาศัย / สิทธิเก็บกิน / สิทธิเหนือพื้นดิน),Checkbox,N,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,เงื่อนไข (นส.4 / นส.3ก.),ไม่ติดเงื่อนไขใดๆข้างต้น,Checkbox,N,,"Conditional — Hidden for อ.ช.2. Mutual exclusive — unchecks all others"
+ที่ดิน (Land),,เงื่อนไข (อ.ช.2),ที่ดินติดสัญญาขายฝาก / สัญญาจำนอง / ห้ามโอน (โฉนดหลังแดง),Checkbox,N,,"Conditional — Shown for อ.ช.2 only"
+ที่ดิน (Land),,เงื่อนไข (อ.ช.2),ที่ดินติดสิทธิต่างๆ (สิทธิอาศัย / สิทธิเก็บกิน / สิทธิเหนือพื้นดิน),Checkbox,N,,"Conditional — Shown for อ.ช.2 only"
+ที่ดิน (Land),,เงื่อนไข (อ.ช.2),ไม่ติดเงื่อนไขใดๆข้างต้น,Checkbox,N,,"Conditional — Shown for อ.ช.2 only. Mutual exclusive"
+ที่ดิน (Land),,ลักษณะที่ดิน,รูปแปลงที่ดิน,Radio,Y,"สี่เหลี่ยมต่างๆ, เหลี่ยมอื่นๆ, สามเหลี่ยม","Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ลักษณะที่ดิน,ถนน เข้า-ออก หลักประกัน,Radio,Y,"ถนนคอนกรีต/ถนนดำ, ถนนหินคลุก, ถนนลูกรัง/ถนนดิน, ไม่มีถนนเข้า-ออกหลักประกัน","Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ลักษณะที่ดิน,ระบบไฟฟ้า,Radio,Y,"เข้าถึง, เข้าไม่ถึง","Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ใบประเมิน,ราคาประเมินหลักประกัน (ที่ดิน),Text + unit (บาท),Y,,"Always visible. Label changes to ""ราคาประเมินหลักประกัน"" for อ.ช.2"
+ที่ดิน (Land),,ใบประเมิน,ราคาประเมินหลักประกัน (สิ่งปลูกสร้าง),Text + unit (บาท),N,,"Conditional — Only when ประเภทหลักประกัน = ที่ดินพร้อมสิ่งปลูกสร้าง"
+ที่ดิน (Land),,ใบประเมิน,วันที่ออกใบประเมิน,Date,N,Format: วว/ดด/ปปปป,Always visible
+ที่ดิน (Land),,ใบประเมิน,วันที่ออกเอกสารใบปลอดหนี้,Date,N,Format: วว/ดด/ปปปป,"Conditional — Only visible for อ.ช.2"
+ที่ดิน (Land),,ใบประเมิน — Checklist,ใบประเมินติดคำสั่งอายัด/ติดคำสั่งยึด,Checkbox,N,,Always visible
+ที่ดิน (Land),,ใบประเมิน — Checklist,ใบประเมินมีการออกใบแทน,Checkbox,N,,Always visible
+ที่ดิน (Land),,ใบประเมิน — Checklist,ไม่ติดเงื่อนไขใดๆข้างต้น,Checkbox,N,,"Always visible. Mutual exclusive"

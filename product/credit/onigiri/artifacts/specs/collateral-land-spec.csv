@@ -1,0 +1,59 @@
+Collateral Type,Sub-type,Section,Field,Field Type,Required,Options / Values,Condition / Visibility Rule
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,ชื่อผู้ถือครองกรรมสิทธิ์ตรงกับลูกค้า,Radio,Y,"ตรง, ไม่ตรง (default)","Always visible. When ""ตรง"" → auto-fill owner fields from customer data"
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,คำนำหน้า,Dropdown,Y,"นาย, นาง, นางสาว",Always visible
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,ชื่อ,Text,Y,,Always visible
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,นามสกุล,Text,Y,,Always visible
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,วันที่ครอบครอง,Date,N,Format: วว/ดด/ปปปป,Always visible
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,ประเภทการครอบครอง,Dropdown,N,"ปกติ, โอนกรมสิทธิ์ภายในครอบครัว, เพิ่งผ่อนชำระเสร็จ","Always visible. When ""โอนกรมสิทธิ์ภายในครอบครัว"" → show ผู้ถือครองก่อนหน้า + วันที่"
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,ผู้ถือครองก่อนหน้า,Dropdown,N,"บิดา/มารดา, คู่สมรส, บุตร","Conditional — shown when ประเภทการครอบครอง = โอนกรมสิทธิ์ภายในครอบครัว"
+ที่ดิน (Land),,ผู้ถือครองกรรมสิทธิ์,วันที่ครอบครอง (ผู้ถือครองก่อนหน้า),Date,N,Format: วว/ดด/ปปปป,"Conditional — shown when ประเภทการครอบครอง = โอนกรมสิทธิ์ภายในครอบครัว or เพิ่งผ่อนชำระเสร็จ"
+ที่ดิน (Land),,เอกสารสิทธิ,ประเภทเอกสารสิทธิ,Dropdown,Y,"โฉนดที่ดิน (นส.4), หนังสือรับรองการใช้ประโยชน์ (นส.3 ก), หนังสือกรรมสิทธิ์ห้องชุด (อ.ช.2)","Always visible. Controls visibility of many downstream fields."
+ที่ดิน (Land),,เอกสารสิทธิ,ประเภท นส.4,Dropdown,Y,"นส.4 ก., นส.4 จ.","Conditional — Only visible when ประเภทเอกสารสิทธิ = นส.4"
+ที่ดิน (Land),,เอกสารสิทธิ,ประเภทหลักประกัน,Dropdown,Y,"ที่ดินเปล่า, ที่ดินพร้อมสิ่งปลูกสร้าง","Conditional — Visible when นส.4 or นส.3ก."
+ที่ดิน (Land),,เอกสารสิทธิ,ประเภทหลักประกันย่อย (land),Dropdown,N,Dynamic based on ประเภทหลักประกัน,"Conditional — Visible when นส.4 or นส.3ก."
+ที่ดิน (Land),,เอกสารสิทธิ,ประเภทหลักประกันย่อย (condo),Dropdown,N,"ห้องชุดสำนักงาน, ห้องชุดเพื่อพาณิชยกรรม, ห้องชุดเพื่ออยู่อาศัย","Conditional — Visible when อ.ช.2"
+ที่ดิน (Land),,เอกสารสิทธิ,เลขที่โฉนด,Text,Y,,"Conditional — For นส.4 and นส.3ก."
+ที่ดิน (Land),,เอกสารสิทธิ,เลขที่ดิน,Text,Y,,"Conditional — For นส.4 and นส.3ก."
+ที่ดิน (Land),,เอกสารสิทธิ,เนื้อที่ (ไร่/งาน/ตร.วา),Area (3 fields),Y,,"Conditional — For นส.4 and นส.3ก."
+ที่ดิน (Land),,เอกสารสิทธิ,เนื้อที่ประมาณ (ตร.ม.),Text + unit (ตร.ม.),N,,"Conditional — Visible for อ.ช.2 only"
+ที่ดิน (Land),,ที่ตั้งเอกสารสิทธิ,ตำบล / แขวง,Text,Y,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ที่ตั้งเอกสารสิทธิ,อำเภอ / เขต,Text,Y,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ที่ตั้งเอกสารสิทธิ,จังหวัด,Dropdown,Y,Province list,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ที่ตั้งหลักประกัน,ที่ตั้งหลักประกันตรงกับที่อยู่ใด,Dropdown,N,"ที่อยู่ตามทะเบียนบ้าน, ที่อยู่ปัจจุบัน, อื่นๆ","Conditional — Shown for ที่ดินพร้อมสิ่งปลูกสร้าง. Auto-fill on selection."
+ที่ดิน (Land),,ที่อยู่หลักประกัน,บ้านเลขที่,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,หมู่บ้าน / อาคาร,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,หมู่,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,ซอย,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,ถนน,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,แขวง / ตำบล,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,เขต / อำเภอ,Text,N,,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,จังหวัด,Dropdown,N,Province list,Conditional — shown after address match selection
+ที่ดิน (Land),,ที่อยู่หลักประกัน,รหัสไปรษณีย์,Text,N,maxlength=5,Conditional — shown after address match selection
+ที่ดิน (Land),,ข้อมูลอาคารชุด,ห้องชุดเลขที่,Text,N,,"Conditional — Only for อ.ช.2"
+ที่ดิน (Land),,ข้อมูลอาคารชุด,ชั้นที่,Text,N,,"Conditional — Only for อ.ช.2"
+ที่ดิน (Land),,ข้อมูลอาคารชุด,อาคารเลขที่,Text,N,,"Conditional — Only for อ.ช.2"
+ที่ดิน (Land),,ข้อมูลอาคารชุด,ทะเบียนอาคารชุด,Text,N,,"Conditional — Only for อ.ช.2"
+ที่ดิน (Land),,ข้อมูลอาคารชุด,ชื่ออาคารชุด,Text,N,,"Conditional — Only for อ.ช.2"
+ที่ดิน (Land),,ที่อยู่อาคารชุด,หมู่ / ซอย / ถนน / แขวง / เขต / จังหวัด / รหัสไปรษณีย์,Mixed,N,Standard address fields,"Conditional — Only for ห้องชุดสำนักงาน and ห้องชุดเพื่อพาณิชยกรรม"
+ที่ดิน (Land),,ที่อยู่อาคารชุด (อยู่อาศัย),ที่ตั้งหลักประกันตรงกับที่อยู่ใด,Dropdown,N,"เลือก, ที่อยู่ตามทะเบียนบ้าน, ที่อยู่ปัจจุบัน, อื่นๆ","Conditional — Only for ห้องชุดเพื่ออยู่อาศัย"
+ที่ดิน (Land),,พิกัด & แผนที่,ละติจูด,Text,N,e.g. 13.7563,Always visible
+ที่ดิน (Land),,พิกัด & แผนที่,ลองติจูด,Text,N,e.g. 100.5018,Always visible
+ที่ดิน (Land),,พิกัด & แผนที่,Pin Google Map,Map button,N,Opens Google Maps,Always visible
+ที่ดิน (Land),,เงื่อนไข (นส.4 / นส.3ก.),ที่ดินติดภาระจำยอม,Checkbox,N,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,เงื่อนไข (นส.4 / นส.3ก.),ที่ดินติดสัญญาขายฝาก / สัญญาจำนอง / ห้ามโอน (โฉนดหลังแดง),Checkbox,N,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,เงื่อนไข (นส.4 / นส.3ก.),ที่ดินแปลงเข้า-ออก / แปลงถนน / แปลงตะเข็บ / ทางสาธารณูปโภค,Checkbox,N,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,เงื่อนไข (นส.4 / นส.3ก.),ที่ดินติดสิทธิต่างๆ (สิทธิอาศัย / สิทธิเก็บกิน / สิทธิเหนือพื้นดิน),Checkbox,N,,"Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,เงื่อนไข (นส.4 / นส.3ก.),ไม่ติดเงื่อนไขใดๆข้างต้น,Checkbox,N,,"Conditional — Hidden for อ.ช.2. Mutual exclusive — unchecks all others"
+ที่ดิน (Land),,เงื่อนไข (อ.ช.2),ที่ดินติดสัญญาขายฝาก / สัญญาจำนอง / ห้ามโอน (โฉนดหลังแดง),Checkbox,N,,"Conditional — Shown for อ.ช.2 only"
+ที่ดิน (Land),,เงื่อนไข (อ.ช.2),ที่ดินติดสิทธิต่างๆ (สิทธิอาศัย / สิทธิเก็บกิน / สิทธิเหนือพื้นดิน),Checkbox,N,,"Conditional — Shown for อ.ช.2 only"
+ที่ดิน (Land),,เงื่อนไข (อ.ช.2),ไม่ติดเงื่อนไขใดๆข้างต้น,Checkbox,N,,"Conditional — Shown for อ.ช.2 only. Mutual exclusive"
+ที่ดิน (Land),,ลักษณะที่ดิน,รูปแปลงที่ดิน,Radio,Y,"สี่เหลี่ยมต่างๆ, เหลี่ยมอื่นๆ, สามเหลี่ยม","Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ลักษณะที่ดิน,ถนน เข้า-ออก หลักประกัน,Radio,Y,"ถนนคอนกรีต/ถนนดำ, ถนนหินคลุก, ถนนลูกรัง/ถนนดิน, ไม่มีถนนเข้า-ออกหลักประกัน","Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ลักษณะที่ดิน,ระบบไฟฟ้า,Radio,Y,"เข้าถึง, เข้าไม่ถึง","Conditional — Hidden for อ.ช.2"
+ที่ดิน (Land),,ใบประเมิน,ราคาประเมินหลักประกัน (ที่ดิน),Text + unit (บาท),Y,,"Always visible. Label changes to ""ราคาประเมินหลักประกัน"" for อ.ช.2"
+ที่ดิน (Land),,ใบประเมิน,ราคาประเมินหลักประกัน (สิ่งปลูกสร้าง),Text + unit (บาท),N,,"Conditional — Only when ประเภทหลักประกัน = ที่ดินพร้อมสิ่งปลูกสร้าง"
+ที่ดิน (Land),,ใบประเมิน,วันที่ออกใบประเมิน,Date,N,Format: วว/ดด/ปปปป,Always visible
+ที่ดิน (Land),,ใบประเมิน,วันที่ออกเอกสารใบปลอดหนี้,Date,N,Format: วว/ดด/ปปปป,"Conditional — Only visible for อ.ช.2"
+ที่ดิน (Land),,ใบประเมิน — Checklist,ใบประเมินติดคำสั่งอายัด/ติดคำสั่งยึด,Checkbox,N,,Always visible
+ที่ดิน (Land),,ใบประเมิน — Checklist,ใบประเมินมีการออกใบแทน,Checkbox,N,,Always visible
+ที่ดิน (Land),,ใบประเมิน — Checklist,ไม่ติดเงื่อนไขใดๆข้างต้น,Checkbox,N,,"Always visible. Mutual exclusive"

@@ -1,0 +1,23 @@
+Collateral Type,Sub-type,Section,Field,Field Type,Required,Options / Values,Condition / Visibility Rule
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,วันที่จดทะเบียน,Date,Y,Format: วว/ดด/ปปปป,Always visible
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,วันที่ครอบครอง,Date,Y,"min = วันที่จดทะเบียน, max = วันนี้","Disabled until วันที่จดทะเบียน is selected. Cannot pick a date before วันที่จดทะเบียน or a future date."
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,ประเภทการครอบครอง,Dropdown,Y,"ปกติ, โอนกรรมสิทธิ์ในครอบครัว, เพิ่งผ่อนชำระเช่าซื้อเสร็จสิ้น","Always visible. When ""โอนกรรมสิทธิ์ในครอบครัว"" → show ผู้ถือครองก่อนหน้า"
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,ผู้ถือครองก่อนหน้า,Dropdown,N,"บิดา/มารดา, คู่สมรส, บุตร","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว"
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,วันที่ครอบครอง (ผู้ถือครองก่อนหน้า),Date,Y,"min = วันที่จดทะเบียน, max = วันที่ครอบครอง","Conditional — shown when ประเภทการครอบครอง = โอนกรรมสิทธิ์ในครอบครัว. Must be between วันที่จดทะเบียน and วันที่ครอบครอง."
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,เลขทะเบียน,Text,Y,,Always visible
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,จังหวัด,Dropdown,Y,Province list,Always visible
+รถจักรยานยนต์ (Bike),,ข้อมูลทะเบียน,ประเภทตาม พ.ร.บ.(รย.),Dropdown,Y,"รย.12 (default), รย.17","Always visible. When รย.17 → show warning banner ""ไม่มีรูปหน้าเว็บกรมขนส่ง"""
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Dropdown Mode,ยี่ห้อรถ,Dropdown,Y,"Honda, Yamaha, Suzuki, Kawasaki, GPX, อื่นๆ","Hidden when ""ไม่มีข้อมูลในระบบ"" is checked. Changing brand updates แบบรุ่น."
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Dropdown Mode,แบบรุ่น,Dropdown,Y,Dynamic based on brand,"Hidden when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Dropdown Mode,รุ่นปี (ค.ศ.),Dropdown,Y,2020–2027,"Hidden when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Manual Mode,ยี่ห้อรถ,Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Manual Mode,แบบรุ่น,Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Manual Mode,รุ่นปี (ค.ศ.),Text,Y,Free text,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,ข้อมูลรถ — Manual Mode,จำนวนเงินสูงสุดที่ CA อนุมัติ,Text + unit (บาท),N,,"Shown when ""ไม่มีข้อมูลในระบบ"" is checked"
+รถจักรยานยนต์ (Bike),,สี,สี,Color picker,N,Max 3 colors selectable,Always visible
+รถจักรยานยนต์ (Bike),,เครื่องยนต์ & ตัวถัง,เลขตัวถัง,Combo (dropdown + text),Y,"Dropdown: ระบุเอง, ไม่มีข้อมูล, pre-populated. Text: uppercase",Always visible
+รถจักรยานยนต์ (Bike),,เครื่องยนต์ & ตัวถัง,เลขเครื่องยนต์,Combo (dropdown + text),Y,"Dropdown: ระบุเอง, ไม่มีข้อมูล, pre-populated. Text: uppercase",Always visible
+รถจักรยานยนต์ (Bike),,เครื่องยนต์ & ตัวถัง,จำนวนซีซี,Text + unit (ซีซี),Y,,Always visible
+รถจักรยานยนต์ (Bike),,เครื่องยนต์ & ตัวถัง,วันครบกำหนดเสียภาษี,Date,Y,Format: วว/ดด/ปปปป,Always visible
+รถจักรยานยนต์ (Bike),,เครื่องยนต์ & ตัวถัง,ที่มาของวันครบกำหนดเสียภาษี,Dropdown,Y,"หน้าภาษี, ใบเสร็จต่อภาษี/ป้ายต่อภาษี",Always visible
+รถจักรยานยนต์ (Bike),,การตรวจสอบความถูกต้อง,ชื่อในเล่มทะเบียนรถตรงกับในบัตรประชาชน,Radio,N,"ตรงกัน (default), ไม่ตรงกัน",Always visible
